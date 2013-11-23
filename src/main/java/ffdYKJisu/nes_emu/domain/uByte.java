@@ -8,7 +8,7 @@ package ffdYKJisu.nes_emu.domain;
  *
  * @author Administrator
  */
-final class uByte {
+public final class uByte {
 
     final private short value;
 
@@ -20,7 +20,7 @@ final class uByte {
         this.value = copy.get();
     }
 
-    uByte(int initVal) {
+    public uByte(int initVal) {
         this.value = (short) Math.abs(initVal & 0xff);
     }
 

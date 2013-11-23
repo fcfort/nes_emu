@@ -7,6 +7,8 @@ package ffdYKJisu.nes_emu.main;
 
 import java.io.File;
 
+import ffdYKJisu.nes_emu.system.NES;
+
 /**
  *
  * @author fe01106

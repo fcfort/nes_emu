@@ -14,7 +14,7 @@ import java.io.InputStreamReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import ffdYKJisu.nes_emu.main.NES;
+import ffdYKJisu.nes_emu.system.NES;
 
 /**
  * Controls interaction between cpu/nes and command line input.

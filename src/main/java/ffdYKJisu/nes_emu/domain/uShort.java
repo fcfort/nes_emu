@@ -8,7 +8,7 @@ package ffdYKJisu.nes_emu.domain;
  *
  * @author Administrator
  */
-final class uShort {
+public final class uShort {
 
 	final private char value;
 

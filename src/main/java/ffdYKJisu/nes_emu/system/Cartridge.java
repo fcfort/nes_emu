@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package ffdYKJisu.nes_emu.main;
+package ffdYKJisu.nes_emu.system;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -34,7 +34,7 @@ public class Cartridge {
     }
     
     /**
-     * Defines the various kinds of banks possible in a catridge
+     * Defines the various kinds of banks possible in a cartridge
      * <p>
      * <code>PRG16</code> - 16KB Program code
      * <p>
@@ -58,7 +58,7 @@ public class Cartridge {
         VERTICAL, HORIZONTAL
     };
     
-    /** Stores the mirroring (horizontal/vertical) of the catridge */
+    /** Stores the mirroring (horizontal/vertical) of the cartridge */
     Mirroring mirroring;
     
     Byte getByte(int index) {
@@ -66,9 +66,8 @@ public class Cartridge {
             return (Byte) romData[index];
         } catch (ArrayIndexOutOfBoundsException ex) {
             Logger.getLogger(Cartridge.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            return 0;
         }
+        return 0;
     }
 
     void loadRomFromFile(File file) {
@@ -128,7 +127,7 @@ public class Cartridge {
         return bytes;
     }
 
-    String printCatridgeData() {
+    String printcartridgeData() {
         StringBuffer output = new StringBuffer();
         output.append("There are " + this.num16PRGBanks + " PRG16 Bank(s)\n");
         for (int i = 0; i < this.num16PRGBanks; i++) {
@@ -167,12 +166,12 @@ public class Cartridge {
         StringBuffer sb = new StringBuffer();
         sb.append("");
         sb.append(printHeaders());
-        sb.append(printCatridgeData());
+        sb.append(printcartridgeData());
         return sb.toString();
     }
     
     /**
-     * Read cartride and read iNes header and store to catridge
+     * Read cartride and read iNes header and store to cartridge
      */
     void setValuesFromHeader() {
         num16PRGBanks = (int) romData[4];
@@ -206,7 +205,7 @@ public class Cartridge {
     /**
      * Reads the specified PRG-ROM bank from the cartridge and returns a Byte[]
      * array of the bytes contained in the bank. Always 16KB in size.
-     * @param bankNum Number of the bank you want from the catridge starting
+     * @param bankNum Number of the bank you want from the cartridge starting
      * from zero
      * @return Byte array of the specific bank requested
      * @throws nes.bankNotFoundException
@@ -228,7 +227,7 @@ public class Cartridge {
         /**
      * Reads the specified CHR-ROM bank from the cartridge and returns a Byte[]
      * array of the bytes contained in the bank. Always 8KB in size.
-     * @param bankNum Number of the bank you want from the catridge starting
+     * @param bankNum Number of the bank you want from the cartridge starting
      * from zero
      * @return Byte array of the specific bank requested
      * @throws nes.bankNotFoundException

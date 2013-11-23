@@ -22,7 +22,7 @@ import ffdYKJisu.nes_emu.domain.uByte;
 public class xmlPropertyReader {
 	public Document opCodeDoc;
 
-	xmlPropertyReader( String fileName ) {
+	public xmlPropertyReader( String fileName ) {
 		try {
 			File file = new File( fileName );
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();

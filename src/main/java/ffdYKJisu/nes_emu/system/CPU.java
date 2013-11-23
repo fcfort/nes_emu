@@ -2,18 +2,18 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package ffdYKJisu.nes_emu.main;
+package ffdYKJisu.nes_emu.system;
 
 
 import java.io.IOException;
 import java.util.logging.*;
 
 import ffdYKJisu.nes_emu.xmlPropertyReader;
-import ffdYKJisu.nes_emu.domain.AddressingMode;
 import ffdYKJisu.nes_emu.domain.StatusBit;
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
 import ffdYKJisu.nes_emu.exceptions.addressException;
+import ffdYKJisu.nes_emu.main.Main;
 
 /**
  * Controls all functions of the main CPU of the NES.
@@ -21,7 +21,7 @@ import ffdYKJisu.nes_emu.exceptions.addressException;
  * The cart is loaded and restarted and emulation begins in this class.
  * @author fe01106
  */
-class CPU {
+public class CPU {
 
 	private static Logger cpuLogger = Logger.getLogger("nes.CPU");
 
@@ -216,7 +216,7 @@ class CPU {
 	 * Runs the CPU for one operation regardless of how long it will take
 	 * @return returns how many cycles the step took
 	 */
-	int runStep() {
+	public int runStep() {
 		// Read Opcode from PC
 		uByte op = this.getOpcode();
 		// Print instruction to logger
@@ -237,7 +237,7 @@ class CPU {
 	 * @param address Location where you want to read an instruction from
 	 * @return A string formatted for debugger display.
 	 */
-	String instructionToString(uShort address) {
+	public String instructionToString(uShort address) {
 		StringBuffer sb = new StringBuffer(address + ": ");
 		int instructionLength = this.instructionLength(address);
 
@@ -280,7 +280,7 @@ class CPU {
 	 * @param address Address at which the instruction is at
 	 * @return Number of bytes until next instruction
 	 */
-	int instructionLength(uShort address) {
+	public int instructionLength(uShort address) {
 		return this.opCodeData.getLength(memory.read(address).toString());
 	}
 
@@ -291,8 +291,8 @@ class CPU {
 	 * for the instruction
 	 * @return Address of where to perform operation
 	 */
-	uShort getAddress() {
-		AddressingMode mode =
+	public uShort getAddress() {
+		ffdYKJisu.nes_emu.domain.AddressingMode mode =
 			opCodeData.getAddressingMode(memory.read(PC).toString());
 		uShort addr = null;
 		uShort tempPC = PC;

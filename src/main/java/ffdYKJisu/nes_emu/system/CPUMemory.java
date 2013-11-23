@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package ffdYKJisu.nes_emu.main;
+package ffdYKJisu.nes_emu.system;
 
 
 import java.io.IOException;
@@ -10,7 +10,6 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
@@ -21,7 +20,7 @@ import ffdYKJisu.nes_emu.exceptions.bankNotFoundException;
  *
  * @author Administrator
  */
-class CPUMemory implements Memory {
+public class CPUMemory implements Memory {
 
 	private static Logger cpuMemoryLogger = Logger.getLogger("nes.CPUMemory");
 	

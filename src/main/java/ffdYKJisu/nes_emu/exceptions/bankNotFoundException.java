@@ -9,7 +9,7 @@ package ffdYKJisu.nes_emu.exceptions;
  *
  * @author Administrator
  */
-class bankNotFoundException extends Exception {
+public class bankNotFoundException extends Exception {
 
     public bankNotFoundException(String msg) {
           super(msg);

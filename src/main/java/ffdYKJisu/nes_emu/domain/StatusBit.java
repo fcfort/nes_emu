@@ -4,8 +4,6 @@
  */
 package ffdYKJisu.nes_emu.domain;
 
-import java.util.logging.Level;
-
 /**
  * Holds the status bits for the processor status
  */

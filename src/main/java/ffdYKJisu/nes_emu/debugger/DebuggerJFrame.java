@@ -10,7 +10,7 @@ import java.io.File;
 
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
-import ffdYKJisu.nes_emu.main.NES;
+import ffdYKJisu.nes_emu.system.NES;
 
 /**
  *

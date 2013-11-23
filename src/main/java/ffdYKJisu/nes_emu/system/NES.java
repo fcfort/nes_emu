@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package ffdYKJisu.nes_emu.main;
+package ffdYKJisu.nes_emu.system;
 
 import java.io.File;
 
@@ -22,7 +22,7 @@ public class NES {
     private final double PpuCpuRatio = 3;
     private Timing timing;
 
-    void initialize() {
+    public void initialize() {
         cpu = new CPU();
         ppu = new PPU();
         this.setCart(cart);
@@ -31,12 +31,11 @@ public class NES {
     }
 
     private enum Timing {
-
         PAL,
         NTSC
     }
 
-    NES() {
+    public NES() {
         timing = Timing.NTSC;
     }
 
@@ -44,7 +43,7 @@ public class NES {
      * 
      * @param numCycles Cycles to run NES (in CPU cycles)
      */
-    void emulateFor(long numCycles) {
+    public void emulateFor(long numCycles) {
         //int testRunLength = 200;
         //for(int i=0; i < testRunLength; i++) {
         int ppuCycles = (int) (numCycles / 3);
@@ -57,16 +56,16 @@ public class NES {
     //}
     }
 
-    void loadRom(File cart) {
+    public void loadRom(File cart) {
         this.cart = new Cartridge(cart);
     }
 
-    void setCart(Cartridge cart) {
+    public void setCart(Cartridge cart) {
         cpu.setCart(cart);
         ppu.setCart(cart);
     }
 
-    CPU getCpu() {
+    public CPU getCpu() {
         return this.cpu;
     }
 }

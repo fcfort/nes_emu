@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package ffdYKJisu.nes_emu.main;
+package ffdYKJisu.nes_emu.system;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
