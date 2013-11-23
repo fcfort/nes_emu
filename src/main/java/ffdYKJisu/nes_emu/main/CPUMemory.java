@@ -2,7 +2,8 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package nes;
+package ffdYKJisu.nes_emu.main;
+
 
 import java.io.IOException;
 import java.util.logging.ConsoleHandler;
@@ -10,6 +11,11 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
+
+import ffdYKJisu.nes_emu.domain.uByte;
+import ffdYKJisu.nes_emu.domain.uShort;
+import ffdYKJisu.nes_emu.exceptions.addressException;
+import ffdYKJisu.nes_emu.exceptions.bankNotFoundException;
 
 /**
  *

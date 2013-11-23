@@ -3,7 +3,8 @@
  * and open the template in the editor.
  */
 
-package nes;
+package ffdYKJisu.nes_emu.debugger;
+
 
 import java.io.BufferedReader;
 import java.io.Console;
@@ -12,6 +13,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import ffdYKJisu.nes_emu.main.NES;
 
 /**
  * Controls interaction between cpu/nes and command line input.

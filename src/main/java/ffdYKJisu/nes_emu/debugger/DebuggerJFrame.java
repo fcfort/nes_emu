@@ -3,9 +3,14 @@
  *
  * Created on June 29, 2008, 5:15 AM
  */
-package nes;
+package ffdYKJisu.nes_emu.debugger;
+
 
 import java.io.File;
+
+import ffdYKJisu.nes_emu.domain.uByte;
+import ffdYKJisu.nes_emu.domain.uShort;
+import ffdYKJisu.nes_emu.main.NES;
 
 /**
  *

@@ -2,7 +2,11 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package nes;
+package ffdYKJisu.nes_emu.main;
+
+import ffdYKJisu.nes_emu.domain.uByte;
+import ffdYKJisu.nes_emu.domain.uShort;
+import ffdYKJisu.nes_emu.exceptions.addressException;
 
 /**
  *

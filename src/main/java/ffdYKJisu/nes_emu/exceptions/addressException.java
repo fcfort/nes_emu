@@ -3,16 +3,14 @@
  * and open the template in the editor.
  */
 
-package nes;
+package ffdYKJisu.nes_emu.exceptions;
 
 /**
  *
  * @author Administrator
  */
-class bankNotFoundException extends Exception {
-
-    public bankNotFoundException(String msg) {
+class addressException extends Exception {
+    public addressException(String msg) {
           super(msg);
-    }
-
+	}
 }

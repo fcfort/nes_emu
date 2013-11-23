@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package nes;
+package ffdYKJisu.nes_emu;
 
 import java.io.File;
 import javax.xml.parsers.DocumentBuilder;
@@ -11,6 +11,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import ffdYKJisu.nes_emu.domain.AddressingMode;
+import ffdYKJisu.nes_emu.domain.uByte;
 
 /**
  * Reads xml file for opcodes properties for printing purposes

@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package nes;
+package ffdYKJisu.nes_emu.main;
 
 /**
  *  Controls all PPU actions and holds object PPUMemory. Largely a passive

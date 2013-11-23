@@ -2,10 +2,18 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package nes;
+package ffdYKJisu.nes_emu.main;
+
 
 import java.io.IOException;
 import java.util.logging.*;
+
+import ffdYKJisu.nes_emu.xmlPropertyReader;
+import ffdYKJisu.nes_emu.domain.AddressingMode;
+import ffdYKJisu.nes_emu.domain.StatusBit;
+import ffdYKJisu.nes_emu.domain.uByte;
+import ffdYKJisu.nes_emu.domain.uShort;
+import ffdYKJisu.nes_emu.exceptions.addressException;
 
 /**
  * Controls all functions of the main CPU of the NES.
