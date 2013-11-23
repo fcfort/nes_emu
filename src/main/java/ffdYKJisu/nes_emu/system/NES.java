@@ -5,6 +5,7 @@
 package ffdYKJisu.nes_emu.system;
 
 import java.io.File;
+import java.io.InputStream;
 
 /**
  * This will hold both the CPU and PPU objects and the Catridge. 
@@ -56,7 +57,7 @@ public class NES {
     //}
     }
 
-    public void loadRom(File cart) {
+    public void loadRom(InputStream cart) {
         this.cart = new Cartridge(cart);
     }
 

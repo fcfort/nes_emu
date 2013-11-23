@@ -9,8 +9,10 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,7 +30,11 @@ public class Cartridge {
     int num8RAMBanks = 1;
     private final int iNESOffset = 16;
 
-    Cartridge(File file) {
+    public Cartridge(InputStream is) {
+        this.loadRom(is);
+    }
+    
+    public Cartridge(File file) {
         this.loadRomFromFile(file);
         this.setValuesFromHeader();
     }
@@ -70,29 +76,26 @@ public class Cartridge {
         return 0;
     }
 
+    void loadRom(InputStream is) {
+        
+    }
+    
     void loadRomFromFile(File file) {
         try {
-            romData = getBytesFromFile(file);
+            romData = getBytesFromInput(new FileInputStream(file));
         } catch (IOException ex) {
             Logger.getLogger(Cartridge.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    byte[] getBytesFromFile(File file) throws IOException {
-        InputStream is = new FileInputStream(file);
-
-        // Get the size of the file
-        long length = file.length();
-
+    byte[] getBytesFromInput(InputStream is) throws IOException {
         // You cannot create an array using a long type.
         // It needs to be an int type.
         // Before converting to an int type, check
         // to ensure that file is not larger than Integer.MAX_VALUE.
-        if (length > Integer.MAX_VALUE) {
-        // File is too large
-        }
 
         // Create the byte array to hold the data
+        List<Byte> bytes = Lists.newArrayList();
         byte[] bytes = new byte[(int) length];
         FileInputStream fis = null;
         BufferedInputStream bis = null;
@@ -171,7 +174,7 @@ public class Cartridge {
     }
     
     /**
-     * Read cartride and read iNes header and store to cartridge
+     * Read cartridge and read iNes header and store to cartridge
      */
     void setValuesFromHeader() {
         num16PRGBanks = (int) romData[4];
