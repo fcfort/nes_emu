@@ -2,11 +2,13 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package ffdYKJisu.nes_emu.system;
+package ffdYKJisu.nes_emu.system.cpu;
 
 
 import java.io.IOException;
-import java.util.logging.*;
+import java.io.InputStream;
+
+import org.apache.log4j.Logger;
 
 import ffdYKJisu.nes_emu.xmlPropertyReader;
 import ffdYKJisu.nes_emu.domain.StatusBit;
@@ -14,6 +16,9 @@ import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
 import ffdYKJisu.nes_emu.exceptions.addressException;
 import ffdYKJisu.nes_emu.main.Main;
+import ffdYKJisu.nes_emu.system.CPUMemory;
+import ffdYKJisu.nes_emu.system.Cartridge;
+import ffdYKJisu.nes_emu.system.NesFormatter;
 
 /**
  * Controls all functions of the main CPU of the NES.
@@ -23,32 +28,12 @@ import ffdYKJisu.nes_emu.main.Main;
  */
 public class CPU {
 
-	private static Logger cpuLogger = Logger.getLogger("nes.CPU");
+	private static Logger logger = Logger.getLogger(CPU.class);
 
-	/**
-	 * Starts the logger for the CPU which records various CPU actions
-	 * like opcodes and operands as the CPU processes them
-	 */
-	void initLogger() {
-		String logName = "cpuLog.txt";
-		try {
-
-			ConsoleHandler c = new ConsoleHandler();
-			c.setLevel(Level.ALL);
-			c.setFormatter(new NesFormatter());
-			cpuLogger.addHandler(c);
-			
-			FileHandler fh = new FileHandler(logName);
-			fh.setFormatter(new SimpleFormatter());
-			//cpuLogger.addHandler(fh);
-		} catch (IOException ex) {
-			Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (SecurityException ex) {
-			Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-		}
-
-		cpuLogger.setLevel(Level.ALL);
+	public CPU() {
+	    initialize();
 	}
+
 	/**
 	 * Program counter, holds memory location of current position
 	 */
@@ -121,10 +106,10 @@ public class CPU {
 
 	void initialize() {
 		// Read opcode properties from file
+	    InputStream in = this.getClass().getClassLoader()
+                .getResourceAsStream("NES_Opcodes_v3.xml");
 		opCodeData = new xmlPropertyReader("NES_Opcodes_v3.xml");
-		// Initialize logger
-		initLogger();
-		cpuLogger.log(Level.INFO, "CPU has been reinitiated");
+		logger.info("CPU has been reinitiated");
 		// Initialize instruction class
 		i = new Instruction();
 		// Initialize stack
@@ -155,7 +140,7 @@ public class CPU {
 		uByte jumpLocH = memory.read(resetAddrH);
 		uShort address = new uShort(jumpLocH, jumpLocL);
 
-		cpuLogger.log(Level.INFO, "Reset, jumping to " + address);
+		logger.info( "Reset, jumping to " + address);
 		PC = address;
 	}
 
@@ -196,9 +181,9 @@ public class CPU {
 	 * Holds the main loop of the emulator. Retrieves the next opcode from
 	 * memory and passes it to processOp().
 	 */
-	void emulateFor(long cyclesToRun) {
+	public void emulateFor(long cyclesToRun) {
 		if (!this.cpuIsRunning) {
-			cpuLogger.log(Level.INFO, "CPU has been started to run for " + cyclesToRun + " cycles");
+			logger.info( "CPU has been started to run for " + cyclesToRun + " cycles");
 			this.cpuIsRunning = true;
 		}
 		long cycleCount = 0;
@@ -207,7 +192,7 @@ public class CPU {
 			System.out.println(this.instructionToString(this.PC));
 			if (cycleCount > cyclesToRun) {
 				this.cpuIsRunning = false;
-				cpuLogger.log(Level.INFO, "CPU has been stopped after " + cycleCount + " cycles");
+				logger.info( "CPU has been stopped after " + cycleCount + " cycles");
 			}
 		}
 	}
@@ -220,9 +205,9 @@ public class CPU {
 		// Read Opcode from PC
 		uByte op = this.getOpcode();
 		// Print instruction to logger
-		cpuLogger.log(Level.FINER, CPU.this.instructionToString( PC ));
+		logger.info(CPU.this.instructionToString( PC ));
 		// Print CPU state to log
-		cpuLogger.log(Level.FINER, "PC:" + PC + "\tP: " + P);
+		logger.info("PC:" + PC + "\tP: " + P);
 		// Process instructions for op
 		int cyclesTaken = this.processOp( op );
 		// Increment PC
@@ -474,7 +459,7 @@ public class CPU {
 			case 0x98:
 				return i.TYA();
 			default:
-				cpuLogger.log(Level.FINER,
+				logger.info(
 					"Opcode (" + opCode + ") not yet implemented");
 				throw new UnsupportedOperationException(
 					"Opcode (" + opCode + ") not yet implemented");
@@ -523,7 +508,7 @@ public class CPU {
 			uByte relOffset = memory.read(PC);
 			incrementPC();
 			uShort newPC = new uShort(PC.get() + relOffset.toSigned());
-			cpuLogger.log(Level.FINER, "BNE " + relOffset + " @" + newPC);
+			logger.info("BNE " + relOffset + " @" + newPC);
 			if (!P.isSetZero()) {
 				CPU.this.setPC(PC.increment(relOffset.toSigned()));
 				if (PC.getUpper().get() != pageBeforeJump)
@@ -540,7 +525,7 @@ public class CPU {
 			incrementPC();
 			uShort newPC = new uShort(PC.get() + relOffset.toSigned());
 
-			cpuLogger.log(Level.FINER, "BPL " + relOffset + " @" + newPC);
+			logger.info("BPL " + relOffset + " @" + newPC);
 
 			if (!P.isSetNegative()) {
 				CPU.this.setPC(PC.increment(relOffset.toSigned()));
@@ -558,7 +543,7 @@ public class CPU {
 		}
 
 		int CLD() {
-			cpuLogger.log(Level.FINER, "CLD");
+			logger.info("CLD");
 			P.clearDecimal();
 			return 2;
 		}
@@ -585,7 +570,7 @@ public class CPU {
 		int CPXz() {
 			incrementPC();
 			uByte tempByte = memory.read(PC); // get zero page offset
-			cpuLogger.log(Level.FINER, "CPXz " + tempByte);
+			logger.info( "CPXz " + tempByte);
 			tempByte = memory.read(tempByte); // read from zero page
 			compare(X, tempByte);
 			incrementPC();
@@ -596,7 +581,7 @@ public class CPU {
 			incrementPC();
 			// Check zero
 			uByte tempByte = new uByte(memory.read(PC));
-			cpuLogger.log(Level.FINER, "CPYi " + tempByte);
+			logger.info("CPYi " + tempByte);
 			compare(Y, tempByte);
 			incrementPC();
 			return 2;
@@ -613,14 +598,13 @@ public class CPU {
 		int INCz() {
 			incrementPC();
 			uByte zpAddress = new uByte(memory.read(PC));
-			cpuLogger.log(Level.FINER, "INCz " + zpAddress);
+			logger.info("INCz " + zpAddress);
 			uByte zpValue = memory.read(zpAddress);
 			zpValue = zpValue.increment();
 			try {
 				CPU.this.memory.write(zpAddress, zpValue);
 			} catch (addressException ex) {
-				Logger.getLogger(CPU.class.getName()).log(Level.SEVERE, null,
-					ex + "Error in INCz address:" + zpAddress + " value:" + zpValue);
+				logger.warn(ex + "Error in INCz address:" + zpAddress + " value:" + zpValue);
 			}
 			P.setNegative(zpValue.isNegative());
 			P.setZero(zpValue.get() == 0);
@@ -633,7 +617,7 @@ public class CPU {
 			CPU.this.setY(Y.increment());
 			P.setNegative(Y.isNegative());
 			P.setZero(Y.get() == 0);
-			cpuLogger.log(Level.FINER, "INY");
+			logger.info( "INY");
 			return 2;
 		}
 
@@ -643,7 +627,7 @@ public class CPU {
 			incrementPC();
 			uByte H = new uByte(memory.read(PC));
 			PC = new uShort(H, L);
-			cpuLogger.log(Level.FINER, "JMPa " + H + L);
+			logger.info( "JMPa " + H + L);
 			return 3;
 		}
 
@@ -668,7 +652,7 @@ public class CPU {
 		int LDAi() {
 			incrementPC();
 			A = memory.read(PC);
-			cpuLogger.log(Level.FINER, "LDAi " + A);
+			logger.info("LDAi " + A);
 			if (A.get() == 0)
 				P.setZero();
 			else
@@ -686,7 +670,7 @@ public class CPU {
 			uByte L = new uByte(memory.read(PC));
 			incrementPC();
 			uByte H = new uByte(memory.read(PC));
-			cpuLogger.log(Level.FINER, "LDAa " + H + L);
+			logger.info( "LDAa " + H + L);
 			A = memory.read(H, L);
 			P.setZero(A.get() == 0);
 			P.setNegative(A.isNegative());
@@ -721,7 +705,7 @@ public class CPU {
 		int LDXi() {
 			incrementPC();
 			X = memory.read(PC);
-			cpuLogger.log(Level.FINER, "LDXi " + X);
+			logger.info( "LDXi " + X);
 			if (X.isNegative())
 				P.setNegative();
 			else
@@ -737,7 +721,7 @@ public class CPU {
 		int LDYi() {
 			incrementPC();
 			Y = memory.read(PC);
-			cpuLogger.log(Level.FINER, "LDYi " + Y);
+			logger.info("LDYi " + Y);
 			if (Y.isNegative())
 				P.setNegative();
 			else
@@ -764,7 +748,7 @@ public class CPU {
 			else
 				P.clearCarry();
 			rotate.rotateLeft(P.isSetCarry());
-			cpuLogger.log(Level.FINER, "ROLax " + H + L);
+			logger.info("ROLax " + H + L);
 			return 7;
 		}
 
@@ -778,7 +762,7 @@ public class CPU {
 		}
 
 		int SEI() {
-			cpuLogger.log(Level.FINER, "SEI");
+			logger.info( "SEI");
 			P.setInterruptDisable();
 			return 2;
 		}
@@ -788,7 +772,7 @@ public class CPU {
 			try {
 				memory.write( addr, A );
 			} catch (addressException ex) {
-				Logger.getLogger( CPU.class.getName() ).log( Level.SEVERE, null,
+				logger.warn(
 					ex + " addr" + addr + " PC " + PC );
 				System.err.println( " addr" + addr + " PC " + PC );
 			}
@@ -800,7 +784,7 @@ public class CPU {
 			uByte L = new uByte(memory.read(PC));
 			incrementPC();
 			uByte H = new uByte(memory.read(PC));
-			cpuLogger.log(Level.FINER, "STAa " + H + L);
+			logger.info("STAa " + H + L);
 			// A.set(memory.read(H,L));
 			try {
 				memory.write(H, L, A);
@@ -821,10 +805,10 @@ public class CPU {
 			try {
 				memory.write(temp, A);
 			} catch (addressException ex) {
-				Logger.getLogger(CPU.class.getName()).log(Level.SEVERE, null, ex);
+				logger.warn( ex);
 			}
 			incrementPC();
-			cpuLogger.log(Level.FINER, "STAay " + H + L);
+			logger.info("STAay " + H + L);
 			return 5;
 		}
 
@@ -839,11 +823,10 @@ public class CPU {
 			try {
 				memory.write(temp, A);
 			} catch (addressException ex) {
-				Logger.getLogger(
-					CPU.class.getName()).log(Level.SEVERE, null,
+				logger.warn(
 					ex + "PC: " + PC);
 			}
-			cpuLogger.log(Level.FINER, "STAiy " + offset);
+			logger.info("STAiy " + offset);
 			incrementPC();
 			return 6;
 		}
@@ -853,9 +836,7 @@ public class CPU {
 			try {
 				memory.write(memory.read(memory.read(PC)), CPU.this.getA());
 			} catch (addressException ex) {
-				Logger.getLogger(
-					CPU.class.getName()).log(Level.SEVERE, null,
-					ex + "PC: " + PC);
+				logger.warn(ex + "PC: " + PC);
 			}
 			incrementPC();
 			return 3;
@@ -868,8 +849,7 @@ public class CPU {
 			try {
 				CPU.this.memory.write(zpAddr, CPU.this.getY());
 			} catch (addressException ex) {
-				Logger.getLogger(CPU.class.getName()).log(Level.SEVERE, null,
-					ex + " STYz at ZP addr:" + zpAddr + "Y:" + CPU.this.getY());
+				logger.warn(ex + " STYz at ZP addr:" + zpAddr + "Y:" + CPU.this.getY());
 			}
 			return 3;
 		}
@@ -887,14 +867,14 @@ public class CPU {
 			Y = A;
 			P.setNegative(Y.isNegative());
 			P.setZero(Y.get() == 0);
-			cpuLogger.log(Level.FINER, "TAY");
+			logger.info("TAY");
 			return 2;
 		}
 
 		int TXS() {
 			incrementPC();
 			CPU.this.S.set(X);
-			cpuLogger.log(Level.FINER, "TXS");
+			logger.info("TXS");
 			return 2;
 		}
 
@@ -1016,8 +996,7 @@ public class CPU {
 				CPU.this.memory.write(addr, val);
 			//System.out.println("Pushing " + val + " to " + addr);
 			} catch (addressException ex) {
-				Logger.getLogger(CPU.class.getName()).log(Level.SEVERE, null,
-					ex + "Error pushing " + val + " to " + addr);
+				logger.warn(ex + "Error pushing " + val + " to " + addr);
 			}
 			stackPointer = new uByte(stackPointer.decrement());
 		}

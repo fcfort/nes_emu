@@ -7,6 +7,9 @@
 	<artifactId>nes_emu</artifactId>
 	<version>1.0</version>
 
+	<properties>
+		<slf4jVersion>1.6.1</slf4jVersion>
+	</properties>
 
 	<dependencies>
 		<dependency>
@@ -19,6 +22,25 @@
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
 			<version>2.6</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4jVersion}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>${slf4jVersion}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.16</version>
+			<scope>runtime</scope>
 		</dependency>
 
 	</dependencies>

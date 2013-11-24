@@ -5,8 +5,12 @@
 package ffdYKJisu.nes_emu;
 
 import java.io.File;
+import java.io.InputStream;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -22,6 +26,22 @@ import ffdYKJisu.nes_emu.domain.uByte;
 public class xmlPropertyReader {
 	public Document opCodeDoc;
 
+	public xmlPropertyReader(InputStream is) {
+	    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setIgnoringElementContentWhitespace( true );
+        try {
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            db.pa
+        } catch (ParserConfigurationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+	}
+	
+	private xmlPropertyReader(InputStream is) {
+	    
+	}
 	public xmlPropertyReader( String fileName ) {
 		try {
 			File file = new File( fileName );

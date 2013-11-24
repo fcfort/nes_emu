@@ -7,8 +7,13 @@ package ffdYKJisu.nes_emu.system;
 import java.io.File;
 import java.io.InputStream;
 
+import org.apache.log4j.Logger;
+
+import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
+import ffdYKJisu.nes_emu.system.cpu.CPU;
+
 /**
- * This will hold both the CPU and PPU objects and the Catridge. 
+ * This will hold both the CPU and PPU objects and the Cartridge. 
  * This is to facilitate passing
  * state information between the two architectures. Also this is needed to allow
  * both the cpu and the ppu to simulate simultaneous operation. 
@@ -16,11 +21,13 @@ import java.io.InputStream;
  */
 public class NES {
 
+    private static final Logger logger = Logger.getLogger(NES.class); 
+    
     private Cartridge cart;
     private CPU cpu;
     private PPU ppu;
     /** How many cycles the ppu runs for every cpu cycles */
-    private final double PpuCpuRatio = 3;
+    private static final double PPU_CPU_CYCLE_RATIO = 3;
     private Timing timing;
 
     public void initialize() {
@@ -58,7 +65,19 @@ public class NES {
     }
 
     public void loadRom(InputStream cart) {
-        this.cart = new Cartridge(cart);
+        try {
+            this.cart = new Cartridge(cart);
+        } catch (UnableToLoadRomException e) {
+            logger.warn("Unable to load cart");
+        }
+    }
+    
+    public void loadRom(File cart) {
+        try {
+            this.cart = new Cartridge(cart);
+        } catch (UnableToLoadRomException e) {
+            logger.warn("Unable to load cart " + cart);
+        } 
     }
 
     public void setCart(Cartridge cart) {

@@ -40,7 +40,7 @@ public class Debugger {
 
 	void loadRom(String romName) {
 		File cart = new File(romName);
-		this.nes.l
+		this.nes.loadRom(cart);
 	}
 
 	void startConsole() {

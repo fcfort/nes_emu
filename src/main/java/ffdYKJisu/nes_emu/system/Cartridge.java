@@ -14,13 +14,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.log4j.Logger;
 
 import com.google.common.collect.Lists;
 
+import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
 import ffdYKJisu.nes_emu.exceptions.bankNotFoundException;
 
 /**
@@ -29,17 +29,19 @@ import ffdYKJisu.nes_emu.exceptions.bankNotFoundException;
  */
 public class Cartridge {
 
+    static final Logger logger = Logger.getLogger(Cartridge.class);
+    
     byte[] romData;
     int num16PRGBanks = 0;
     int num8CHRBanks = 0;
     int num8RAMBanks = 1;
     private final int iNESOffset = 16;
 
-    public Cartridge(InputStream is) {
+    public Cartridge(InputStream is) throws UnableToLoadRomException {
         this.loadRom(is);
     }
 
-    public Cartridge(File file) {
+    public Cartridge(File file) throws UnableToLoadRomException {
         this.loadRomFromFile(file);
         this.setValuesFromHeader();
     }
@@ -76,22 +78,24 @@ public class Cartridge {
         try {
             return (Byte) romData[index];
         } catch (ArrayIndexOutOfBoundsException ex) {
-            Logger.getLogger(Cartridge.class.getName()).log(Level.SEVERE, null,
-                    ex);
+            logger.error("Accessing romdata outside of bounds");
         }
         return 0;
     }
 
-    public void loadRom(InputStream is) {
-        romData = getBytesFromInput(is);
+    public void loadRom(InputStream is) throws UnableToLoadRomException {
+        try {
+            romData = getBytesFromInput(is);
+        } catch (IOException e) {
+            throw new UnableToLoadRomException("Unable to load rom from input stream ");
+        }
     }
 
-    public void loadRomFromFile(File file) {
+    public void loadRomFromFile(File file) throws UnableToLoadRomException {
         try {
             romData = getBytesFromInput(new FileInputStream(file));
         } catch (IOException ex) {
-            Logger.getLogger(Cartridge.class.getName()).log(Level.SEVERE, null,
-                    ex);
+            throw new UnableToLoadRomException("Failed to load rom from file " + file);
         }
     }
 
@@ -127,8 +131,7 @@ public class Cartridge {
             try {
                 temp = this.get16PRGBank(i);
             } catch (bankNotFoundException ex) {
-                Logger.getLogger(Cartridge.class.getName()).log(Level.SEVERE,
-                        null, ex);
+                logger.warn("Could not find bank at index " + i);
             }
             for (int j = 0; j < temp.length; j++) {
                 // System.out.printf("%X", temp[j]);
@@ -144,8 +147,7 @@ public class Cartridge {
             try {
                 temp = this.get8CHRBank(i);
             } catch (bankNotFoundException ex) {
-                Logger.getLogger(Cartridge.class.getName()).log(Level.SEVERE,
-                        null, ex);
+                logger.warn("Could not find bank at index " + i);
             }
             for (int j = 0; j < temp.length; j++) {
                 // System.out.printf("%X", temp[j]);

@@ -1,2 +1,0 @@
-Jun 20, 2008 11:27:35 AM nes.CPU init
-INFO: CPU has been reinitiated

@@ -4,12 +4,7 @@
  */
 package ffdYKJisu.nes_emu.system;
 
-
-import java.io.IOException;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.log4j.Logger;
 
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
@@ -22,28 +17,7 @@ import ffdYKJisu.nes_emu.exceptions.bankNotFoundException;
  */
 public class CPUMemory implements Memory {
 
-	private static Logger cpuMemoryLogger = Logger.getLogger("nes.CPUMemory");
-	
-	void initLogger() {
-		String logName = "cpuMemoryLog.txt";
-		try {
-
-			ConsoleHandler c = new ConsoleHandler();
-			c.setFormatter(new NesFormatter());
-			c.setLevel(Level.ALL);
-			cpuMemoryLogger.addHandler(c);
-			
-			FileHandler fh = new FileHandler(logName);
-			fh.setFormatter(new NesFormatter());
-			//cpuLogger.addHandler(fh);
-		} catch (IOException ex) {
-			Logger.getLogger(CPUMemory.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (SecurityException ex) {
-			Logger.getLogger(CPUMemory.class.getName()).log(Level.SEVERE, null, ex);
-		}
-		cpuMemoryLogger.setLevel(Level.ALL);
-	}
-	
+	private static Logger logger = Logger.getLogger(CPUMemory.class);
 	
 	private final int PRGROMlen = 2 * Cartridge.Bank.PRG16.length;
 	private final int SRAMlen = 0x2000;
@@ -62,7 +36,7 @@ public class CPUMemory implements Memory {
 		this.writeCartToMemory();
 	}
 
-	CPUMemory() {
+	public CPUMemory() {
 		this.zeroAllRam();
 	}
 
@@ -88,7 +62,7 @@ public class CPUMemory implements Memory {
 		this.cart = cart;
 	}
 
-	void writeCartToMemory() {
+	public void writeCartToMemory() {
 		PRGROM = new uByte[PRGROMlen];
 		try {
 			Byte[] bank = this.cart.get16PRGBank(0);
@@ -103,7 +77,7 @@ public class CPUMemory implements Memory {
 			}
 
 		} catch (bankNotFoundException ex) {
-			Logger.getLogger(CPUMemory.class.getName()).log(Level.SEVERE, null, ex);
+			logger.warn("Bank not found");
 		}
 	}
 
@@ -157,8 +131,7 @@ public class CPUMemory implements Memory {
 		if (addr >= 0x0000 && addr < 0x2000) {
 			//Logger.getLogger(CPUMemory.class.getName()).log(Level.INFO, 
 			//	"Writing " + val + " to " + address);
-			cpuMemoryLogger.log( Level.INFO, 
-				"Writing " + val + " to " + address);
+			logger.info("Writing " + val + " to " + address);
 			//System.out.println("Writing " + val + " to " + address);
 			RAMwrite(addr, val);
 		}

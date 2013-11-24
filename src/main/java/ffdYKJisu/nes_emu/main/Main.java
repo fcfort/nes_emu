@@ -22,14 +22,16 @@ public class Main {
      *            the command line arguments
      */
     public static void main(String[] args) {
+        String path = "src/main/resources/";
         String romName = "Pac-Man (U) [!].nes";
 
-        InputStream romIs = Main.class.getClass().getClassLoader()
-                .getResourceAsStream(romName);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(romIs));
-
+        //InputStream romIs = Main.class.getClass().getClassLoader()
+          //      .getResourceAsStream(path + romName);
+        //BufferedReader reader = new BufferedReader(new InputStreamReader(romIs));
+        ClassLoader l = Main.class.getClassLoader();
+        InputStream pacmanIs = l.getResourceAsStream("pacman.nes");
         NES nes = new NES();
-        nes.loadRom(romIs);
+        nes.loadRom(new File(romName));
         nes.initialize();
         nes.emulateFor(20);
         /*
