@@ -12,18 +12,7 @@ import ffdYKJisu.nes_emu.domain.AddressingMode;
  *
  */
 public enum Opcode { 
-    BRK("00", "BRK", 7, 1, AddressingMode.IMPLICIT),
-    ORAix("01", "ORA", 6, 2, AddressingMode.INDIRECT_X),
-    ORAz("05", "ORA", 3, 2, AddressingMode.ZERO_PAGE),
-    ASLz("06", "ASL", 5, 2, AddressingMode.ZERO_PAGE),
-    PHP("08", "PHP", 3, 1, AddressingMode.IMPLICIT),
-    ORA("09", "ORA", 2, 2, AddressingMode.IMMEDIATE),
-    ASLac("06", "ASL", 2, 1, AddressingMode.ACCUMULATOR),
-    ORAa("0D", "ORA", 4, 3, AddressingMode.ABSOLUTE),
-    ASLa("OE", "ASL", 6, 3, AddressingMode.ABSOLUTE)
-    ;
-
-/*
+	/*
 <?xml version="1.0" encoding="UTF-8"?>
 <Operations>
   <Opcode id="00" printName="BRK" cycles="7" length="1" addressingMode="Implied" />
@@ -36,34 +25,16 @@ public enum Opcode {
   <Opcode id="0D" printName="ORA" cycles="4" length="3" addressingMode="Absolute" />
   <Opcode id="0E" printName="ASL" cycles="6" length="3" addressingMode="Absolute" />
   */
-    private final String opcodeBytes;
-    private final String codeName;
-    private final int cycles;
-    private final int length;
-    private final boolean extraCycleOnBranch;
-    private final boolean extraCycleOnPageJump;
-    private final AddressingMode addressingMode;
-    private final Map<String, Opcode> opcodeMap = Maps.newHashMap();
+    BRK("00", "BRK", 7, 1, AddressingMode.IMPLICIT),
+    ORAix("01", "ORA", 6, 2, AddressingMode.INDIRECT_X),
+    ORAz("05", "ORA", 3, 2, AddressingMode.ZERO_PAGE),
+    ASLz("06", "ASL", 5, 2, AddressingMode.ZERO_PAGE),
+    PHP("08", "PHP", 3, 1, AddressingMode.IMPLICIT),
+    ORA("09", "ORA", 2, 2, AddressingMode.IMMEDIATE),
+    ASLac("06", "ASL", 2, 1, AddressingMode.ACCUMULATOR),
+    ORAa("0D", "ORA", 4, 3, AddressingMode.ABSOLUTE),
+    ASLa("OE", "ASL", 6, 3, AddressingMode.ABSOLUTE),
     
-    Opcode(String opcodeBytes, String codeName, int cycles, int length, AddressingMode addressingMode) {
-        this(opcodeBytes, codeName, cycles, length, false, false, addressingMode);       
-    }
-    
-    Opcode(String opcodeBytes, String codeName, int cycles, int length, boolean extraCycleOnBranch, 
-            boolean extraCycleOnPageJump, AddressingMode addressingMode) {
-        this.opcodeBytes = opcodeBytes;
-        this.codeName = codeName;
-        this.cycles = cycles;
-        this.length = length;
-        this.extraCycleOnBranch = extraCycleOnBranch;
-        this.extraCycleOnPageJump = extraCycleOnPageJump;
-        this.addressingMode = addressingMode;        
-        opcodeMap.put(opcodeBytes, this);       
-    }
-    
-    public Opcode getOpcodeByBytes(String opcodeBytes) {
-        return opcodeMap.get(opcodeBytes);
-    }
    /*
       <Opcode id="10" printName="BPL" cycles="2" length="2" addressingMode="Relative" onBranchCycle="1" onPageJumpCycle="1" />
       <Opcode id="11" printName="ORA" cycles="5" length="2" addressingMode="(Indirect),Y" />
@@ -77,6 +48,23 @@ public enum Opcode {
       <Opcode id="21" printName="AND" cycles="6" length="2" addressingMode="(Indirect,X)" />
       <Opcode id="24" printName="BIT" cycles="3" length="2" addressingMode="Zero Page" />
       <Opcode id="25" printName="AND" cycles="3" length="2" addressingMode="Zero Page" />
+      */
+
+	BPL("10", "BPL", 2, 2, true, true, AddressingMode.RELATIVE),
+	ORAiy("11", "ORA", 5, 2, AddressingMode.INDIRECT_Y),
+	ORAzx("15", "ORA", 4, 2, AddressingMode.ZERO_PAGE_X),
+	ASLzx("16", "ASL", 6, 2, AddressingMode.ZERO_PAGE_X),
+	CLC("18", "CLC", 2, 1, AddressingMode.IMPLICIT),
+	ORAay("19", "ORA", 4, 3, false, true, AddressingMode.ABSOLUTE_Y),
+	ORAax("1D", "ORA", 4, 3, false, true, AddressingMode.ABSOLUTE_X),
+	ASLax("1E", "ASL", 7, 3, AddressingMode.ABSOLUTE_X),
+	JSR("20", "JSR", 6, 3, AddressingMode.ABSOLUTE),
+	AND("21", "AND", 6, 2, AddressingMode.INDIRECT_X),
+	BITz("24", "BIT", 3, 2, AddressingMode.ZERO_PAGE),
+	AND("25", "AND", 3, 2, AddressingMode.ZERO_PAGE)
+  	;
+
+/*
       <Opcode id="26" printName="ROL" cycles="5" length="2" addressingMode="Zero Page" />
       <Opcode id="28" printName="PLP" cycles="4" length="1" addressingMode="Implied" />
       <Opcode id="29" printName="AND" cycles="2" length="2" addressingMode="Immediate" />
@@ -208,4 +196,33 @@ public enum Opcode {
       <Opcode id="FD" printName="SBC" cycles="4" length="3" addressingMode="Absolute,X" onPageJumpCycle="1" />
       <Opcode id="FE" printName="INC" cycles="7" length="3" addressingMode="Absolute,X" />
     </Operations>*/
+    private final String opcodeBytes;
+    private final String codeName;
+    private final int cycles;
+    private final int length;
+    private final boolean extraCycleOnBranch;
+    private final boolean extraCycleOnPageJump;
+    private final AddressingMode addressingMode;
+    private final Map<String, Opcode> opcodeMap = Maps.newHashMap();
+    
+    Opcode(String opcodeBytes, String codeName, int cycles, int length, AddressingMode addressingMode) {
+        this(opcodeBytes, codeName, cycles, length, false, false, addressingMode);       
+    }
+    
+    Opcode(String opcodeBytes, String codeName, int cycles, int length, boolean extraCycleOnBranch, 
+            boolean extraCycleOnPageJump, AddressingMode addressingMode) {
+        this.opcodeBytes = opcodeBytes;
+        this.codeName = codeName;
+        this.cycles = cycles;
+        this.length = length;
+        this.extraCycleOnBranch = extraCycleOnBranch;
+        this.extraCycleOnPageJump = extraCycleOnPageJump;
+        this.addressingMode = addressingMode;        
+        opcodeMap.put(opcodeBytes, this);       
+    }
+    
+    public Opcode getOpcodeByBytes(String opcodeBytes) {
+        return opcodeMap.get(opcodeBytes);
+    }
+  
 }
