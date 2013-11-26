@@ -12,44 +12,15 @@ import ffdYKJisu.nes_emu.domain.AddressingMode;
  *
  */
 public enum Opcode { 
-	/*
-<?xml version="1.0" encoding="UTF-8"?>
-<Operations>
-  <Opcode id="00" printName="BRK" cycles="7" length="1" addressingMode="Implied" />
-  <Opcode id="01" printName="ORA" cycles="6" length="2" addressingMode="(Indirect,X)" />
-  <Opcode id="05" printName="ORA" cycles="3" length="2" addressingMode="Zero Page" />
-  <Opcode id="06" printName="ASL" cycles="5" length="2" addressingMode="Zero Page" />
-  <Opcode id="08" printName="PHP" cycles="3" length="1" addressingMode="Implied" />
-  <Opcode id="09" printName="ORA" cycles="2" length="2" addressingMode="Immediate" />
-  <Opcode id="0A" printName="ASL" cycles="2" length="1" addressingMode="Accumulator" />
-  <Opcode id="0D" printName="ORA" cycles="4" length="3" addressingMode="Absolute" />
-  <Opcode id="0E" printName="ASL" cycles="6" length="3" addressingMode="Absolute" />
-  */
-    BRK("00", "BRK", 7, 1, AddressingMode.IMPLICIT),
-    ORAix("01", "ORA", 6, 2, AddressingMode.INDIRECT_X),
-    ORAz("05", "ORA", 3, 2, AddressingMode.ZERO_PAGE),
-    ASLz("06", "ASL", 5, 2, AddressingMode.ZERO_PAGE),
-    PHP("08", "PHP", 3, 1, AddressingMode.IMPLICIT),
-    ORA("09", "ORA", 2, 2, AddressingMode.IMMEDIATE),
-    ASLac("06", "ASL", 2, 1, AddressingMode.ACCUMULATOR),
-    ORAa("0D", "ORA", 4, 3, AddressingMode.ABSOLUTE),
-    ASLa("OE", "ASL", 6, 3, AddressingMode.ABSOLUTE),
-    
-   /*
-      <Opcode id="10" printName="BPL" cycles="2" length="2" addressingMode="Relative" onBranchCycle="1" onPageJumpCycle="1" />
-      <Opcode id="11" printName="ORA" cycles="5" length="2" addressingMode="(Indirect),Y" />
-      <Opcode id="15" printName="ORA" cycles="4" length="2" addressingMode="Zero Page,X" />
-      <Opcode id="16" printName="ASL" cycles="6" length="2" addressingMode="Zero Page,X" />
-      <Opcode id="18" printName="CLC" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="19" printName="ORA" cycles="4" length="3" addressingMode="Absolute,Y" onPageJumpCycle="1" />
-      <Opcode id="1D" printName="ORA" cycles="4" length="3" addressingMode="Absolute,X" onPageJumpCycle="1" />
-      <Opcode id="1E" printName="ASL" cycles="7" length="3" addressingMode="Absolute, X" />
-      <Opcode id="20" printName="JSR" cycles="6" length="3" addressingMode="Absolute" />
-      <Opcode id="21" printName="AND" cycles="6" length="2" addressingMode="(Indirect,X)" />
-      <Opcode id="24" printName="BIT" cycles="3" length="2" addressingMode="Zero Page" />
-      <Opcode id="25" printName="AND" cycles="3" length="2" addressingMode="Zero Page" />
-      */
-
+	BRK("00", "BRK", 7, 1, AddressingMode.IMPLICIT),
+	ORAix("01", "ORA", 6, 2, AddressingMode.INDIRECT_X),
+	ORAz("05", "ORA", 3, 2, AddressingMode.ZERO_PAGE),
+	ASLz("06", "ASL", 5, 2, AddressingMode.ZERO_PAGE),
+	PHP("08", "PHP", 3, 1, AddressingMode.IMPLICIT),
+	ORAi("09", "ORA", 2, 2, AddressingMode.IMMEDIATE),
+	ASLac("0A", "ASL", 2, 1, AddressingMode.ACCUMULATOR),
+	ORAa("0D", "ORA", 4, 3, AddressingMode.ABSOLUTE),
+	ASLa("0E", "ASL", 6, 3, AddressingMode.ABSOLUTE),
 	BPL("10", "BPL", 2, 2, true, true, AddressingMode.RELATIVE),
 	ORAiy("11", "ORA", 5, 2, AddressingMode.INDIRECT_Y),
 	ORAzx("15", "ORA", 4, 2, AddressingMode.ZERO_PAGE_X),
@@ -58,144 +29,141 @@ public enum Opcode {
 	ORAay("19", "ORA", 4, 3, false, true, AddressingMode.ABSOLUTE_Y),
 	ORAax("1D", "ORA", 4, 3, false, true, AddressingMode.ABSOLUTE_X),
 	ASLax("1E", "ASL", 7, 3, AddressingMode.ABSOLUTE_X),
-	JSR("20", "JSR", 6, 3, AddressingMode.ABSOLUTE),
-	AND("21", "AND", 6, 2, AddressingMode.INDIRECT_X),
+	JSRa("20", "JSR", 6, 3, AddressingMode.ABSOLUTE),
+	ANDix("21", "AND", 6, 2, AddressingMode.INDIRECT_X),
 	BITz("24", "BIT", 3, 2, AddressingMode.ZERO_PAGE),
-	AND("25", "AND", 3, 2, AddressingMode.ZERO_PAGE)
-  	;
+	ANDz("25", "AND", 3, 2, AddressingMode.ZERO_PAGE),
+	ROLz("26", "ROL", 5, 2, AddressingMode.ZERO_PAGE),
+	PLP("28", "PLP", 4, 1, AddressingMode.IMPLICIT),
+	ANDi("29", "AND", 2, 2, AddressingMode.IMMEDIATE),
+	ROLac("2A", "ROL", 2, 1, AddressingMode.ACCUMULATOR),
+	BITa("2C", "BIT", 4, 3, AddressingMode.ABSOLUTE),
+	ANDa("2D", "AND", 4, 3, AddressingMode.ABSOLUTE),
+	ROLa("2E", "ROL", 6, 3, AddressingMode.ABSOLUTE),
+	BMI("30", "BMI", 2, 2, true, true, AddressingMode.RELATIVE),
+	ANDiy("31", "AND", 5, 2, AddressingMode.INDIRECT_Y),
+	ANDzx("35", "AND", 4, 2, AddressingMode.ZERO_PAGE_X),
+	ROLzx("36", "ROL", 6, 2, AddressingMode.ZERO_PAGE_X),
+	SEC("38", "SEC", 2, 1, AddressingMode.IMPLICIT),
+	ANDay("39", "AND", 4, 3, false, true, AddressingMode.ABSOLUTE_Y),
+	ANDax("3D", "AND", 4, 3, false, true, AddressingMode.ABSOLUTE_X),
+	ROLax("3E", "ROL", 7, 3, AddressingMode.ABSOLUTE_X),
+	EORa("40", "EOR", 4, 3, AddressingMode.ABSOLUTE),
+	EORix("41", "EOR", 6, 2, AddressingMode.INDIRECT_X),
+	EORz("45", "EOR", 3, 2, AddressingMode.ZERO_PAGE),
+	LSRz("46", "LSR", 5, 2, AddressingMode.ZERO_PAGE),
+	PHA("48", "PHA", 3, 1, AddressingMode.IMPLICIT),
+	EORi("49", "EOR", 2, 2, AddressingMode.IMMEDIATE),
+	LSRac("4A", "LSR", 2, 1, AddressingMode.ACCUMULATOR),
+	JMPa("4C", "JMP", 3, 3, AddressingMode.ABSOLUTE),
+	RTI("4D", "RTI", 6, 1, AddressingMode.IMPLICIT),
+	LSRa("4E", "LSR", 6, 3, AddressingMode.ABSOLUTE),
+	BVC("50", "BVC", 2, 2, true, true, AddressingMode.RELATIVE),
+	EORiy("51", "EOR", 5, 2, false, true, AddressingMode.INDIRECT_Y),
+	EORzx("55", "EOR", 4, 2, AddressingMode.ZERO_PAGE_X),
+	LSRzx("56", "LSR", 6, 2, AddressingMode.ZERO_PAGE_X),
+	CLI("58", "CLI", 2, 1, AddressingMode.IMPLICIT),
+	EORay("59", "EOR", 4, 3, false, true, AddressingMode.ABSOLUTE_Y),
+	EORax("5D", "EOR", 4, 3, false, true, AddressingMode.ABSOLUTE_X),
+	LSRax("5E", "LSR", 7, 3, AddressingMode.ABSOLUTE_X),
+	RTS("60", "RTS", 6, 1, AddressingMode.IMPLICIT),
+	ADCix("61", "ADC", 6, 2, AddressingMode.INDIRECT_X),
+	ADCz("65", "ADC", 3, 2, AddressingMode.ZERO_PAGE),
+	RORz("66", "ROR", 5, 2, AddressingMode.ZERO_PAGE),
+	PLA("68", "PLA", 4, 1, AddressingMode.IMPLICIT),
+	ADCi("69", "ADC", 2, 2, AddressingMode.IMMEDIATE),
+	RORac("6A", "ROR", 2, 1, AddressingMode.ACCUMULATOR),
+	JMP("6C", "JMP", 5, 3, AddressingMode.INDIRECT),
+	ADCa("6D", "ADC", 4, 3, AddressingMode.ABSOLUTE),
+	RORa("6E", "ROR", 6, 3, AddressingMode.ABSOLUTE),
+	BVS("70", "BVS", 2, 2, true, true, AddressingMode.RELATIVE),
+	ADCiy("71", "ADC", 5, 2, false, true, AddressingMode.INDIRECT_Y),
+	ADCzx("75", "ADC", 4, 2, AddressingMode.ZERO_PAGE_X),
+	RORzx("76", "ROR", 6, 2, AddressingMode.ZERO_PAGE_X),
+	SEI("78", "SEI", 2, 1, AddressingMode.IMPLICIT),
+	ADCay("79", "ADC", 4, 3, false, true, AddressingMode.ABSOLUTE_Y),
+	ADCax("7D", "ADC", 4, 3, false, true, AddressingMode.ABSOLUTE_X),
+	RORax("7E", "ROR", 7, 3, AddressingMode.ABSOLUTE_X),
+	STAix("81", "STA", 6, 2, AddressingMode.INDIRECT_X),
+	STYz("84", "STY", 3, 2, AddressingMode.ZERO_PAGE),
+	STAz("85", "STA", 3, 2, AddressingMode.ZERO_PAGE),
+	STXz("86", "STX", 3, 2, AddressingMode.ZERO_PAGE),
+	DEY("88", "DEY", 2, 1, AddressingMode.IMPLICIT),
+	TXA("8A", "TXA", 2, 1, AddressingMode.IMPLICIT),
+	STYa("8C", "STY", 4, 3, AddressingMode.ABSOLUTE),
+	STAa("8D", "STA", 4, 3, AddressingMode.ABSOLUTE),
+	STXa("8E", "STX", 4, 3, AddressingMode.ABSOLUTE),
+	BCC("90", "BCC", 2, 2, true, true, AddressingMode.RELATIVE),
+	STAiy("91", "STA", 6, 2, AddressingMode.INDIRECT_Y),
+	STYzx("94", "STY", 4, 2, AddressingMode.ZERO_PAGE_X),
+	STAzx("95", "STA", 4, 2, AddressingMode.ZERO_PAGE_X),
+	STXzy("96", "STX", 4, 2, AddressingMode.ZERO_PAGE_Y),
+	TYA("98", "TYA", 2, 1, AddressingMode.IMPLICIT),
+	STAay("99", "STA", 5, 3, AddressingMode.ABSOLUTE_Y),
+	TXS("9A", "TXS", 2, 1, AddressingMode.IMPLICIT),
+	STAax("9D", "STA", 5, 3, AddressingMode.ABSOLUTE_X),
+	LDYi("A0", "LDY", 2, 2, AddressingMode.IMMEDIATE),
+	LDAix("A1", "LDA", 6, 2, AddressingMode.INDIRECT_X),
+	LDXi("A2", "LDX", 2, 2, AddressingMode.IMMEDIATE),
+	LDYz("A4", "LDY", 3, 2, AddressingMode.ZERO_PAGE),
+	LDAz("A5", "LDA", 3, 2, AddressingMode.ZERO_PAGE),
+	LDXz("A6", "LDX", 3, 2, AddressingMode.ZERO_PAGE),
+	TAY("A8", "TAY", 2, 1, AddressingMode.IMPLICIT),
+	LDAi("A9", "LDA", 2, 2, AddressingMode.IMMEDIATE),
+	TAX("AA", "TAX", 2, 1, AddressingMode.IMPLICIT),
+	LDYa("AC", "LDY", 4, 3, AddressingMode.ABSOLUTE),
+	LDAa("AD", "LDA", 4, 3, AddressingMode.ABSOLUTE),
+	LDXa("AE", "LDX", 4, 3, AddressingMode.ABSOLUTE),
+	BCS("B0", "BCS", 2, 2, true, true, AddressingMode.RELATIVE),
+	LDAiy("B1", "LDA", 5, 2, false, true, AddressingMode.INDIRECT_Y),
+	LDYzx("B4", "LDY", 4, 2, AddressingMode.ZERO_PAGE_X),
+	LDAzx("B5", "LDA", 4, 2, AddressingMode.ZERO_PAGE_X),
+	LDXzy("B6", "LDX", 4, 2, AddressingMode.ZERO_PAGE_Y),
+	CLV("B8", "CLV", 2, 1, AddressingMode.IMPLICIT),
+	LDAay("B9", "LDA", 4, 3, false, true, AddressingMode.ABSOLUTE_Y),
+	TSX("BA", "TSX", 2, 1, AddressingMode.IMPLICIT),
+	LDYax("BC", "LDY", 4, 3, false, true, AddressingMode.ABSOLUTE_X),
+	LDAax("BD", "LDA", 4, 3, false, true, AddressingMode.ABSOLUTE_X),
+	LDXay("BE", "LDX", 4, 3, false, true, AddressingMode.ABSOLUTE_Y),
+	CPYi("C0", "CPY", 2, 2, AddressingMode.IMMEDIATE),
+	CMPix("C1", "CMP", 6, 2, AddressingMode.INDIRECT_X),
+	CPYz("C4", "CPY", 3, 2, AddressingMode.ZERO_PAGE),
+	CMPz("C5", "CMP", 3, 2, AddressingMode.ZERO_PAGE),
+	DECz("C6", "DEC", 5, 2, AddressingMode.ZERO_PAGE),
+	INY("C8", "INY", 2, 1, AddressingMode.IMPLICIT),
+	CMPi("C9", "CMP", 2, 2, AddressingMode.IMMEDIATE),
+	DEX("CA", "DEX", 2, 1, AddressingMode.IMPLICIT),
+	CPYa("CC", "CPY", 4, 3, AddressingMode.ABSOLUTE),
+	CMPa("CD", "CMP", 4, 3, AddressingMode.ABSOLUTE),
+	DECa("CE", "DEC", 6, 3, AddressingMode.ABSOLUTE),
+	BNE("D0", "BNE", 2, 2, true, true, AddressingMode.RELATIVE),
+	CMPiy("D1", "CMP", 5, 2, false, true, AddressingMode.INDIRECT_Y),
+	CMPzx("D5", "CMP", 4, 2, AddressingMode.ZERO_PAGE_X),
+	DECzx("D6", "DEC", 6, 2, AddressingMode.ZERO_PAGE_X),
+	CLD("D8", "CLD", 2, 1, AddressingMode.IMPLICIT),
+	CMPay("D9", "CMP", 4, 3, false, true, AddressingMode.ABSOLUTE_Y),
+	CMPax("DD", "CMP", 4, 3, false, true, AddressingMode.ABSOLUTE_X),
+	DECax("DE", "DEC", 7, 3, AddressingMode.ABSOLUTE_X),
+	CPXi("E0", "CPX", 2, 2, AddressingMode.IMMEDIATE),
+	SBCix("E1", "SBC", 6, 2, AddressingMode.INDIRECT_X),
+	CPXz("E4", "CPX", 3, 2, AddressingMode.ZERO_PAGE),
+	SBCz("E5", "SBC", 3, 2, AddressingMode.ZERO_PAGE),
+	INCz("E6", "INC", 5, 2, AddressingMode.ZERO_PAGE),
+	INX("E8", "INX", 2, 1, AddressingMode.IMPLICIT),
+	SBCi("E9", "SBC", 2, 2, AddressingMode.IMMEDIATE),
+	NOP("EA", "NOP", 2, 1, AddressingMode.IMPLICIT),
+	CPXa("EC", "CPX", 4, 3, AddressingMode.ABSOLUTE),
+	SBCa("ED", "SBC", 4, 3, AddressingMode.ABSOLUTE),
+	INCa("EE", "INC", 6, 3, AddressingMode.ABSOLUTE),
+	BEQ("F0", "BEQ", 2, 2, true, true, AddressingMode.RELATIVE),
+	SBCiy("F1", "SBC", 5, 2, AddressingMode.INDIRECT_Y),
+	SBCzx("F5", "SBC", 4, 2, AddressingMode.ZERO_PAGE_X),
+	INCzx("F6", "INC", 6, 2, AddressingMode.ZERO_PAGE_X),
+	SED("F8", "SED", 2, 1, AddressingMode.IMPLICIT),
+	SBCay("F9", "SBC", 4, 3, false, true, AddressingMode.ABSOLUTE_Y),
+	SBCax("FD", "SBC", 4, 3, false, true, AddressingMode.ABSOLUTE_X),
+	INCax("FE", "INC", 7, 3, AddressingMode.ABSOLUTE_X);
 
-/*
-      <Opcode id="26" printName="ROL" cycles="5" length="2" addressingMode="Zero Page" />
-      <Opcode id="28" printName="PLP" cycles="4" length="1" addressingMode="Implied" />
-      <Opcode id="29" printName="AND" cycles="2" length="2" addressingMode="Immediate" />
-      <Opcode id="2A" printName="ROL" cycles="2" length="1" addressingMode="Accumulator" />
-      <Opcode id="2C" printName="BIT" cycles="4" length="3" addressingMode="Absolute" />
-      <Opcode id="2D" printName="AND" cycles="4" length="3" addressingMode="Absolute" />
-      <Opcode id="2E" printName="ROL" cycles="6" length="3" addressingMode="Absolute" />
-      <Opcode id="30" printName="BMI" cycles="2" length="2" addressingMode="Relative" onBranchCycle="1" onPageJumpCycle="1" />
-      <Opcode id="31" printName="AND" cycles="5" length="2" addressingMode="(Indirect,Y)" />
-      <Opcode id="35" printName="AND" cycles="4" length="2" addressingMode="Zero Page,X" />
-      <Opcode id="36" printName="ROL" cycles="6" length="2" addressingMode="Zero Page,X" />
-      <Opcode id="38" printName="SEC" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="39" printName="AND" cycles="4" length="3" addressingMode="Absolute,Y" onPageJumpCycle="1" />
-      <Opcode id="3D" printName="AND" cycles="4" length="3" addressingMode="Absolute,X" onPageJumpCycle="1" />
-      <Opcode id="3E" printName="ROL" cycles="7" length="3" addressingMode="Absolute,X" />
-      <Opcode id="40" printName="EOR" cycles="4" length="3" addressingMode="Absolute" />
-      <Opcode id="41" printName="EOR" cycles="6" length="2" addressingMode="(Indirect,X)" />
-      <Opcode id="45" printName="EOR" cycles="3" length="2" addressingMode="Zero Page" />
-      <Opcode id="46" printName="LSR" cycles="5" length="2" addressingMode="Zero Page" />
-      <Opcode id="48" printName="PHA" cycles="3" length="1" addressingMode="Implied" />
-      <Opcode id="49" printName="EOR" cycles="2" length="2" addressingMode="Immediate" />
-      <Opcode id="4A" printName="LSR" cycles="2" length="1" addressingMode="Accumulator" />
-      <Opcode id="4C" printName="JMP" cycles="3" length="3" addressingMode="Absolute" />
-      <Opcode id="4D" printName="RTI" cycles="6" length="1" addressingMode="Implied" />
-      <Opcode id="4E" printName="LSR" cycles="6" length="3" addressingMode="Absolute" />
-      <Opcode id="50" printName="BVC" cycles="2" length="2" addressingMode="Relative" onBranchCycle="1" onPageJumpCycle="1" />
-      <Opcode id="51" printName="EOR" cycles="5" length="2" addressingMode="(Indirect),Y" onPageJumpCycle="1" />
-      <Opcode id="55" printName="EOR" cycles="4" length="2" addressingMode="Zero Page,X" />
-      <Opcode id="56" printName="LSR" cycles="6" length="2" addressingMode="Zero Page,X" />
-      <Opcode id="58" printName="CLI" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="59" printName="EOR" cycles="4" length="3" addressingMode="Absolute,Y" onPageJumpCycle="1" />
-      <Opcode id="5D" printName="EOR" cycles="4" length="3" addressingMode="Absolute,X" onPageJumpCycle="1" />
-      <Opcode id="5E" printName="LSR" cycles="7" length="3" addressingMode="Absolute,X" />
-      <Opcode id="60" printName="RTS" cycles="6" length="1" addressingMode="Implied" />
-      <Opcode id="61" printName="ADC" cycles="6" length="2" addressingMode="(Indirect,X)" />
-      <Opcode id="65" printName="ADC" cycles="3" length="2" addressingMode="Zero Page" />
-      <Opcode id="66" printName="ROR" cycles="5" length="2" addressingMode="Zero Page" />
-      <Opcode id="68" printName="PLA" cycles="4" length="1" addressingMode="Implied" />
-      <Opcode id="69" printName="ADC" cycles="2" length="2" addressingMode="Immediate" />
-      <Opcode id="6A" printName="ROR" cycles="2" length="1" addressingMode="Accumulator" />
-      <Opcode id="6C" printName="JMP" cycles="5" length="3" addressingMode="Indirect" />
-      <Opcode id="6D" printName="ADC" length="3" cycles="4" addressingMode="Absolute" />
-      <Opcode id="6E" printName="ROR" cycles="6" length="3" addressingMode="Absolute" />
-      <Opcode id="70" printName="BVS" cycles="2" length="2" addressingMode="Relative" onBranchCycle="1" onPageJumpCycle="1" />
-      <Opcode id="71" printName="ADC" cycles="5" length="2" addressingMode="(Indirect),Y" onPageJumpCycle="1" />
-      <Opcode id="75" printName="ADC" cycles="4" length="2" addressingMode="Zero Page,X" />
-      <Opcode id="76" printName="ROR" cycles="6" length="2" addressingMode="Zero Page,X" />
-      <Opcode id="78" printName="SEI" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="79" printName="ADC" cycles="4" length="3" addressingMode="Absolute,Y" onPageJumpCycle="1" />
-      <Opcode id="7D" printName="ADC" cycles="4" length="3" addressingMode="Absolute,X" onPageJumpCycle="1" />
-      <Opcode id="7E" printName="ROR" cycles="7" length="3" addressingMode="Absolute,X" />
-      <Opcode id="81" printName="STA" cycles="6" length="2" addressingMode="(Indirect,X)" />
-      <Opcode id="84" printName="STY" cycles="3" length="2" addressingMode="Zero Page" />
-      <Opcode id="85" printName="STA" cycles="3" length="2" addressingMode="Zero Page" />
-      <Opcode id="86" printName="STX" cycles="3" length="2" addressingMode="Zero Page" />
-      <Opcode id="88" printName="DEY" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="8A" printName="TXA" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="8C" printName="STY" cycles="4" length="3" addressingMode="Absolute" />
-      <Opcode id="8D" printName="STA" cycles="4" length="3" addressingMode="Absolute" />
-      <Opcode id="8E" printName="STX" cycles="4" length="3" addressingMode="Absolute" />
-      <Opcode id="90" printName="BCC" cycles="2" length="2" addressingMode="Relative" onBranchCycle="1" onPageJumpCycle="1" />
-      <Opcode id="91" printName="STA" cycles="6" length="2" addressingMode="(Indirect),Y" />
-      <Opcode id="94" printName="STY" cycles="4" length="2" addressingMode="Zero Page,X" />
-      <Opcode id="95" printName="STA" cycles="4" length="2" addressingMode="Zero Page,X" />
-      <Opcode id="96" printName="STX" cycles="4" length="2" addressingMode="Zero Page,Y" />
-      <Opcode id="98" printName="TYA" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="99" printName="STA" cycles="5" length="3" addressingMode="Absolute,Y" />
-      <Opcode id="9A" printName="TXS" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="9D" printName="STA" cycles="5" length="3" addressingMode="Absolute,X" />
-      <Opcode id="A0" printName="LDY" cycles="2" length="2" addressingMode="Immediate" />
-      <Opcode id="A1" printName="LDA" cycles="6" length="2" addressingMode="(Indirect,X)" />
-      <Opcode id="A2" printName="LDX" cycles="2" length="2" addressingMode="Immediate" />
-      <Opcode id="A4" printName="LDY" cycles="3" length="2" addressingMode="Zero Page" />
-      <Opcode id="A5" printName="LDA" cycles="3" length="2" addressingMode="Zero Page" />
-      <Opcode id="A6" printName="LDX" cycles="3" length="2" addressingMode="Zero Page" />
-      <Opcode id="A8" printName="TAY" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="A9" printName="LDA" cycles="2" length="2" addressingMode="Immediate" />
-      <Opcode id="AA" printName="TAX" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="AC" printName="LDY" cycles="4" length="3" addressingMode="Absolute" />
-      <Opcode id="AD" printName="LDA" cycles="4" length="3" addressingMode="Absolute" />
-      <Opcode id="AE" printName="LDX" cycles="4" length="3" addressingMode="Absolute" />
-      <Opcode id="B0" printName="BCS" cycles="2" length="2" addressingMode="Relative" onBranchCycle="1" onPageJumpCycle="1" />
-      <Opcode id="B1" printName="LDA" cycles="5" length="2" addressingMode="(Indirect),Y" onPageJumpCycle="1" />
-      <Opcode id="B4" printName="LDY" cycles="4" length="2" addressingMode="Zero Page,X" />
-      <Opcode id="B5" printName="LDA" cycles="4" length="2" addressingMode="Zero Page,X" />
-      <Opcode id="B6" printName="LDX" cycles="4" length="2" addressingMode="Zero Page,Y" />
-      <Opcode id="B8" printName="CLV" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="B9" printName="LDA" cycles="4" length="3" addressingMode="Absolute,Y" onPageJumpCycle="1" />
-      <Opcode id="BA" printName="TSX" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="BC" printName="LDY" cycles="4" length="3" addressingMode="Absolute,X" onPageJumpCycle="1" />
-      <Opcode id="BD" printName="LDA" cycles="4" length="3" addressingMode="Absolute,X" onPageJumpCycle="1" />
-      <Opcode id="BE" printName="LDX" cycles="4" length="3" addressingMode="Absolute,Y" onPageJumpCycle="1" />
-      <Opcode id="C0" printName="CPY" cycles="2" length="2" addressingMode="Immediate" />
-      <Opcode id="C1" printName="CMP" cycles="6" length="2" addressingMode="(Indirect,X)" />
-      <Opcode id="C4" printName="CPY" cycles="3" length="2" addressingMode="Zero Page" />
-      <Opcode id="C5" printName="CMP" cycles="3" length="2" addressingMode="Zero Page" />
-      <Opcode id="C6" printName="DEC" cycles="5" length="2" addressingMode="Zero Page" />
-      <Opcode id="C8" printName="INY" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="C9" printName="CMP" cycles="2" length="2" addressingMode="Immediate" />
-      <Opcode id="CA" printName="DEX" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="CC" printName="CPY" cycles="4" length="3" addressingMode="Absolute" />
-      <Opcode id="CD" printName="CMP" cycles="4" length="3" addressingMode="Absolute" />
-      <Opcode id="CE" printName="DEC" cycles="6" length="3" addressingMode="Absolute" />
-      <Opcode id="D0" printName="BNE" cycles="2" length="2" addressingMode="Relative" onBranchCycle="1" onPageJumpCycle="1" />
-      <Opcode id="D1" printName="CMP" cycles="5" length="2" addressingMode="(Indirect),Y" onPageJumpCycle="1" />
-      <Opcode id="D5" printName="CMP" cycles="4" length="2" addressingMode="Zero Page,X" />
-      <Opcode id="D6" printName="DEC" cycles="6" length="2" addressingMode="Zero Page,X" />
-      <Opcode id="D8" printName="CLD" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="D9" printName="CMP" cycles="4" length="3" addressingMode="Absolute,Y" onPageJumpCycle="1" />
-      <Opcode id="DD" printName="CMP" cycles="4" length="3" addressingMode="Absolute,X" onPageJumpCycle="1" />
-      <Opcode id="DE" printName="DEC" cycles="7" length="3" addressingMode="Absolute,X" />
-      <Opcode id="E0" printName="CPX" cycles="2" length="2" addressingMode="Immediate" />
-      <Opcode id="E1" printName="SBC" cycles="6" length="2" addressingMode="(Indirect,X)" />
-      <Opcode id="E4" printName="CPX" cycles="3" length="2" addressingMode="Zero Page" />
-      <Opcode id="E5" printName="SBC" cycles="3" length="2" addressingMode="Zero Page" />
-      <Opcode id="E6" printName="INC" cycles="5" length="2" addressingMode="Zero Page" />
-      <Opcode id="E8" printName="INX" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="E9" printName="SBC" cycles="2" length="2" addressingMode="Immediate" />
-      <Opcode id="EA" printName="NOP" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="EC" printName="CPX" cycles="4" length="3" addressingMode="Absolute" />
-      <Opcode id="ED" printName="SBC" cycles="4" length="3" addressingMode="Absolute" />
-      <Opcode id="EE" printName="INC" cycles="6" length="3" addressingMode="Absolute" />
-      <Opcode id="F0" printName="BEQ" cycles="2" length="2" addressingMode="Relative" onBranchCycle="1" onPageJumpCycle="1" />
-      <Opcode id="F1" printName="SBC" cycles="5" length="2" addressingMode="(Indirect),Y" />
-      <Opcode id="F5" printName="SBC" cycles="4" length="2" addressingMode="Zero Page,X" />
-      <Opcode id="F6" printName="INC" cycles="6" length="2" addressingMode="Zero Page,X" />
-      <Opcode id="F8" printName="SED" cycles="2" length="1" addressingMode="Implied" />
-      <Opcode id="F9" printName="SBC" cycles="4" length="3" addressingMode="Absolute,Y" onPageJumpCycle="1" />
-      <Opcode id="FD" printName="SBC" cycles="4" length="3" addressingMode="Absolute,X" onPageJumpCycle="1" />
-      <Opcode id="FE" printName="INC" cycles="7" length="3" addressingMode="Absolute,X" />
-    </Operations>*/
     private final String opcodeBytes;
     private final String codeName;
     private final int cycles;
