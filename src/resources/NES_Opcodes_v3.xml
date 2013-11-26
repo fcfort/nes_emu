@@ -16,7 +16,7 @@
   <Opcode id="18" printName="CLC" cycles="2" length="1" addressingMode="Implied" />
   <Opcode id="19" printName="ORA" cycles="4" length="3" addressingMode="Absolute,Y" onPageJumpCycle="1" />
   <Opcode id="1D" printName="ORA" cycles="4" length="3" addressingMode="Absolute,X" onPageJumpCycle="1" />
-  <Opcode id="1E" printName="ASL" cycles="7" length="3" addressingMode="Absolute, X" />
+  <Opcode id="1E" printName="ASL" cycles="7" length="3" addressingMode="Absolute,X" />
   <Opcode id="20" printName="JSR" cycles="6" length="3" addressingMode="Absolute" />
   <Opcode id="21" printName="AND" cycles="6" length="2" addressingMode="(Indirect,X)" />
   <Opcode id="24" printName="BIT" cycles="3" length="2" addressingMode="Zero Page" />
@@ -62,7 +62,7 @@
   <Opcode id="69" printName="ADC" cycles="2" length="2" addressingMode="Immediate" />
   <Opcode id="6A" printName="ROR" cycles="2" length="1" addressingMode="Accumulator" />
   <Opcode id="6C" printName="JMP" cycles="5" length="3" addressingMode="Indirect" />
-  <Opcode id="6D" printName="ADC" length="3" cycles="4" addressingMode="Absolute" />
+  <Opcode id="6D" printName="ADC" cycles="4" length="3" addressingMode="Absolute" />
   <Opcode id="6E" printName="ROR" cycles="6" length="3" addressingMode="Absolute" />
   <Opcode id="70" printName="BVS" cycles="2" length="2" addressingMode="Relative" onBranchCycle="1" onPageJumpCycle="1" />
   <Opcode id="71" printName="ADC" cycles="5" length="2" addressingMode="(Indirect),Y" onPageJumpCycle="1" />
