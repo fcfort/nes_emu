@@ -38,7 +38,7 @@ my %enum_code = (
 
 while(<>) {
     my ($id, $printname, $cycles, $length, $addressing);
-    my ($branch, $page);
+    my ($branch, $page) = (0,0);
     if(m/id="(..)" printName="(...)" cycles="(\d+)" length="(\d+)" addressingMode="(.*?)"/) {
        $id = $1;
        $printname = $2;
@@ -48,7 +48,7 @@ while(<>) {
        if($addressing eq '') {
             print "Failed to match addressing mode on $_\n";
        }
-    
+
        if(/onBranchCycle/) {
             $branch = 1;
        }
@@ -56,10 +56,10 @@ while(<>) {
             $page = 1;
        }
 
-        if(not $branch or not $page) {
+        if(not $branch and not $page) {
             print $printname.$enum_code{$addressing} . qq/("$id", "$printname", $cycles, $length, AddressingMode.$enum_name{$addressing}),/ . "\n";
         } else {
-            print $printname.$enum_code{$addressing} . qq/("$id", "$printname", $cycles, $length, / . ($branch ? "true" : "false") .", " . ($page ? "true" : "false") . ", "  . qq/AddressingMode.$enum_name{$addressing}),/ . "\n";               
+            print $printname.$enum_code{$addressing} . qq/("$id", "$printname", $cycles, $length, / . ($branch ? "true" : "false") .", " . ($page ? "true" : "false") . ", "  . qq/AddressingMode.$enum_name{$addressing}),/ . "\n";
         }
     } else {
         print "failed to convert $_\n";
