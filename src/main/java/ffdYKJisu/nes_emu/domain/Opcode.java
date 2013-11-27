@@ -1,10 +1,9 @@
-package ffdYKJisu.nes_emu.system;
+package ffdYKJisu.nes_emu.domain;
 
 import java.util.Map;
 
 import com.google.common.collect.Maps;
 
-import ffdYKJisu.nes_emu.domain.AddressingMode;
 
 /**
  * Stores static information about opcodes

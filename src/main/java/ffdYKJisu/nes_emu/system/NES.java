@@ -7,10 +7,12 @@ package ffdYKJisu.nes_emu.system;
 import java.io.File;
 import java.io.InputStream;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
 import ffdYKJisu.nes_emu.system.cpu.CPU;
+import ffdYKJisu.nes_emu.system.ppu.PPU;
 
 /**
  * This will hold both the CPU and PPU objects and the Cartridge. 
@@ -21,7 +23,7 @@ import ffdYKJisu.nes_emu.system.cpu.CPU;
  */
 public class NES {
 
-    private static final Logger logger = Logger.getLogger(NES.class); 
+    private static final Logger logger = LoggerFactory.getLogger(NES.class);
     
     private Cartridge cart;
     private CPU cpu;

@@ -4,19 +4,15 @@
  */
 package ffdYKJisu.nes_emu.system;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
 import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 
@@ -29,7 +25,7 @@ import ffdYKJisu.nes_emu.exceptions.bankNotFoundException;
  */
 public class Cartridge {
 
-    static final Logger logger = Logger.getLogger(Cartridge.class);
+    static final Logger logger = LoggerFactory.getLogger(Cartridge.class);
     
     byte[] romData;
     int num16PRGBanks = 0;
@@ -55,7 +51,7 @@ public class Cartridge {
      * <p>
      * <code>RAM8</code> - 8KB RAM space
      */
-    enum Bank {
+    public enum Bank {
 
         PRG16(0x4000), // 16KB
         CHR8(0x2000), // 8KB
@@ -67,7 +63,7 @@ public class Cartridge {
         }
     }
 
-    enum Mirroring {
+    public enum Mirroring {
         VERTICAL, HORIZONTAL
     };
 
@@ -210,7 +206,7 @@ public class Cartridge {
      * @return Byte array of the specific bank requested
      * @throws nes.bankNotFoundException
      */
-    Byte[] get16PRGBank(int bankNum) throws bankNotFoundException {
+    public Byte[] get16PRGBank(int bankNum) throws bankNotFoundException {
         if (bankNum > this.num16PRGBanks) {
             throw new bankNotFoundException("Bank " + bankNum
                     + " doesn't exist");

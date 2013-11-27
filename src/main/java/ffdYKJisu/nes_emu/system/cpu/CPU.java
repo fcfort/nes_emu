@@ -8,17 +8,16 @@ package ffdYKJisu.nes_emu.system.cpu;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import ffdYKJisu.nes_emu.xmlPropertyReader;
 import ffdYKJisu.nes_emu.domain.StatusBit;
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
 import ffdYKJisu.nes_emu.exceptions.addressException;
 import ffdYKJisu.nes_emu.main.Main;
-import ffdYKJisu.nes_emu.system.CPUMemory;
 import ffdYKJisu.nes_emu.system.Cartridge;
-import ffdYKJisu.nes_emu.system.NesFormatter;
+import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 
 /**
  * Controls all functions of the main CPU of the NES.
@@ -28,7 +27,7 @@ import ffdYKJisu.nes_emu.system.NesFormatter;
  */
 public class CPU {
 
-	private static Logger logger = Logger.getLogger(CPU.class);
+	private static Logger logger = LoggerFactory.getLogger(CPU.class);
 
 	public CPU() {
 	    initialize();
@@ -53,8 +52,7 @@ public class CPU {
 	Instruction i;
 	/** Holds Stack object for stack instructions to use */
 	Stack S;
-	xmlPropertyReader opCodeData;
-
+	
 	// Getters/Setters for CPU registers
 	public StatusBit getP() {
 		return P;
@@ -105,10 +103,6 @@ public class CPU {
 	}
 
 	void initialize() {
-		// Read opcode properties from file
-	    InputStream in = this.getClass().getClassLoader()
-                .getResourceAsStream("NES_Opcodes_v3.xml");
-		opCodeData = new xmlPropertyReader("NES_Opcodes_v3.xml");
 		logger.info("CPU has been reinitiated");
 		// Initialize instruction class
 		i = new Instruction();

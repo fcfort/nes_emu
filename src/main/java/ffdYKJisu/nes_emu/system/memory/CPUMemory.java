@@ -2,14 +2,16 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package ffdYKJisu.nes_emu.system;
+package ffdYKJisu.nes_emu.system.memory;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
 import ffdYKJisu.nes_emu.exceptions.addressException;
 import ffdYKJisu.nes_emu.exceptions.bankNotFoundException;
+import ffdYKJisu.nes_emu.system.Cartridge;
 
 /**
  *
@@ -17,7 +19,7 @@ import ffdYKJisu.nes_emu.exceptions.bankNotFoundException;
  */
 public class CPUMemory implements Memory {
 
-	private static Logger logger = Logger.getLogger(CPUMemory.class);
+	private static Logger logger = LoggerFactory.getLogger(CPUMemory.class);
 	
 	private final int PRGROMlen = 2 * Cartridge.Bank.PRG16.length;
 	private final int SRAMlen = 0x2000;

@@ -7,8 +7,6 @@ import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
 import ffdYKJisu.nes_emu.exceptions.addressException;
 
-
-
 public class Stack {
 
     /**
