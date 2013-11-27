@@ -12,6 +12,7 @@ import ffdYKJisu.nes_emu.domain.uShort;
 import ffdYKJisu.nes_emu.exceptions.addressException;
 import ffdYKJisu.nes_emu.exceptions.bankNotFoundException;
 import ffdYKJisu.nes_emu.system.Cartridge;
+import ffdYKJisu.nes_emu.system.NES;
 
 /**
  *
@@ -24,7 +25,7 @@ public class CPUMemory implements Memory {
 	private final int PRGROMlen = 2 * Cartridge.Bank.PRG16.length;
 	private final int SRAMlen = 0x2000;
 	private final int RAMlen = 0x2000;
-	private Cartridge cart;
+	private NES nes;
 	private uByte[] PRGROM;
 	private uByte[] SRAM;
 	private uByte[] EROM;
@@ -32,42 +33,17 @@ public class CPUMemory implements Memory {
 	private static final int PPUiolen = 8;
 	private uByte[] RAM;
 
-	CPUMemory(Cartridge cart) {
-		this.setCart(cart);
-		this.zeroAllRam();
-		this.writeCartToMemory();
-	}
-
-	public CPUMemory() {
-		this.zeroAllRam();
-	}
-
-	private void zeroAllRam() {
-		// SRAM
-		SRAM = new uByte[SRAMlen];
-		for (int i = 0; i < SRAMlen; i++) {
-			SRAM[i] = new uByte(0);
-		}
-		// RAM
+	public CPUMemory(NES nes) {
+		this.nes = nes;
 		RAM = new uByte[RAMlen];
-		for (int i = 0; i < RAMlen; i++) {
-			RAM[i] = new uByte(0);
-		}
-		// PPU I/O Registers
-		PPUio = new uByte[PPUiolen];
-		for (int i = 0; i < PPUiolen; i++) {
-			PPUio[i] = new uByte(0);
-		}
-	}
-
-	public void setCart(Cartridge cart) {
-		this.cart = cart;
-	}
-
-	public void writeCartToMemory() {
 		PRGROM = new uByte[PRGROMlen];
+		SRAM = new uByte[SRAMlen];
+		PPUio = new uByte[PPUiolen];
+	}
+	
+	public void writeCartToMemory(Cartridge cart) {		
 		try {
-			Byte[] bank = this.cart.get16PRGBank(0);
+			Byte[] bank = cart.get16PRGBank(0);
 			// Copy to lower bank
 			for (int i = 0; i < bank.length; i++) {
 				PRGROM[i] = new uByte(bank[i]);
@@ -84,6 +60,8 @@ public class CPUMemory implements Memory {
 	}
 
 	public uByte read(uShort address) {
+		logger.info("Read at address {}", address);
+		
 		char addr = address.get();
 		uByte temp;
 		// PRGROM

@@ -180,6 +180,8 @@ public class Cartridge {
         } else {
             num8RAMBanks = romData[8];
         }
+        
+        logger.info("Got {} 16 PRG Banks and {} 8 CHR banks", num16PRGBanks, num8CHRBanks);
     }
 
     /**

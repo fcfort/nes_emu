@@ -42,7 +42,6 @@ public class Debugger {
 	}
 	
 	public void startConsole() {
-        nes.initialize();
 		boolean debuggerRunning = true;
 		System.out.println("Welcome to the NES debugger." + 
 			" Enter ? for help.");

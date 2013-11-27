@@ -23,31 +23,41 @@ import ffdYKJisu.nes_emu.system.NES;
  */
 public class Main {
 
-    static final Logger logger = LoggerFactory.getLogger(Main.class);  
-	
-    /**
-     * 
-     * @param args
-     *            the command line arguments
-     */
-    public static void main(String[] args) {
-        String path = "src/main/resources/";
-        String romName = "Pac-Man (U) [!].nes";
+	static final Logger logger = LoggerFactory.getLogger(Main.class);
 
-        ClassLoader l = Main.class.getClassLoader();
-        InputStream pacmanIs = l.getResourceAsStream("pacman.nes");       
-        
-        Cartridge pacmanCart = null;
+	/**
+	 * 
+	 * @param args
+	 *            the command line arguments
+	 */
+	public static void main(String[] args) {
+
+		String romName = "Pac-Man (U) [!].nes";
+
 		try {
-			pacmanCart = new Cartridge(pacmanIs);
+			Cartridge pacmanCart = getCartridge(romName);
+			NES nes = new NES();
+			nes.setCart(pacmanCart);
+			Debugger d = new Debugger(nes);
+			d.startConsole();
 		} catch (UnableToLoadRomException e) {
-			logger.error("Failed to load cartridge");
-			System.exit(1);
+			logger.error("Failed to load rom {}", romName);
 		}
-        
-        NES nes = new NES(pacmanCart);
-        nes.loadRom(new File(romName));
-        Debugger d = new Debugger(nes);
-        d.startConsole();
-        }
+
+	}
+
+	public static Cartridge getCartridge(String resourcePath)
+			throws UnableToLoadRomException {
+		InputStream pacmanIs = Main.class.getClassLoader().getResourceAsStream(
+				resourcePath);
+
+		if (pacmanIs == null) {
+			logger.error("Failed to load cartridge");
+			throw new UnableToLoadRomException();
+		}
+
+		Cartridge cart = new Cartridge(pacmanIs);
+
+		return cart;
+	}
 }

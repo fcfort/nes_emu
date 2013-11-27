@@ -35,19 +35,14 @@ public class NES {
 	
 	private Timing timing;
 
-	public void initialize() {
-
-	}
-
 	private enum Timing {
 		PAL, NTSC
 	}
 
-	public NES(Cartridge cart) {
+	public NES() {
 		timing = Timing.NTSC;
-		cpu = new CPU();
+		cpu = new CPU(this);
 		ppu = new PPU();
-		this.cart = cart;
 	}
 
 	/**
@@ -67,29 +62,19 @@ public class NES {
 		// ppu.emulateFor(ppuCycles, cpu.getPpuData());
 		// }
 	}
-
-	public void loadRom(InputStream cart) {
-		try {
-			this.cart = new Cartridge(cart);
-		} catch (UnableToLoadRomException e) {
-			logger.warn("Unable to load cart");
-		}
+	
+	public Cartridge getCart() { 
+		return cart;
 	}
-
-	public void loadRom(File cart) {
-		try {
-			this.cart = new Cartridge(cart);
-		} catch (UnableToLoadRomException e) {
-			logger.warn("Unable to load cart " + cart);
-		}
-	}
-
+	
 	public void setCart(Cartridge cart) {
-		cpu.setCart(cart);
-		//ppu.setCart(cart);
+		this.cart = cart;
+		cpu.getMemory().writeCartToMemory(cart);
 	}
 
 	public CPU getCpu() {
 		return this.cpu;
 	}
+	
+	
 }

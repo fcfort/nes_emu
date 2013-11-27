@@ -5,9 +5,6 @@
 package ffdYKJisu.nes_emu.system.cpu;
 
 
-import java.io.IOException;
-import java.io.InputStream;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +14,8 @@ import ffdYKJisu.nes_emu.domain.StatusBit;
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
 import ffdYKJisu.nes_emu.exceptions.addressException;
-import ffdYKJisu.nes_emu.main.Main;
 import ffdYKJisu.nes_emu.system.Cartridge;
+import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 
 /**
@@ -30,25 +27,6 @@ import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 public class CPU {
 
 	private static Logger logger = LoggerFactory.getLogger(CPU.class);
-
-	public CPU() {
-		logger.info("CPU has been reinitiated");
-		// Initialize instruction class
-		i = new Instruction();
-		// Initialize stack
-		S = new Stack();
-		// Set up State registers
-		initStateRegisters();
-		// Load cart into memory
-		memory = new CPUMemory();
-		memory.setCart(cart);
-		// Loads cartridge banks to cpu memory banks
-		memory.writeCartToMemory();
-		// Jump to initial position
-		resetInterrupt();
-		// Start the cpu
-		cpuIsRunning = false;
-	}
 
 	/**
 	 * Program counter, holds memory location of current position
@@ -63,13 +41,33 @@ public class CPU {
 	/** Holds the bits of the status byte for the processor */
 	private StatusBit P;
 	private Cartridge cart;
-	public CPUMemory memory;
+	private final CPUMemory memory;
 	private boolean cpuIsRunning;
 	/** Holds private Instruction class */
 	Instruction i;
 	/** Holds Stack object for stack instructions to use */
-	Stack S;
+	Stack S;	
+	private final NES nes;
 	
+	public CPU(NES nes) {		
+		logger.info("CPU has been reinitiated");
+		this.nes = nes;
+		// Initialize instruction class
+		i = new Instruction();
+		// Initialize stack
+		S = new Stack();
+		// Set up State registers
+		initStateRegisters();
+		// Load cart into memory
+		memory = new CPUMemory(nes);
+		// Loads cartridge banks to cpu memory banks
+		//memory.writeCartToMemory(cart);
+		// Jump to initial position
+		resetInterrupt();
+		// Start the cpu
+		cpuIsRunning = false;
+	}
+
 	// Getters/Setters for CPU registers
 	public StatusBit getP() {
 		return P;
@@ -994,6 +992,10 @@ public class CPU {
 			}
 			stackPointer = new uByte(stackPointer.decrement());
 		}
+	}
+
+	public CPUMemory getMemory() {
+		return this.memory;
 	}
 }
 

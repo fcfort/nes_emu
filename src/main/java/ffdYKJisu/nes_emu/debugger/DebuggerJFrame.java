@@ -42,7 +42,7 @@ public class DebuggerJFrame extends javax.swing.JFrame {
 			//System.out.println("addr" + address + " ilen " + instructionLength);
 			} catch (Exception e) {
 				sb.append(address + ": ");
-				sb.append(this.nes.getCpu().memory.read(address).toString());
+				sb.append(this.nes.getCpu().getMemory().read(address).toString());
 				address = address.increment();
 			}
 			// Append instruction there to string buffer
@@ -499,14 +499,14 @@ private void jTextFieldStepMultiplierKeyReleased(java.awt.event.KeyEvent evt) {/
 				String romName = "Pac-Man (U) [!].nes";
 				//File cart = new File(romName);
 				InputStream is = this.getClass().getClassLoader().getResourceAsStream(romName);
-				try {
-					j.nes = new NES(new Cartridge(is));
-				} catch (UnableToLoadRomException e) {
+				//try {
+					//j.nes = new NES(new Cartridge(is));
+				//} catch (UnableToLoadRomException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+					//e.printStackTrace();
+				//}
 				// j.nes.loadRom(cart);
-				j.nes.initialize();
+				//j.nes.initialize();
 				j.updateState();
 			}
 		});
