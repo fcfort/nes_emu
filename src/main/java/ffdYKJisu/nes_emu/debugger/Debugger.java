@@ -8,11 +8,11 @@ package ffdYKJisu.nes_emu.debugger;
 
 import java.io.BufferedReader;
 import java.io.Console;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ffdYKJisu.nes_emu.system.NES;
 
@@ -22,28 +22,26 @@ import ffdYKJisu.nes_emu.system.NES;
  * @author Administrator
  */
 public class Debugger {
+	
+	private static final Logger logger = LoggerFactory.getLogger(Debugger.class);
+	
 	Console c;
 	NES nes;
 	BufferedReader in;
 	
-	Debugger( ) {
+	public Debugger(NES nes) {
+		this.nes = nes;
+		
 		c = System.console();
 		if ( c == null ) {
-			System.err.println("No Console");
-			// System.exit(1);
+			logger.error("Unable to create console");
 		} else {
 			InputStreamReader reader = new InputStreamReader(System.in);
 			in = new BufferedReader(reader);
-		}
-		nes = new NES();		
+		}		
 	}
-
-	void loadRom(String romName) {
-		File cart = new File(romName);
-		this.nes.loadRom(cart);
-	}
-
-	void startConsole() {
+	
+	public void startConsole() {
         nes.initialize();
 		boolean debuggerRunning = true;
 		System.out.println("Welcome to the NES debugger." + 
@@ -61,9 +59,8 @@ public class Debugger {
 		try {
 			return in.readLine();
 		} catch (IOException ex) {
-			Logger.getLogger(Debugger.class.getName()).log(
-				Level.SEVERE, null, ex);
-			return "caw";
+			logger.error("Failed to read input from inputstream");
+			return "";
 		} 
 	}
 }

@@ -20,8 +20,5 @@ public class PPU {
     void setCart(Cartridge c) {
         this.cart = c;
     }
-	
-	void initialize() { 
-		//load
-	}
+
 }

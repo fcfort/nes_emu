@@ -7,9 +7,12 @@ package ffdYKJisu.nes_emu.debugger;
 
 
 import java.io.File;
+import java.io.InputStream;
 
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
+import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
+import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
 
 /**
@@ -494,9 +497,15 @@ private void jTextFieldStepMultiplierKeyReleased(java.awt.event.KeyEvent evt) {/
 				DebuggerJFrame j = new DebuggerJFrame();
 				j.setVisible(true);
 				String romName = "Pac-Man (U) [!].nes";
-				File cart = new File(romName);
-				j.nes = new NES();
-				j.nes.loadRom(cart);
+				//File cart = new File(romName);
+				InputStream is = this.getClass().getClassLoader().getResourceAsStream(romName);
+				try {
+					j.nes = new NES(new Cartridge(is));
+				} catch (UnableToLoadRomException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				// j.nes.loadRom(cart);
 				j.nes.initialize();
 				j.updateState();
 			}

@@ -9,6 +9,12 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ffdYKJisu.nes_emu.debugger.Debugger;
+import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
+import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
 
 /**
@@ -17,7 +23,10 @@ import ffdYKJisu.nes_emu.system.NES;
  */
 public class Main {
 
+    static final Logger logger = LoggerFactory.getLogger(Main.class);  
+	
     /**
+     * 
      * @param args
      *            the command line arguments
      */
@@ -25,39 +34,20 @@ public class Main {
         String path = "src/main/resources/";
         String romName = "Pac-Man (U) [!].nes";
 
-        //InputStream romIs = Main.class.getClass().getClassLoader()
-          //      .getResourceAsStream(path + romName);
-        //BufferedReader reader = new BufferedReader(new InputStreamReader(romIs));
         ClassLoader l = Main.class.getClassLoader();
-        InputStream pacmanIs = l.getResourceAsStream("pacman.nes");
-        NES nes = new NES();
+        InputStream pacmanIs = l.getResourceAsStream("pacman.nes");       
+        
+        Cartridge pacmanCart = null;
+		try {
+			pacmanCart = new Cartridge(pacmanIs);
+		} catch (UnableToLoadRomException e) {
+			logger.error("Failed to load cartridge");
+			System.exit(1);
+		}
+        
+        NES nes = new NES(pacmanCart);
         nes.loadRom(new File(romName));
-        nes.initialize();
-        nes.emulateFor(20);
-        /*
-         * d.loadRom(romName); d.startConsole();
-         */
-        /*
-         * 
-         * File cart = new File(romName); NES nes = new NES();
-         * nes.loadRom(cart); nes.initialize(); nes.emulateFor(100);
-         */
-
-        /*
-         * CPU cpu = new CPU(); cpu.loadRom(cart); cpu.init();
-         */
-        // cpu.emulateFor(100);
-        // uByte test harness
-        /*
-         * uByte temp; for ( int i = 0; i < 0x100; i++) { temp = new uByte(i);
-         * // System.out.print(temp + " "); System.out.print(temp + "->" +
-         * temp.negativeValue() + " neg? " + temp.isNegative() +
-         * " as signed byte " + temp.toSigned() + "\n"); }
-         */
-        /*
-         * System.out.println("uByte test harness"); uByte a = new uByte(2323);
-         * for(int i =0; i > -1000; i--) { a.set(i);
-         * System.out.print(a.toString() + " "); }
-         */
-    }
+        Debugger d = new Debugger(nes);
+        d.startConsole();
+        }
 }

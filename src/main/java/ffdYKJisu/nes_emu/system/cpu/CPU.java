@@ -11,6 +11,8 @@ import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ffdYKJisu.nes_emu.domain.AddressingMode;
+import ffdYKJisu.nes_emu.domain.Opcode;
 import ffdYKJisu.nes_emu.domain.StatusBit;
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
@@ -30,7 +32,22 @@ public class CPU {
 	private static Logger logger = LoggerFactory.getLogger(CPU.class);
 
 	public CPU() {
-	    initialize();
+		logger.info("CPU has been reinitiated");
+		// Initialize instruction class
+		i = new Instruction();
+		// Initialize stack
+		S = new Stack();
+		// Set up State registers
+		initStateRegisters();
+		// Load cart into memory
+		memory = new CPUMemory();
+		memory.setCart(cart);
+		// Loads cartridge banks to cpu memory banks
+		memory.writeCartToMemory();
+		// Jump to initial position
+		resetInterrupt();
+		// Start the cpu
+		cpuIsRunning = false;
 	}
 
 	/**
@@ -100,25 +117,6 @@ public class CPU {
 
 	public void setSP(uByte SP) {
 		this.S.set(SP);
-	}
-
-	void initialize() {
-		logger.info("CPU has been reinitiated");
-		// Initialize instruction class
-		i = new Instruction();
-		// Initialize stack
-		S = new Stack();
-		// Set up State registers
-		initStateRegisters();
-		// Load cart into memory
-		memory = new CPUMemory();
-		memory.setCart(cart);
-		// Loads cartridge banks to cpu memory banks
-		memory.writeCartToMemory();
-		// Jump to initial position
-		resetInterrupt();
-		// Start the cpu
-		cpuIsRunning = false;
 	}
 
 	public void setCart(Cartridge c) {
@@ -205,7 +203,8 @@ public class CPU {
 		// Process instructions for op
 		int cyclesTaken = this.processOp( op );
 		// Increment PC
-		PC = PC.increment(opCodeData.getLength( op ));
+		PC = PC.increment(Opcode.getOpcodeByBytes(op).getLength());
+		
 		// Return time taken
 		return cyclesTaken;
 	}
@@ -241,8 +240,8 @@ public class CPU {
 			sbBytes.append(" ");
 		}
 		sb.append(sbBytes);
-
-		sb.append(" " + this.opCodeData.getPrintName(bytes[0].toString()) + " ");
+		String opcodeName = Opcode.getOpcodeByBytes(bytes[0]).getCodeName();
+		sb.append(" " + opcodeName + " ");
 
 		for (int j = 1; j < instructionLength; j++) {
 			sb.append(bytes[j].toString());
@@ -260,7 +259,7 @@ public class CPU {
 	 * @return Number of bytes until next instruction
 	 */
 	public int instructionLength(uShort address) {
-		return this.opCodeData.getLength(memory.read(address).toString());
+		return Opcode.getOpcodeByBytes(memory.read(address)).getLength();
 	}
 
 	/**
@@ -271,8 +270,8 @@ public class CPU {
 	 * @return Address of where to perform operation
 	 */
 	public uShort getAddress() {
-		ffdYKJisu.nes_emu.domain.AddressingMode mode =
-			opCodeData.getAddressingMode(memory.read(PC).toString());
+		AddressingMode mode =
+			Opcode.getOpcodeByBytes(memory.read(PC)).getAddressingMode();
 		uShort addr = null;
 		uShort tempPC = PC;
 		switch (mode) {
@@ -640,7 +639,8 @@ public class CPU {
 			A = memory.read(addr);
 			P.setZero(A.get() == 0);
 			P.setNegative(A.isNegative());
-			return opCodeData.getCycles( getOpcode() , false, false );
+			//return opCodeData.getCycles( getOpcode() , false, false );
+			return Opcode.getOpcodeByBytes(getOpcode()).getCycles();
 		}
 		
 		int LDAi() {
@@ -770,7 +770,7 @@ public class CPU {
 					ex + " addr" + addr + " PC " + PC );
 				System.err.println( " addr" + addr + " PC " + PC );
 			}
-			return opCodeData.getCycles( getOpcode() , false, false );
+			return Opcode.getOpcodeByBytes(getOpcode()).getCycles();
 		}
 		
 		int STAa() {
@@ -799,7 +799,7 @@ public class CPU {
 			try {
 				memory.write(temp, A);
 			} catch (addressException ex) {
-				logger.warn( ex);
+				logger.warn(ex.getMessage());
 			}
 			incrementPC();
 			logger.info("STAay " + H + L);

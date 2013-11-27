@@ -35,6 +35,7 @@ public class Cartridge {
 
     public Cartridge(InputStream is) throws UnableToLoadRomException {
         this.loadRom(is);
+        this.setValuesFromHeader();
     }
 
     public Cartridge(File file) throws UnableToLoadRomException {

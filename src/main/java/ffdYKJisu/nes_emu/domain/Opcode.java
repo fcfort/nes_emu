@@ -2,6 +2,8 @@ package ffdYKJisu.nes_emu.domain;
 
 import java.util.Map;
 
+import org.apache.commons.lang.builder.ToStringBuilder;
+
 import com.google.common.collect.Maps;
 
 
@@ -170,7 +172,16 @@ public enum Opcode {
     private final boolean extraCycleOnBranch;
     private final boolean extraCycleOnPageJump;
     private final AddressingMode addressingMode;
-    private final Map<String, Opcode> opcodeMap = Maps.newHashMap();
+    
+    private final static int OPCODE_NUMBER_BASE = 16;
+    
+    private static final Map<uByte, Opcode> opcodeMap; 
+    static {
+    	opcodeMap = Maps.newHashMap();    	
+    	for (Opcode o : Opcode.values()) {
+    		opcodeMap.put(new uByte(Integer.parseInt(o.getOpcodeBytes(), OPCODE_NUMBER_BASE)), o);
+    	}
+    }
     
     Opcode(String opcodeBytes, String codeName, int cycles, int length, AddressingMode addressingMode) {
         this(opcodeBytes, codeName, cycles, length, false, false, addressingMode);       
@@ -184,12 +195,46 @@ public enum Opcode {
         this.length = length;
         this.extraCycleOnBranch = extraCycleOnBranch;
         this.extraCycleOnPageJump = extraCycleOnPageJump;
-        this.addressingMode = addressingMode;        
-        opcodeMap.put(opcodeBytes, this);       
+        this.addressingMode = addressingMode;                 
     }
     
-    public Opcode getOpcodeByBytes(String opcodeBytes) {
-        return opcodeMap.get(opcodeBytes);
+    
+    public String getOpcodeBytes() {
+    	return opcodeBytes;
+    }
+    
+    public static Opcode getOpcodeByBytes(uByte b) {
+    	return opcodeMap.get(b);
+    }
+    
+    public int getCycles() {
+    	return cycles;
+    }
+    
+    public int getLength() {
+    	return length;
+    }
+    
+    public AddressingMode getAddressingMode() {
+    	return addressingMode;
+    }
+    
+    public String getCodeName() { 
+    	return codeName;
+    }
+    
+    public int getCycles(boolean isBranch, boolean isJump) {
+    	int cyclesTaken = cycles;   
+    	if(isBranch && extraCycleOnBranch) { 
+    		cyclesTaken++;
+    	}
+    	if(isJump && extraCycleOnPageJump) {
+    		cyclesTaken++;
+    	}
+    	return cyclesTaken;
     }
   
+    public String toString() {
+    	return ToStringBuilder.reflectionToString(this);
+    }
 }

@@ -10,7 +10,7 @@ package ffdYKJisu.nes_emu.domain;
  */
 public final class uShort {
 
-	final private char value;
+	private final char value;
 
 	public uShort() {
 		this.value = 0;

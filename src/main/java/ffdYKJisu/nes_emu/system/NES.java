@@ -15,79 +15,81 @@ import ffdYKJisu.nes_emu.system.cpu.CPU;
 import ffdYKJisu.nes_emu.system.ppu.PPU;
 
 /**
- * This will hold both the CPU and PPU objects and the Cartridge. 
- * This is to facilitate passing
- * state information between the two architectures. Also this is needed to allow
- * both the cpu and the ppu to simulate simultaneous operation. 
+ * This will hold both the CPU and PPU objects and the Cartridge. This is to
+ * facilitate passing state information between the two architectures. Also this
+ * is needed to allow both the cpu and the ppu to simulate simultaneous
+ * operation.
+ * 
  * @author fe01106
  */
 public class NES {
 
-    private static final Logger logger = LoggerFactory.getLogger(NES.class);
-    
-    private Cartridge cart;
-    private CPU cpu;
-    private PPU ppu;
-    /** How many cycles the ppu runs for every cpu cycles */
-    private static final double PPU_CPU_CYCLE_RATIO = 3;
-    private Timing timing;
+	private static final Logger logger = LoggerFactory.getLogger(NES.class);
 
-    public void initialize() {
-        cpu = new CPU();
-        ppu = new PPU();
-        this.setCart(cart);
-        cpu.initialize();
-        ppu.initialize();
-    }
+	private /* final */ Cartridge cart;
+	private final CPU cpu;
+	private final PPU ppu;
+	/** How many cycles the ppu runs for every cpu cycles */
+	
+	private static final double PPU_CPU_CYCLE_RATIO = 3;
+	
+	private Timing timing;
 
-    private enum Timing {
-        PAL,
-        NTSC
-    }
+	public void initialize() {
 
-    public NES() {
-        timing = Timing.NTSC;
-    }
+	}
 
-    /** 
-     * 
-     * @param numCycles Cycles to run NES (in CPU cycles)
-     */
-    public void emulateFor(long numCycles) {
-        //int testRunLength = 200;
-        //for(int i=0; i < testRunLength; i++) {
-        int ppuCycles = (int) (numCycles / 3);
-        // Pass data the cpu needs to the ppu and run the cpu 
-        // cpu.emulateFor(numCycles, ppu.getCpuData();
-        cpu.emulateFor(numCycles);
+	private enum Timing {
+		PAL, NTSC
+	}
 
-    // Pass data the ppu needs to the ppu and run the ppu 
-    // ppu.emulateFor(ppuCycles, cpu.getPpuData());
-    //}
-    }
+	public NES(Cartridge cart) {
+		timing = Timing.NTSC;
+		cpu = new CPU();
+		ppu = new PPU();
+		this.cart = cart;
+	}
 
-    public void loadRom(InputStream cart) {
-        try {
-            this.cart = new Cartridge(cart);
-        } catch (UnableToLoadRomException e) {
-            logger.warn("Unable to load cart");
-        }
-    }
-    
-    public void loadRom(File cart) {
-        try {
-            this.cart = new Cartridge(cart);
-        } catch (UnableToLoadRomException e) {
-            logger.warn("Unable to load cart " + cart);
-        } 
-    }
+	/**
+	 * 
+	 * @param numCycles
+	 *            Cycles to run NES (in CPU cycles)
+	 */
+	public void emulateFor(long numCycles) {
+		// int testRunLength = 200;
+		// for(int i=0; i < testRunLength; i++) {
+		int ppuCycles = (int) (numCycles / 3);
+		// Pass data the cpu needs to the ppu and run the cpu
+		// cpu.emulateFor(numCycles, ppu.getCpuData();
+		cpu.emulateFor(numCycles);
 
-    public void setCart(Cartridge cart) {
-        cpu.setCart(cart);
-        ppu.setCart(cart);
-    }
+		// Pass data the ppu needs to the ppu and run the ppu
+		// ppu.emulateFor(ppuCycles, cpu.getPpuData());
+		// }
+	}
 
-    public CPU getCpu() {
-        return this.cpu;
-    }
+	public void loadRom(InputStream cart) {
+		try {
+			this.cart = new Cartridge(cart);
+		} catch (UnableToLoadRomException e) {
+			logger.warn("Unable to load cart");
+		}
+	}
+
+	public void loadRom(File cart) {
+		try {
+			this.cart = new Cartridge(cart);
+		} catch (UnableToLoadRomException e) {
+			logger.warn("Unable to load cart " + cart);
+		}
+	}
+
+	public void setCart(Cartridge cart) {
+		cpu.setCart(cart);
+		//ppu.setCart(cart);
+	}
+
+	public CPU getCpu() {
+		return this.cpu;
+	}
 }
