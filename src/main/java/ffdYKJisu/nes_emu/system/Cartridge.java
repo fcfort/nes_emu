@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 
 import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
-import ffdYKJisu.nes_emu.exceptions.bankNotFoundException;
+import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 
 /**
  * 
@@ -127,7 +127,7 @@ public class Cartridge {
             Byte[] temp = null;
             try {
                 temp = this.get16PRGBank(i);
-            } catch (bankNotFoundException ex) {
+            } catch (BankNotFoundException ex) {
                 logger.warn("Could not find bank at index " + i);
             }
             for (int j = 0; j < temp.length; j++) {
@@ -143,7 +143,7 @@ public class Cartridge {
             Byte[] temp = null;
             try {
                 temp = this.get8CHRBank(i);
-            } catch (bankNotFoundException ex) {
+            } catch (BankNotFoundException ex) {
                 logger.warn("Could not find bank at index " + i);
             }
             for (int j = 0; j < temp.length; j++) {
@@ -207,11 +207,11 @@ public class Cartridge {
      *            Number of the bank you want from the cartridge starting from
      *            zero
      * @return Byte array of the specific bank requested
-     * @throws nes.bankNotFoundException
+     * @throws BankNotFoundException.bankNotFoundException
      */
-    public Byte[] get16PRGBank(int bankNum) throws bankNotFoundException {
+    public Byte[] get16PRGBank(int bankNum) throws BankNotFoundException {
         if (bankNum > this.num16PRGBanks) {
-            throw new bankNotFoundException("Bank " + bankNum
+            throw new BankNotFoundException("Bank " + bankNum
                     + " doesn't exist");
         }
         int bankLength = Bank.PRG16.length;
@@ -233,11 +233,11 @@ public class Cartridge {
      *            Number of the bank you want from the cartridge starting from
      *            zero
      * @return Byte array of the specific bank requested
-     * @throws nes.bankNotFoundException
+     * @throws BankNotFoundException.bankNotFoundException
      */
-    Byte[] get8CHRBank(int bankNum) throws bankNotFoundException {
+    Byte[] get8CHRBank(int bankNum) throws BankNotFoundException {
         if (bankNum > this.num8CHRBanks) {
-            throw new bankNotFoundException("Bank " + bankNum
+            throw new BankNotFoundException("Bank " + bankNum
                     + " doesn't exist");
         }
         int bankLength = Bank.CHR8.length;

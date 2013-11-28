@@ -5,7 +5,7 @@ import java.util.logging.Logger;
 
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
-import ffdYKJisu.nes_emu.exceptions.addressException;
+import ffdYKJisu.nes_emu.exceptions.AddressException;
 import ffdYKJisu.nes_emu.system.memory.Memory;
 
 public class Stack implements Memory {
@@ -48,7 +48,7 @@ public class Stack implements Memory {
         try {
             this.write(addr, val);
         //System.out.println("Pushing " + val + " to " + addr);
-        } catch (addressException ex) {
+        } catch (AddressException ex) {
             Logger.getLogger(CPU.class.getName()).log(Level.SEVERE, null,
                 ex + "Error pushing " + val + " to " + addr);
         }
@@ -67,12 +67,12 @@ public class Stack implements Memory {
 		return stack[zeroPageAddress.get()];
 	}
 
-	public void write(uShort address, uByte val) throws addressException {
+	public void write(uShort address, uByte val) throws AddressException {
 		stack[address.get()] = val;
 	}
 
 	public void write(uByte addrH, uByte addrL, uByte val)
-			throws addressException {
+			throws AddressException {
 		stack[addrL.get()] = val;
 	}
 }

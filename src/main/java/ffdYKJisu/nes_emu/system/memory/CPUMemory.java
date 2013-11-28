@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
-import ffdYKJisu.nes_emu.exceptions.addressException;
-import ffdYKJisu.nes_emu.exceptions.bankNotFoundException;
+import ffdYKJisu.nes_emu.exceptions.AddressException;
+import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
 
@@ -54,7 +54,7 @@ public class CPUMemory implements Memory {
 				PRGROM[i + 0x4000] = new uByte(bank[i]);
 			}
 
-		} catch (bankNotFoundException ex) {
+		} catch (BankNotFoundException ex) {
 			logger.warn("Bank not found");
 		}
 	}
@@ -102,12 +102,14 @@ public class CPUMemory implements Memory {
 		return read(address);
 	}
 
- 	public void write(uShort address, uByte val) throws addressException {
+ 	public void write(uShort address, uByte val) throws AddressException {
+ 		logger.info("Write at address {} of {}", address, val);
+ 		
 		char addr = address.get();
 		if (addr > 0xFFFF)
-			throw new addressException("Over 0xFFFF");
+			throw new AddressException("Over 0xFFFF");
 		if (addr >= 0x8000)
-			throw new addressException("In PRGROM");
+			throw new AddressException("In PRGROM");
 		if (addr >= 0x0000 && addr < 0x2000) {
 			//Logger.getLogger(CPUMemory.class.getName()).log(Level.INFO, 
 			//	"Writing " + val + " to " + address);
@@ -117,11 +119,11 @@ public class CPUMemory implements Memory {
 		}
 	}
 
-	public void write(uByte zeroPageAddress, uByte val) throws addressException {
+	public void write(uByte zeroPageAddress, uByte val) throws AddressException {
 		write(new uShort(zeroPageAddress), val);
 	}
 
-	public void write(uByte addrH, uByte addrL, uByte val) throws addressException {
+	public void write(uByte addrH, uByte addrL, uByte val) throws AddressException {
 		write(new uShort(addrH, addrL), val);
 	}
 

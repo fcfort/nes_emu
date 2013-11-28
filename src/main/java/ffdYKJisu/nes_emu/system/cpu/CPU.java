@@ -13,8 +13,7 @@ import ffdYKJisu.nes_emu.domain.Opcode;
 import ffdYKJisu.nes_emu.domain.StatusBit;
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
-import ffdYKJisu.nes_emu.exceptions.addressException;
-import ffdYKJisu.nes_emu.system.Cartridge;
+import ffdYKJisu.nes_emu.exceptions.AddressException;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 
@@ -40,7 +39,6 @@ public class CPU {
 	private uByte Y;
 	/** Holds the bits of the status byte for the processor */
 	private StatusBit P;
-	private Cartridge cart;
 	private final CPUMemory memory;
 	private boolean cpuIsRunning;
 	/** Holds private Instruction class */
@@ -62,8 +60,6 @@ public class CPU {
 		memory = new CPUMemory(nes);
 		// Loads cartridge banks to cpu memory banks
 		//memory.writeCartToMemory(cart);
-		// Jump to initial position
-		resetInterrupt();
 		// Start the cpu
 		cpuIsRunning = false;
 	}
@@ -117,11 +113,7 @@ public class CPU {
 		this.S.set(SP);
 	}
 
-	public void setCart(Cartridge c) {
-		this.cart = c;
-	}
-
-	private void resetInterrupt() {
+	public void resetInterrupt() {				
 		uShort resetAddrL = new uShort((char) 0xfffc);
 		uShort resetAddrH = new uShort((char) 0xfffd);
 		//uByte jumpLocL = new uByte(memory.read(resetAddrL));
@@ -129,8 +121,8 @@ public class CPU {
 		//uByte jumpLocH = new uByte(memory.read(resetAddrH));
 		uByte jumpLocH = memory.read(resetAddrH);
 		uShort address = new uShort(jumpLocH, jumpLocL);
-
 		logger.info( "Reset, jumping to " + address);
+		
 		PC = address;
 	}
 
@@ -178,8 +170,7 @@ public class CPU {
 		}
 		long cycleCount = 0;
 		while (this.cpuIsRunning) {
-			cycleCount += this.runStep();
-			System.out.println(this.instructionToString(this.PC));
+			cycleCount += this.runStep();			
 			if (cycleCount > cyclesToRun) {
 				this.cpuIsRunning = false;
 				logger.info( "CPU has been stopped after " + cycleCount + " cycles");
@@ -193,15 +184,15 @@ public class CPU {
 	 */
 	public int runStep() {
 		// Read Opcode from PC
-		uByte op = this.getOpcode();
+		Opcode op = this.getOpcode();
+		uByte opcodeBytes = op.getOpcodeBytes();
 		// Print instruction to logger
-		logger.info(CPU.this.instructionToString( PC ));
+		logger.info("Got opcode {} with bytes {} at PC {}", new Object[]{op, opcodeBytes, PC});
 		// Print CPU state to log
-		logger.info("PC:" + PC + "\tP: " + P);
 		// Process instructions for op
-		int cyclesTaken = this.processOp( op );
+		int cyclesTaken = this.processOp( opcodeBytes);
 		// Increment PC
-		PC = PC.increment(Opcode.getOpcodeByBytes(op).getLength());
+		PC = PC.increment(op.getLength());
 		
 		// Return time taken
 		return cyclesTaken;
@@ -349,8 +340,10 @@ public class CPU {
 	 * Retrieves the next opcode from memory and returns it as a uByte
 	 * @return opCode as a uByte
 	 */
-	private uByte getOpcode() {
-		return memory.read(PC);
+	private Opcode getOpcode() {
+		uByte b = memory.read(PC);
+		Opcode o = Opcode.getOpcodeByBytes(b);
+		return o;
 	}
 	
 	
@@ -594,7 +587,7 @@ public class CPU {
 			zpValue = zpValue.increment();
 			try {
 				CPU.this.memory.write(zpAddress, zpValue);
-			} catch (addressException ex) {
+			} catch (AddressException ex) {
 				logger.warn(ex + "Error in INCz address:" + zpAddress + " value:" + zpValue);
 			}
 			P.setNegative(zpValue.isNegative());
@@ -638,7 +631,7 @@ public class CPU {
 			P.setZero(A.get() == 0);
 			P.setNegative(A.isNegative());
 			//return opCodeData.getCycles( getOpcode() , false, false );
-			return Opcode.getOpcodeByBytes(getOpcode()).getCycles();
+			return getOpcode().getCycles();
 		}
 		
 		int LDAi() {
@@ -763,12 +756,12 @@ public class CPU {
 			uShort addr = getAddress();
 			try {
 				memory.write( addr, A );
-			} catch (addressException ex) {
+			} catch (AddressException ex) {
 				logger.warn(
 					ex + " addr" + addr + " PC " + PC );
 				System.err.println( " addr" + addr + " PC " + PC );
 			}
-			return Opcode.getOpcodeByBytes(getOpcode()).getCycles();
+			return getOpcode().getCycles();
 		}
 		
 		int STAa() {
@@ -780,7 +773,7 @@ public class CPU {
 			// A.set(memory.read(H,L));
 			try {
 				memory.write(H, L, A);
-			} catch (addressException e) {
+			} catch (AddressException e) {
 				System.out.println("HL addr" + H + L + " PC " + PC);
 			}
 			incrementPC();
@@ -796,7 +789,7 @@ public class CPU {
 			temp.increment(Y.get());
 			try {
 				memory.write(temp, A);
-			} catch (addressException ex) {
+			} catch (AddressException ex) {
 				logger.warn(ex.getMessage());
 			}
 			incrementPC();
@@ -814,7 +807,7 @@ public class CPU {
 			temp.increment(Y.get());
 			try {
 				memory.write(temp, A);
-			} catch (addressException ex) {
+			} catch (AddressException ex) {
 				logger.warn(
 					ex + "PC: " + PC);
 			}
@@ -827,7 +820,7 @@ public class CPU {
 			incrementPC();
 			try {
 				memory.write(memory.read(memory.read(PC)), CPU.this.getA());
-			} catch (addressException ex) {
+			} catch (AddressException ex) {
 				logger.warn(ex + "PC: " + PC);
 			}
 			incrementPC();
@@ -840,7 +833,7 @@ public class CPU {
 			incrementPC();
 			try {
 				CPU.this.memory.write(zpAddr, CPU.this.getY());
-			} catch (addressException ex) {
+			} catch (AddressException ex) {
 				logger.warn(ex + " STYz at ZP addr:" + zpAddr + "Y:" + CPU.this.getY());
 			}
 			return 3;
@@ -987,7 +980,7 @@ public class CPU {
 			try {
 				CPU.this.memory.write(addr, val);
 			//System.out.println("Pushing " + val + " to " + addr);
-			} catch (addressException ex) {
+			} catch (AddressException ex) {
 				logger.warn(ex + "Error pushing " + val + " to " + addr);
 			}
 			stackPointer = new uByte(stackPointer.decrement());

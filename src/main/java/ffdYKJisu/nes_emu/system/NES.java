@@ -4,13 +4,9 @@
  */
 package ffdYKJisu.nes_emu.system;
 
-import java.io.File;
-import java.io.InputStream;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
 import ffdYKJisu.nes_emu.system.cpu.CPU;
 import ffdYKJisu.nes_emu.system.ppu.PPU;
 
@@ -74,6 +70,14 @@ public class NES {
 
 	public CPU getCpu() {
 		return this.cpu;
+	}
+
+	public void reset() {
+		cpu.resetInterrupt();
+	}
+
+	public void step() {
+		cpu.emulateFor(1);		
 	}
 	
 	

@@ -1,0 +1,9 @@
+Instantiate NES
+    Instantiate CPU     
+        Instantiate CPU Memory
+    Instantiate PPU
+        Instantiate PPU Memory
+    Instantiate Cartridge
+    Load Cartridge
+    Reset NES
+    Begin emulation

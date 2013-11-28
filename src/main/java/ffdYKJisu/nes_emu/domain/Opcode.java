@@ -179,7 +179,7 @@ public enum Opcode {
     static {
     	opcodeMap = Maps.newHashMap();    	
     	for (Opcode o : Opcode.values()) {
-    		opcodeMap.put(new uByte(Integer.parseInt(o.getOpcodeBytes(), OPCODE_NUMBER_BASE)), o);
+    		opcodeMap.put(o.getOpcodeBytes(), o);
     	}
     }
     
@@ -199,8 +199,8 @@ public enum Opcode {
     }
     
     
-    public String getOpcodeBytes() {
-    	return opcodeBytes;
+    public uByte getOpcodeBytes() {
+    	return new uByte(Short.parseShort(opcodeBytes, OPCODE_NUMBER_BASE));
     }
     
     public static Opcode getOpcodeByBytes(uByte b) {

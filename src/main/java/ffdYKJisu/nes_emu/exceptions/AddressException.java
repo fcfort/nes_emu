@@ -9,10 +9,13 @@ package ffdYKJisu.nes_emu.exceptions;
  *
  * @author Administrator
  */
-public class bankNotFoundException extends Exception {
+public class AddressException extends Exception {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -6702393265914768379L;
 
-    public bankNotFoundException(String msg) {
+	public AddressException(String msg) {
           super(msg);
-    }
-
+	}
 }

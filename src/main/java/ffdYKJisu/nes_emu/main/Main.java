@@ -4,15 +4,13 @@
  */
 package ffdYKJisu.nes_emu.main;
 
-import java.io.BufferedReader;
-import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ffdYKJisu.nes_emu.debugger.Debugger;
+import ffdYKJisu.nes_emu.debugger.ConsoleDebugger;
 import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
 import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
@@ -38,10 +36,13 @@ public class Main {
 			Cartridge pacmanCart = getCartridge(romName);
 			NES nes = new NES();
 			nes.setCart(pacmanCart);
-			Debugger d = new Debugger(nes);
+			nes.reset();
+			ConsoleDebugger d = new ConsoleDebugger(nes);
 			d.startConsole();
 		} catch (UnableToLoadRomException e) {
 			logger.error("Failed to load rom {}", romName);
+		} catch (IOException e) {
+			logger.error("Failed to create console debugger");
 		}
 
 	}

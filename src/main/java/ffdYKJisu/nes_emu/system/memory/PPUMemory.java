@@ -6,7 +6,7 @@ package ffdYKJisu.nes_emu.system.memory;
 
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
-import ffdYKJisu.nes_emu.exceptions.addressException;
+import ffdYKJisu.nes_emu.exceptions.AddressException;
 
 /**
  *
@@ -129,11 +129,11 @@ public class PPUMemory implements Memory {
         return read(address);
 	}
 
-	public void write(uShort address, uByte val) throws addressException {
+	public void write(uShort address, uByte val) throws AddressException {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
-	public void write(uByte addrH, uByte addrL, uByte val) throws addressException {
+	public void write(uByte addrH, uByte addrL, uByte val) throws AddressException {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
 }
