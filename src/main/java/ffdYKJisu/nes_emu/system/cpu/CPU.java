@@ -14,6 +14,7 @@ import ffdYKJisu.nes_emu.domain.StatusBit;
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
 import ffdYKJisu.nes_emu.exceptions.AddressException;
+import ffdYKJisu.nes_emu.exceptions.AddressingModeException;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 
@@ -260,28 +261,35 @@ public class CPU {
 	 * @return Address of where to perform operation
 	 */
 	public uShort getAddress() {
-		AddressingMode mode =
-			Opcode.getOpcodeByBytes(memory.read(PC)).getAddressingMode();
+		Opcode o = Opcode.getOpcodeByBytes(memory.read(PC));		
+		AddressingMode mode = o.getAddressingMode();
 		uShort addr = null;
 		uShort tempPC = PC;
+				
 		switch (mode) {
 			case IMPLICIT:
+				break;
 			case ACCUMULATOR:
+				break;
 			case IMMEDIATE:
-				return null;
+				break;
 			case ZERO_PAGE:
-				return new uShort(memory.read(tempPC.increment()));
+				addr = new uShort(memory.read(tempPC.increment()));
+				break;
 			case ZERO_PAGE_X:
 				uByte zpAddr = memory.read(tempPC.increment());
-				return new uShort ( zpAddr.increment(X.get()) );
+				addr = new uShort ( zpAddr.increment(X.get()) );
+				break;
 			case ZERO_PAGE_Y:	
-				return new uShort ( 
+				addr = new uShort ( 
 					memory.read(tempPC.increment())
 						.increment(Y.get()) 
 				);
+				break;
 			case RELATIVE:
 				uByte relOffset = memory.read(tempPC.increment());
-				return tempPC.increment(2 + relOffset.get());
+				addr = tempPC.increment(2 + relOffset.get());
+				break;
 			case ABSOLUTE:
 				/*
 				uByte L = memory.read(tempPC.increment());
@@ -290,51 +298,60 @@ public class CPU {
 					tempPC + "," + tempPC.increment() + "," + tempPC.increment(2));
 				System.err.println("Absolute " + L+H+" @" + PC);
 				*/
-				return new uShort(
+				addr = new uShort(
 					memory.read(tempPC.increment(2)),
 					memory.read(tempPC.increment())
 				);
+				break;
 			case ABSOLUTE_X:
-				return new uShort(
+				addr = new uShort(
 					memory.read(tempPC).increment(2),
 					memory.read(tempPC).increment()
 				).increment(X.get());
+				break;
 			case ABSOLUTE_Y:
-				return new uShort(
+				addr = new uShort(
 					memory.read(tempPC).increment(2),
 					memory.read(tempPC).increment()
-				).increment(Y.get());	
+				).increment(Y.get());
+				break;
 			case INDIRECT:
 				addr = new uShort(
 					memory.read(tempPC).increment(2),
 					memory.read(tempPC).increment()
 				);
-				return new uShort(
+				addr = new uShort(
 					memory.read(addr.increment()),
 					memory.read(addr)
 					);
+				break;
 			case INDIRECT_X:
 				addr = new uShort(
 					memory.read(tempPC).increment(2),
 					memory.read(tempPC).increment()
 				).increment(X.get());
-				return new uShort(
+				addr = new uShort(
 					memory.read(addr.increment()),
 					memory.read(addr)
-					);			
+					);
+				break;
 			case INDIRECT_Y:
 				addr = new uShort(
 					memory.read(tempPC).increment(2),
 					memory.read(tempPC).increment()
 				);				
-				return new uShort(
+				addr = new uShort(
 					memory.read(addr.increment()),
 					memory.read(addr)
-					).increment(Y.get());							
+					).increment(Y.get());
+				break;
 			default:
-				return null;
+				logger.error("No matching addressing mode for {}", mode);
+				throw new AddressingModeException(mode.toString());
 		}
-
+		
+		logger.info("Reading opcode {} at PC {} with mode {}. Got final address {}", new Object[]{o, PC, mode, addr});
+		return addr;
 	}
 
 	/**
@@ -637,6 +654,7 @@ public class CPU {
 		}
 		
 		int LDAi() {
+			logger.info("Beginning operation LDAi");
 			incrementPC();
 			A = memory.read(PC);
 			logger.info("LDAi " + A);

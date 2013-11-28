@@ -52,8 +52,14 @@ public class ConsoleDebugger {
                 // If we input the special word then we will mask
                 // the next line.
                 
+                /* run one step */
                 if(line.equalsIgnoreCase("s")) {
                 	nes.step();
+                }
+                
+                /* run forever */
+                if(line.equalsIgnoreCase("r")) {
+                	nes.step(Integer.MAX_VALUE);
                 }
                 else if (line.equalsIgnoreCase("quit") || line.equalsIgnoreCase("exit")) {
                     break;

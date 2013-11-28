@@ -77,7 +77,11 @@ public class NES {
 	}
 
 	public void step() {
-		cpu.emulateFor(1);		
+		step(1);
+	}
+
+	public void step(int maxValue) {
+		cpu.emulateFor(maxValue);		
 	}
 	
 	

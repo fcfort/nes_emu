@@ -245,8 +245,11 @@ public enum Opcode {
 		return cyclesTaken;
 	}
 
-	public String toString() {
-		return ToStringBuilder.reflectionToString(this,ToStringStyle.SHORT_PREFIX_STYLE);
+	// Opcode[opcodeBytes=A9,codeName=LDA,cycles=2,length=2,extraCycleOnBranch=false,
+	// extraCycleOnPageJump=false,addressingMode=Immediate,name=LDAi,ordinal=97]
+	@Override public String toString() {
+		// return ToStringBuilder.reflectionToString(this,ToStringStyle.SHORT_PREFIX_STYLE);
+		return "Opcode["+this.name()+","+this.getOpcodeBytes()+","+this.addressingMode+"]";
 	}
 	
 }
