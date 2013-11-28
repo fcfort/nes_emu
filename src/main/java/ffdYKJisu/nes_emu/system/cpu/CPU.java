@@ -184,7 +184,8 @@ public class CPU {
 	 */
 	public int runStep() {
 		// Read Opcode from PC
-		Opcode op = this.getOpcode();
+		Opcode op = getOpcode();
+		
 		uByte opcodeBytes = op.getOpcodeBytes();
 		// Print instruction to logger
 		logger.info("Got opcode {} with bytes {} at PC {}", new Object[]{op, opcodeBytes, PC});
@@ -341,8 +342,9 @@ public class CPU {
 	 * @return opCode as a uByte
 	 */
 	private Opcode getOpcode() {
-		uByte b = memory.read(PC);
+		uByte b = memory.read(PC);		
 		Opcode o = Opcode.getOpcodeByBytes(b);
+		logger.info("Reading opcode at PC addr {}. Got byte {} and opcode {}", new Object[] {PC, b, o});
 		return o;
 	}
 	

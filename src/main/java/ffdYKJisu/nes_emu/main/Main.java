@@ -33,9 +33,9 @@ public class Main {
 		String romName = "Pac-Man (U) [!].nes";
 
 		try {
-			Cartridge pacmanCart = getCartridge(romName);
+			Cartridge cart = getCartridge(romName);
 			NES nes = new NES();
-			nes.setCart(pacmanCart);
+			nes.setCart(cart);
 			nes.reset();
 			ConsoleDebugger d = new ConsoleDebugger(nes);
 			d.startConsole();
@@ -49,15 +49,15 @@ public class Main {
 
 	public static Cartridge getCartridge(String resourcePath)
 			throws UnableToLoadRomException {
-		InputStream pacmanIs = Main.class.getClassLoader().getResourceAsStream(
+		InputStream romIs = Main.class.getClassLoader().getResourceAsStream(
 				resourcePath);
 
-		if (pacmanIs == null) {
+		if (romIs == null) {
 			logger.error("Failed to load cartridge");
 			throw new UnableToLoadRomException();
 		}
 
-		Cartridge cart = new Cartridge(pacmanIs);
+		Cartridge cart = new Cartridge(romIs);
 
 		return cart;
 	}

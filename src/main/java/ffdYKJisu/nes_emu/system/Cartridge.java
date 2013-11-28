@@ -27,12 +27,14 @@ public class Cartridge {
 
     static final Logger logger = LoggerFactory.getLogger(Cartridge.class);
     
-    byte[] romData;
-    int num16PRGBanks = 0;
-    int num8CHRBanks = 0;
-    int num8RAMBanks = 1;
+    private byte[] romData;
+    private int num16PRGBanks = 0;
+    private int num8CHRBanks = 0;
+    private int num8RAMBanks = 1;
     private final int iNESOffset = 16;
-
+    /** Stores the mirroring (horizontal/vertical) of the cartridge */
+    private Mirroring mirroring;
+    
     public Cartridge(InputStream is) throws UnableToLoadRomException {
         this.loadRom(is);
         this.setValuesFromHeader();
@@ -53,7 +55,6 @@ public class Cartridge {
      * <code>RAM8</code> - 8KB RAM space
      */
     public enum Bank {
-
         PRG16(0x4000), // 16KB
         CHR8(0x2000), // 8KB
         RAM8(0x2000); // 8KB
@@ -68,8 +69,6 @@ public class Cartridge {
         VERTICAL, HORIZONTAL
     };
 
-    /** Stores the mirroring (horizontal/vertical) of the cartridge */
-    Mirroring mirroring;
 
     Byte getByte(int index) {
         try {
@@ -119,7 +118,7 @@ public class Cartridge {
         return ArrayUtils.toPrimitive(bytes.toArray(new Byte[] {}));
     }
 
-    String printcartridgeData() {
+    String printCartridgeData() {
         StringBuffer output = new StringBuffer();
         output.append("There are " + this.num16PRGBanks + " PRG16 Bank(s)\n");
         for (int i = 0; i < this.num16PRGBanks; i++) {
@@ -157,10 +156,9 @@ public class Cartridge {
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
-        sb.append("");
+        StringBuilder sb = new StringBuilder();
         sb.append(printHeaders());
-        sb.append(printcartridgeData());
+        sb.append(printCartridgeData());
         return sb.toString();
     }
 

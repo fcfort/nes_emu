@@ -4,6 +4,9 @@
  */
 package ffdYKJisu.nes_emu.domain;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+
 /**
  *
  * @author Administrator
@@ -95,14 +98,17 @@ public final class uShort {
 	}
 
 	@Override public boolean equals(Object obj) {
-		if (obj instanceof uShort)
-			return this.value == ((uShort) obj).get();
-		return false;
-	}
-
+		   if (obj == null) { return false; }
+		   if (obj == this) { return true; }
+		   if (obj.getClass() != getClass()) {
+		     return false;
+		   }
+		   uByte rhs = (uByte) obj;
+		   return new EqualsBuilder()
+		                 .append(this.get(),rhs.get()).isEquals();
+	}   
+	
 	@Override public int hashCode() {
-		int hash = 5;
-		hash = 13 * hash + this.value;
-		return hash;
+		return new HashCodeBuilder().append(value).toHashCode();
 	}
 }

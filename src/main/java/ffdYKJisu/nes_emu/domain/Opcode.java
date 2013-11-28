@@ -1,8 +1,14 @@
 package ffdYKJisu.nes_emu.domain;
 
 import java.util.Map;
+import java.util.Map.Entry;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
 
@@ -12,7 +18,7 @@ import com.google.common.collect.Maps;
  * @author fcf
  *
  */
-public enum Opcode { 
+public enum Opcode { 	
 	BRK("00", "BRK", 7, 1, AddressingMode.IMPLICIT),
 	ORAix("01", "ORA", 6, 2, AddressingMode.INDIRECT_X),
 	ORAz("05", "ORA", 3, 2, AddressingMode.ZERO_PAGE),
@@ -165,76 +171,82 @@ public enum Opcode {
 	SBCax("FD", "SBC", 4, 3, false, true, AddressingMode.ABSOLUTE_X),
 	INCax("FE", "INC", 7, 3, AddressingMode.ABSOLUTE_X);
 
-    private final String opcodeBytes;
-    private final String codeName;
-    private final int cycles;
-    private final int length;
-    private final boolean extraCycleOnBranch;
-    private final boolean extraCycleOnPageJump;
-    private final AddressingMode addressingMode;
-    
-    private final static int OPCODE_NUMBER_BASE = 16;
-    
-    private static final Map<uByte, Opcode> opcodeMap; 
-    static {
-    	opcodeMap = Maps.newHashMap();    	
-    	for (Opcode o : Opcode.values()) {
-    		opcodeMap.put(o.getOpcodeBytes(), o);
-    	}
-    }
-    
-    Opcode(String opcodeBytes, String codeName, int cycles, int length, AddressingMode addressingMode) {
-        this(opcodeBytes, codeName, cycles, length, false, false, addressingMode);       
-    }
-    
-    Opcode(String opcodeBytes, String codeName, int cycles, int length, boolean extraCycleOnBranch, 
-            boolean extraCycleOnPageJump, AddressingMode addressingMode) {
-        this.opcodeBytes = opcodeBytes;
-        this.codeName = codeName;
-        this.cycles = cycles;
-        this.length = length;
-        this.extraCycleOnBranch = extraCycleOnBranch;
-        this.extraCycleOnPageJump = extraCycleOnPageJump;
-        this.addressingMode = addressingMode;                 
-    }
-    
-    
-    public uByte getOpcodeBytes() {
-    	return new uByte(Short.parseShort(opcodeBytes, OPCODE_NUMBER_BASE));
-    }
-    
-    public static Opcode getOpcodeByBytes(uByte b) {
-    	return opcodeMap.get(b);
-    }
-    
-    public int getCycles() {
-    	return cycles;
-    }
-    
-    public int getLength() {
-    	return length;
-    }
-    
-    public AddressingMode getAddressingMode() {
-    	return addressingMode;
-    }
-    
-    public String getCodeName() { 
-    	return codeName;
-    }
-    
-    public int getCycles(boolean isBranch, boolean isJump) {
-    	int cyclesTaken = cycles;   
-    	if(isBranch && extraCycleOnBranch) { 
-    		cyclesTaken++;
-    	}
-    	if(isJump && extraCycleOnPageJump) {
-    		cyclesTaken++;
-    	}
-    	return cyclesTaken;
-    }
-  
-    public String toString() {
-    	return ToStringBuilder.reflectionToString(this);
-    }
+	private static final Logger logger = LoggerFactory.getLogger(Opcode.class);
+	
+	private final String opcodeBytes;
+	private final String codeName;
+	private final int cycles;
+	private final int length;
+	private final boolean extraCycleOnBranch;
+	private final boolean extraCycleOnPageJump;
+	private final AddressingMode addressingMode;
+
+	private final static int OPCODE_NUMBER_BASE = 16;
+
+	private static final Map<uByte, Opcode> opcodeMap;
+	static {
+		opcodeMap = Maps.newHashMap();		
+		for (Opcode o : Opcode.values()) {
+			opcodeMap.put(o.getOpcodeBytes(), o);
+			// logger.info("Mapping byte {} to opcode {}", o.getOpcodeBytes(), o);
+		}
+	}
+
+	Opcode(String opcodeBytes, String codeName, int cycles, int length,
+			AddressingMode addressingMode) {
+		this(opcodeBytes, codeName, cycles, length, false, false,
+				addressingMode);
+	}
+
+	Opcode(String opcodeBytes, String codeName, int cycles, int length,
+			boolean extraCycleOnBranch, boolean extraCycleOnPageJump,
+			AddressingMode addressingMode) {
+		this.opcodeBytes = opcodeBytes;
+		this.codeName = codeName;
+		this.cycles = cycles;
+		this.length = length;
+		this.extraCycleOnBranch = extraCycleOnBranch;
+		this.extraCycleOnPageJump = extraCycleOnPageJump;
+		this.addressingMode = addressingMode;
+	}
+
+	public uByte getOpcodeBytes() {
+		return new uByte(Short.parseShort(opcodeBytes, OPCODE_NUMBER_BASE));
+	}
+
+	public static Opcode getOpcodeByBytes(uByte b) {		
+		return opcodeMap.get(b);
+	}
+
+	public int getCycles() {
+		return cycles;
+	}
+
+	public int getLength() {
+		return length;
+	}
+
+	public AddressingMode getAddressingMode() {
+		return addressingMode;
+	}
+
+	public String getCodeName() {
+		return codeName;
+	}
+
+	public int getCycles(boolean isBranch, boolean isJump) {
+		int cyclesTaken = cycles;
+		if (isBranch && extraCycleOnBranch) {
+			cyclesTaken++;
+		}
+		if (isJump && extraCycleOnPageJump) {
+			cyclesTaken++;
+		}
+		return cyclesTaken;
+	}
+
+	public String toString() {
+		return ToStringBuilder.reflectionToString(this,ToStringStyle.SHORT_PREFIX_STYLE);
+	}
+	
 }
