@@ -75,4 +75,5 @@ public class Stack implements Memory {
 			throws AddressException {
 		stack[addrL.get()] = val;
 	}
+	
 }

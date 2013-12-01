@@ -42,17 +42,15 @@ public class CPU {
 	private StatusBit P;
 	private final CPUMemory memory;
 	private boolean cpuIsRunning;
-	/** Holds private Instruction class */
-	Instruction i;
+	private int cyclesRun;
 	/** Holds Stack object for stack instructions to use */
 	Stack S;	
 	private final NES nes;
 	
 	public CPU(NES nes) {		
-		logger.info("CPU has been reinitiated");
+		logger.info("CPU has been initiated");	
 		this.nes = nes;
-		// Initialize instruction class
-		i = new Instruction();
+		cyclesRun = 0;
 		// Initialize stack
 		S = new Stack();
 		// Set up State registers
@@ -112,6 +110,10 @@ public class CPU {
 
 	public void setSP(uByte SP) {
 		this.S.set(SP);
+	}
+	
+	public CPUMemory getMemory() {
+		return memory;
 	}
 
 	public void resetInterrupt() {				
@@ -192,12 +194,13 @@ public class CPU {
 		logger.info("Got opcode {} with bytes {} at PC {}", new Object[]{op, opcodeBytes, PC});
 		// Print CPU state to log
 		// Process instructions for op
-		int cyclesTaken = this.processOp( opcodeBytes);
+		int cyclesBefore = this.cyclesRun; 
+		this.processOp(op);
 		// Increment PC
 		PC = PC.increment(op.getLength());
 		
 		// Return time taken
-		return cyclesTaken;
+		return this.cyclesRun - cyclesBefore;
 	}
 
 	/**
@@ -372,106 +375,76 @@ public class CPU {
 	 * @param Opcode value as a uByte
 	 * @return Number of cycles taken for the instruction
 	 */
-	private int processOp(uByte opCode) {
-		switch ((int) opCode.get()) {
+	private void processOp(Opcode op) {
+		switch (op) {
 			// ADCi - Add with Carry immediate
-			case 0x69:
-				return i.ADCi();
+			case ADCi: ADCi(); break;
 			// BEQ - Branch if Equal
-			case 0xF0:
-				return i.BEQ();
+			case BEQ: BEQ(); break;
 			// BNE - Branch if Not Equal
-			case 0xD0:
-				return i.BNE();
+			case BNE: BNE(); break;
 			// BPL - Branch if Positive
-			case 0x10:
-				return i.BPL();
+			case BPL: BPL(); break;
 			// CLC - Clear Carry Flag
-			case 0x18:
-				return i.CLC();
+			case CLC: CLC(); break;
 			// CLD - Clear Decimal Mode
-			case 0xD8:
-				return i.CLD();
+			case CLD: CLD(); break;
 			// CMPay - Compare A register absolute Y
-			case 0xD9:
-				return i.CMPay();
+			case CMPay: CMPay(); break;
 			// CMPz - Compare A register zero page
-			case 0xC5:
-				return i.CMPz();
+			case CMPz: CMPz(); break;
 			// CPXz - Compare X Register
-			case 0xE4:
-				return i.CPXz();
+			case CPXz: CPXz(); break;
 			// CPYi - Compare Y Register immediate
-			case 0xC0:
-				return i.CPYi();
+			case CPYi: CPYi(); break;
 			// DEX - Decrement X Register
-			case 0xCA:
-				return i.DEX();
+			case DEX: DEX(); break;
 			// INCz - Increment CPUMemory zero page
-			case 0xE6:
-				return i.INCz();
+			case INCz: INCz(); break;
 			// INY - Increment Y Register
-			case 0xC8:
-				return i.INY();
+			case INY: INY(); break;
 			// JMPa - Jump
-			case 0x4C:
-				return i.JMPa();
+			case JMPa: JMPa(); break;
 			// JSR - Jump to Subroutine
-			case 0x20:
-				return i.JSR();
+			case JSRa: JSR(); break;
 			// LDA - Load Accumulator
-			case 0xA9:
-			case 0xAD:
-			case 0xB9:
-			case 0xA5:
-				return i.LDA();
+			case LDAa: LDAa(); break;			
+			case LDAay: LDAay(); break;
+			case LDAi: LDAi(); break;
+			case LDAz: LDAz(); break;
 			// LDXi - Load X Register
-			case 0xA2:
-				return i.LDXi();
+			case LDXi: LDXi(); break;
 			// LDYi - Load Y Register immediate
-			case 0xA0:
-				return i.LDYi();
+			case LDYi: LDYi(); break;
 			// ROLax - Rotate Left absolute X
-			case 0x3E:
-				return i.ROLax();
+			case ROLax: ROLax(); break;
 			// RTS - Return from Subroutine
-			case 0x60:
-				return i.RTS();
+			case RTS: RTS(); break;
 			// SEI - Set Interrupt Disable
-			case 0x78:
-				return i.SEI();
+			case SEI: SEI(); break;
 			// STA - Store Accumulator
-			case 0x8D:
-			case 0x99:
-			case 0x91:
-			case 0x85:
-				return i.STA();
+			case STAa: STAa(); break;
+			case STAay: STAay(); break;
+			case STAiy: STAiy(); break;
+			case STAz: STAz(); break;
 			// STYz - Store Y Register zero page
-			case 0x84:
-				return i.STYz();
+			case STYz: STYz(); break;
 			// TAX - Transfer Accumulator to X	
-			case 0xAA:
-				return i.TAX();
+			case TAX: TAX(); break;
 			// TAY - Transfer Accumulator to Y
-			case 0xA8:
-				return i.TAY();
+			case TAY: TAY(); break;
 			// TXS - Transfer X to Stack Pointer
-			case 0x9A:
-				return i.TXS();
+			case TXS: TXS(); break;
 			// TYA - Transfer Y to Accumulator
-			case 0x98:
-				return i.TYA();
+			case TYA: TYA(); break;
 			default:
-				logger.info(
-					"Opcode (" + opCode + ") not yet implemented");
-				throw new UnsupportedOperationException(
-					"Opcode (" + opCode + ") not yet implemented");
+				logger.info("Opcode {} not yet implemented", op);
+				throw new UnsupportedOperationException("Opcode (" + op + ") not yet implemented");
+				//PC.increment(op.getLength());
 		}
 	}
 
-	private class Instruction {
-
-		int ADCi() {
+		private void ADCi() {
 			incrementPC();
 			uByte val = memory.read(PC);
 			incrementPC();
@@ -487,10 +460,10 @@ public class CPU {
 			A = new uByte(temp);
 			P.setZero(A.get() == 0);
 			P.setNegative(A.isNegative());
-			return 2;
+			// return 2;
 		}
 
-		int BEQ() {
+		private void BEQ() {
 			uShort curAddr = PC;
 			incrementPC();
 			uByte relOffset = memory.read(PC);
@@ -498,14 +471,14 @@ public class CPU {
 			if (CPU.this.P.isSetZero()) {
 				uShort newAddr = PC.increment(relOffset.toSigned());
 				CPU.this.setPC(newAddr);
-				if (this.pageJumped(curAddr, newAddr))
-					return 4;
-				return 3;
+				if (this.pageJumped(curAddr, newAddr)){}
+					//return 4;
+				//return 3;
 			}
-			return 2;
+			//return 2;
 		}
 
-		int BNE() {
+		private void BNE() {
 			short pageBeforeJump = PC.getUpper().get();
 			incrementPC();
 			uByte relOffset = memory.read(PC);
@@ -514,14 +487,14 @@ public class CPU {
 			logger.info("BNE " + relOffset + " @" + newPC);
 			if (!P.isSetZero()) {
 				CPU.this.setPC(PC.increment(relOffset.toSigned()));
-				if (PC.getUpper().get() != pageBeforeJump)
-					return 4;
-				return 3;
+				if (PC.getUpper().get() != pageBeforeJump){}
+					//return 4; 
+				//return 3;
 			}
-			return 2;
+			//return 2;
 		}
 
-		int BPL() {
+		private void BPL() {
 			short pageBeforeJump = PC.getUpper().get();
 			incrementPC();
 			uByte relOffset = memory.read(PC);
@@ -532,73 +505,73 @@ public class CPU {
 
 			if (!P.isSetNegative()) {
 				CPU.this.setPC(PC.increment(relOffset.toSigned()));
-				if (PC.getUpper().get() != pageBeforeJump)
-					return 4;
-				return 3;
+				if (PC.getUpper().get() != pageBeforeJump){}
+					//return 4;
+				//return 3;
 			}
-			return 2;
+			//return 2;
 		}
 
-		int CLC() {
+		private void CLC() {
 			P.clearZero();
 			incrementPC();
-			return 2;
+			//return 2;
 		}
 
-		int CLD() {
+		private void CLD() {
 			logger.info("CLD");
 			P.clearDecimal();
-			return 2;
+			//return 2;
 		}
 
-		int CMPz() {
+		private void CMPz() {
 			incrementPC();
 			uByte value = memory.read(memory.read(PC));
 			this.compare(A, value);
 			incrementPC();
-			return 3;
+			// return 3;
 		}
 
-		int CMPay() {
+		private void CMPay() {
 			incrementPC();
 			uShort addr = readBytesAsAddress(PC);
 			CPU.this.setPC(PC.increment(2));
 			uShort newAddr = this.toAbsoluteYAddress(addr);
 			this.compare(CPU.this.getA(), CPU.this.memory.read(newAddr));
-			if (this.pageJumped(addr, newAddr))
-				return 5;
-			return 4;
+			if (this.pageJumped(addr, newAddr)) {}
+				//return 5;
+			//return 4;
 		}
 
-		int CPXz() {
+		private void CPXz() {
 			incrementPC();
 			uByte tempByte = memory.read(PC); // get zero page offset
 			logger.info( "CPXz " + tempByte);
 			tempByte = memory.read(tempByte); // read from zero page
 			compare(X, tempByte);
 			incrementPC();
-			return 3;
+			//return 3;
 		}
 
-		int CPYi() {
+		private void CPYi() {
 			incrementPC();
 			// Check zero
 			uByte tempByte = new uByte(memory.read(PC));
 			logger.info("CPYi " + tempByte);
 			compare(Y, tempByte);
 			incrementPC();
-			return 2;
+			//return 2;
 		}
 
-		int DEX() {
+		private void DEX() {
 			incrementPC();
 			X = X.decrement();
 			P.setZero(X.get() == 0);
 			P.setNegative(X.isNegative());
-			return 2;
+			// return 2;
 		}
 
-		int INCz() {
+		private void INCz() {
 			incrementPC();
 			uByte zpAddress = new uByte(memory.read(PC));
 			logger.info("INCz " + zpAddress);
@@ -612,48 +585,48 @@ public class CPU {
 			P.setNegative(zpValue.isNegative());
 			P.setZero(zpValue.get() == 0);
 			incrementPC();
-			return 5;
+			//return 5;
 		}
 
-		int INY() {
+		private void INY() {
 			incrementPC();
 			CPU.this.setY(Y.increment());
 			P.setNegative(Y.isNegative());
 			P.setZero(Y.get() == 0);
 			logger.info( "INY");
-			return 2;
+			// return 2;
 		}
 
-		int JMPa() {
+		private void JMPa() {
 			incrementPC();
 			uByte L = new uByte(memory.read(PC));
 			incrementPC();
 			uByte H = new uByte(memory.read(PC));
 			PC = new uShort(H, L);
 			logger.info( "JMPa " + H + L);
-			return 3;
+			// return 3;
 		}
 
-		int JSR() {
+		private void JSR() {
 			incrementPC();
 			uShort subAddr = this.readBytesAsAddress(PC);
 			incrementPC();
 			S.push(CPU.this.PC.getUpper());
 			S.push(CPU.this.PC.getLower());
 			CPU.this.setPC(subAddr);
-			return 6;
+			//return 6;
 		}
 
-		int LDA() {
+		private void LDA() {
 			uShort addr = getAddress();
 			A = memory.read(addr);
 			P.setZero(A.get() == 0);
 			P.setNegative(A.isNegative());
 			//return opCodeData.getCycles( getOpcode() , false, false );
-			return getOpcode().getCycles();
+			//return getOpcode().getCycles();
 		}
 		
-		int LDAi() {
+		private void LDAi() {
 			logger.info("Beginning operation LDAi");
 			incrementPC();
 			A = memory.read(PC);
@@ -667,10 +640,10 @@ public class CPU {
 			else
 				P.clearNegative();
 			incrementPC();
-			return 2;
+			//return 2;
 		}
 
-		int LDAa() {
+		private void LDAa() {
 			incrementPC();
 			uByte L = new uByte(memory.read(PC));
 			incrementPC();
@@ -680,10 +653,10 @@ public class CPU {
 			P.setZero(A.get() == 0);
 			P.setNegative(A.isNegative());
 			incrementPC();
-			return 4;
+			//return 4;
 		}
 
-		int LDAay() {
+		private void LDAay() {
 			incrementPC();
 			uShort addr = readBytesAsAddress(PC);
 			CPU.this.setPC(PC.increment(2));
@@ -692,22 +665,22 @@ public class CPU {
 			P.setZero(A.get() == 0);
 			P.setNegative(A.isNegative());
 			//CPU.this.setPC(PC.increment());
-			if (this.pageJumped(addr, newAddr))
-				return 5;
-			else
-				return 4;
+			if (this.pageJumped(addr, newAddr)) {}
+				//return 5;
+			else {}
+				//return 4;
 		}
 
-		int LDAz() {
+		private void LDAz() {
 			incrementPC();
 			A = memory.read(memory.read(PC));
 			P.setZero(A.get() == 0);
 			P.setNegative(A.isNegative());
 			incrementPC();
-			return 3;
+			// return 3;
 		}
 
-		int LDXi() {
+		private void LDXi() {
 			incrementPC();
 			X = memory.read(PC);
 			logger.info( "LDXi " + X);
@@ -720,10 +693,10 @@ public class CPU {
 			else
 				P.clearZero();
 			incrementPC();
-			return 2;
+			//return 2;
 		}
 
-		int LDYi() {
+		private void LDYi() {
 			incrementPC();
 			Y = memory.read(PC);
 			logger.info("LDYi " + Y);
@@ -736,10 +709,10 @@ public class CPU {
 			else
 				P.clearZero();
 			incrementPC();
-			return 2;
+			// return 2;
 		}
 
-		int ROLax() {
+		private void ROLax() {
 			incrementPC();
 			uByte L = new uByte(memory.read(PC));
 			incrementPC();
@@ -754,25 +727,25 @@ public class CPU {
 				P.clearCarry();
 			rotate.rotateLeft(P.isSetCarry());
 			logger.info("ROLax " + H + L);
-			return 7;
+			//return 7;
 		}
 
-		int RTS() {
+		private void RTS() {
 			uByte L = S.pull();
 			uByte H = S.pull();
 			uShort addr = new uShort(H, L);
 			CPU.this.setPC(addr);
 			incrementPC();
-			return 6;
+			//return 6;
 		}
 
-		int SEI() {
+		private void SEI() {
 			logger.info( "SEI");
 			P.setInterruptDisable();
-			return 2;
+			//return 2;
 		}
 
-		int STA() {
+		private void STA() {
 			uShort addr = getAddress();
 			try {
 				memory.write( addr, A );
@@ -781,10 +754,10 @@ public class CPU {
 					ex + " addr" + addr + " PC " + PC );
 				System.err.println( " addr" + addr + " PC " + PC );
 			}
-			return getOpcode().getCycles();
+			//return getOpcode().getCycles();
 		}
 		
-		int STAa() {
+		private void STAa() {
 			incrementPC();
 			uByte L = new uByte(memory.read(PC));
 			incrementPC();
@@ -797,10 +770,10 @@ public class CPU {
 				System.out.println("HL addr" + H + L + " PC " + PC);
 			}
 			incrementPC();
-			return 4;
+			//return 4;
 		}
 
-		int STAay() {
+		private void STAay() {
 			incrementPC();
 			uByte L = new uByte(memory.read(PC));
 			incrementPC();
@@ -814,10 +787,10 @@ public class CPU {
 			}
 			incrementPC();
 			logger.info("STAay " + H + L);
-			return 5;
+			//return 5;
 		}
 
-		int STAiy() {
+		private void STAiy() {
 			incrementPC();
 			uByte offset = new uByte(memory.read(PC));
 			uByte L = new uByte(memory.read(offset));
@@ -833,10 +806,10 @@ public class CPU {
 			}
 			logger.info("STAiy " + offset);
 			incrementPC();
-			return 6;
+			// return 6;
 		}
 
-		int STAz() {
+		private void STAz() {
 			incrementPC();
 			try {
 				memory.write(memory.read(memory.read(PC)), CPU.this.getA());
@@ -844,10 +817,10 @@ public class CPU {
 				logger.warn(ex + "PC: " + PC);
 			}
 			incrementPC();
-			return 3;
+			//return 3;
 		}
 
-		int STYz() {
+		private void STYz() {
 			incrementPC();
 			uByte zpAddr = CPU.this.memory.read(CPU.this.getPC());
 			incrementPC();
@@ -856,39 +829,39 @@ public class CPU {
 			} catch (AddressException ex) {
 				logger.warn(ex + " STYz at ZP addr:" + zpAddr + "Y:" + CPU.this.getY());
 			}
-			return 3;
+			//return 3;
 		}
 
-		int TAX() {
+		private void TAX() {
 			incrementPC();
 			X = A;
 			P.setNegative(X.isNegative());
 			P.setZero(X.get() == 0);
-			return 2;
+			//return 2;
 		}
 
-		int TAY() {
+		private void TAY() {
 			incrementPC();
 			Y = A;
 			P.setNegative(Y.isNegative());
 			P.setZero(Y.get() == 0);
 			logger.info("TAY");
-			return 2;
+			//return 2;
 		}
 
-		int TXS() {
+		private void TXS() {
 			incrementPC();
-			CPU.this.S.set(X);
+			S.set(X);
 			logger.info("TXS");
-			return 2;
+			//return 2;
 		}
 
-		int TYA() {
+		private void TYA() {
 			incrementPC();
 			A = Y;
 			P.setNegative(Y.isNegative());
 			P.setZero(Y.get() == 0);
-			return 2;
+			//return 2;
 		}
 // ------------------------
 // Helper functions
@@ -968,47 +941,4 @@ public class CPU {
 			}
 		}
 	}
-
-	private class Stack {
-
-		/**
-		 * Holds the current offset into the 1-page (stack) for the next 
-		 * available
-		 * empty spot for pushing to the stack
-		 */
-		private uByte stackPointer = new uByte(0xFF);
-		private final uShort stackOffset = new uShort(0x100);
-
-		uByte get() {
-			return stackPointer;
-		}
-
-		void set(uByte sp) {
-			stackPointer = sp;
-		}
-
-		uByte pull() {
-			stackPointer = new uByte(stackPointer.increment());
-			uShort addr = new uShort(stackPointer.get() + stackOffset.get());
-			uByte val = CPU.this.memory.read(addr);
-			//System.out.println("Pulling " + val + " from " + addr);
-			return val;
-		}
-
-		void push(uByte val) {
-			uShort addr = new uShort(stackPointer.get() + stackOffset.get());
-			try {
-				CPU.this.memory.write(addr, val);
-			//System.out.println("Pushing " + val + " to " + addr);
-			} catch (AddressException ex) {
-				logger.warn(ex + "Error pushing " + val + " to " + addr);
-			}
-			stackPointer = new uByte(stackPointer.decrement());
-		}
-	}
-
-	public CPUMemory getMemory() {
-		return this.memory;
-	}
-}
 
