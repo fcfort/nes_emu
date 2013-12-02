@@ -203,7 +203,7 @@ public class CPU {
 		int cyclesBefore = this.cyclesRun; 
 		this.processOp(op);
 		// Increment PC
-		PC = PC.increment(op.getLength());
+		incrementPC(op.getLength());
 		
 		// Return time taken
 		return this.cyclesRun - cyclesBefore;
@@ -412,7 +412,7 @@ public class CPU {
 			// JMPa - Jump
 			case JMPa: JMPa(); break;
 			// JSR - Jump to Subroutine
-			case JSRa: JSR(); break;
+			case JSR: JSR(); break;
 			// LDA - Load Accumulator
 			case LDAa: LDAa(); break;			
 			case LDAay: LDAay(); break;
@@ -466,7 +466,6 @@ public class CPU {
 			A = new uByte(temp);
 			P.setZero(A.get() == 0);
 			P.setNegative(A.isNegative());
-			incrementPC(2);
 		}
 
 		private void BEQ() {
@@ -520,14 +519,13 @@ public class CPU {
 
 		private void CLC() {
 			P.clearZero();
-			incrementPC();
-			//return 2;
+			this.cyclesTaken += Opcode.CLC.getCycles();
 		}
 
 		private void CLD() {
 			logger.info("CLD");
 			P.clearDecimal();
-			//return 2;
+			this.cyclesTaken += Opcode.CLD.getCycles();
 		}
 
 		private void CMPz() {
@@ -535,7 +533,7 @@ public class CPU {
 			uByte value = memory.read(memory.read(PC));
 			this.compare(A, value);
 			incrementPC();
-			// return 3;
+			this.cyclesTaken += Opcode.CMPz.getCycles();
 		}
 
 		private void CMPay() {
@@ -556,7 +554,7 @@ public class CPU {
 			tempByte = memory.read(tempByte); // read from zero page
 			compare(X, tempByte);
 			incrementPC();
-			//return 3;
+			this.cyclesTaken += Opcode.CPXz.getCycles();
 		}
 
 		private void CPYi() {
@@ -566,7 +564,7 @@ public class CPU {
 			logger.info("CPYi " + tempByte);
 			compare(Y, tempByte);
 			incrementPC();
-			//return 2;
+			this.cyclesTaken += Opcode.CPYi.getCycles();
 		}
 
 		private void DEX() {
@@ -574,7 +572,7 @@ public class CPU {
 			X = X.decrement();
 			P.setZero(X.get() == 0);
 			P.setNegative(X.isNegative());
-			// return 2;
+			this.cyclesTaken += Opcode.DEX.getCycles();
 		}
 
 		private void INCz() {
@@ -591,7 +589,7 @@ public class CPU {
 			P.setNegative(zpValue.isNegative());
 			P.setZero(zpValue.get() == 0);
 			incrementPC();
-			//return 5;
+			this.cyclesTaken += Opcode.INCz.getCycles();
 		}
 
 		private void INY() {
@@ -600,7 +598,7 @@ public class CPU {
 			P.setNegative(Y.isNegative());
 			P.setZero(Y.get() == 0);
 			logger.info( "INY");
-			// return 2;
+			this.cyclesTaken += Opcode.INY.getCycles();
 		}
 
 		private void JMPa() {
@@ -610,7 +608,7 @@ public class CPU {
 			uByte H = new uByte(memory.read(PC));
 			PC = new uShort(H, L);
 			logger.info( "JMPa " + H + L);
-			// return 3;
+			this.cyclesTaken += Opcode.JMPa.getCycles();
 		}
 
 		private void JSR() {
@@ -620,16 +618,7 @@ public class CPU {
 			S.push(CPU.this.PC.getUpper());
 			S.push(CPU.this.PC.getLower());
 			CPU.this.setPC(subAddr);
-			//return 6;
-		}
-
-		private void LDA() {
-			uShort addr = getAddress();
-			A = memory.read(addr);
-			P.setZero(A.get() == 0);
-			P.setNegative(A.isNegative());
-			//return opCodeData.getCycles( getOpcode() , false, false );
-			//return getOpcode().getCycles();
+			this.cyclesTaken += Opcode.JSR.getCycles();
 		}
 		
 		private void LDAi() {
@@ -646,7 +635,7 @@ public class CPU {
 			else
 				P.clearNegative();
 			incrementPC();
-			//return 2;
+			this.cyclesTaken += Opcode.LDAi.getCycles();
 		}
 
 		private void LDAa() {
@@ -659,7 +648,7 @@ public class CPU {
 			P.setZero(A.get() == 0);
 			P.setNegative(A.isNegative());
 			incrementPC();
-			//return 4;
+			this.cyclesTaken += Opcode.LDAa.getCycles();
 		}
 
 		private void LDAay() {
@@ -683,7 +672,7 @@ public class CPU {
 			P.setZero(A.get() == 0);
 			P.setNegative(A.isNegative());
 			incrementPC();
-			// return 3;
+			this.cyclesTaken += Opcode.LDAz.getCycles();
 		}
 
 		private void LDXi() {
@@ -699,7 +688,7 @@ public class CPU {
 			else
 				P.clearZero();
 			incrementPC();
-			//return 2;
+			this.cyclesTaken += Opcode.LDXi.getCycles();
 		}
 
 		private void LDYi() {
@@ -715,7 +704,7 @@ public class CPU {
 			else
 				P.clearZero();
 			incrementPC();
-			// return 2;
+			this.cyclesTaken += Opcode.LDYi.getCycles();
 		}
 
 		private void ROLax() {
@@ -733,7 +722,7 @@ public class CPU {
 				P.clearCarry();
 			rotate.rotateLeft(P.isSetCarry());
 			logger.info("ROLax " + H + L);
-			//return 7;
+			this.cyclesTaken += Opcode.ROLax.getCycles();
 		}
 
 		private void RTS() {
@@ -742,13 +731,13 @@ public class CPU {
 			uShort addr = new uShort(H, L);
 			CPU.this.setPC(addr);
 			incrementPC();
-			//return 6;
+			this.cyclesTaken += Opcode.RTS.getCycles();
 		}
 
 		private void SEI() {
 			logger.info( "SEI");
 			P.setInterruptDisable();
-			//return 2;
+			this.cyclesTaken += Opcode.SEI.getCycles();
 		}
 
 		private void STA() {
@@ -760,7 +749,7 @@ public class CPU {
 					ex + " addr" + addr + " PC " + PC );
 				System.err.println( " addr" + addr + " PC " + PC );
 			}
-			//return getOpcode().getCycles();
+			this.cyclesTaken += Opcode.STA.getCycles();
 		}
 		
 		private void STAa() {
@@ -776,7 +765,7 @@ public class CPU {
 				System.out.println("HL addr" + H + L + " PC " + PC);
 			}
 			incrementPC();
-			//return 4;
+			this.cyclesTaken += Opcode.STAa.getCycles();
 		}
 
 		private void STAay() {
@@ -793,7 +782,7 @@ public class CPU {
 			}
 			incrementPC();
 			logger.info("STAay " + H + L);
-			//return 5;
+			this.cyclesTaken += Opcode.STAay.getCycles();
 		}
 
 		private void STAiy() {
@@ -812,7 +801,7 @@ public class CPU {
 			}
 			logger.info("STAiy " + offset);
 			incrementPC();
-			// return 6;
+			this.cyclesTaken += Opcode.STAiy.getCycles();
 		}
 
 		private void STAz() {
@@ -823,7 +812,7 @@ public class CPU {
 				logger.warn(ex + "PC: " + PC);
 			}
 			incrementPC();
-			//return 3;
+			this.cyclesTaken += Opcode.STAz.getCycles();
 		}
 
 		private void STYz() {
@@ -835,7 +824,7 @@ public class CPU {
 			} catch (AddressException ex) {
 				logger.warn(ex + " STYz at ZP addr:" + zpAddr + "Y:" + CPU.this.getY());
 			}
-			//return 3;
+			this.cyclesTaken += Opcode.STYz.getCycles();
 		}
 
 		private void TAX() {
@@ -843,7 +832,7 @@ public class CPU {
 			X = A;
 			P.setNegative(X.isNegative());
 			P.setZero(X.get() == 0);
-			//return 2;
+			this.cyclesTaken += Opcode.TAX.getCycles();
 		}
 
 		private void TAY() {
@@ -852,14 +841,14 @@ public class CPU {
 			P.setNegative(Y.isNegative());
 			P.setZero(Y.get() == 0);
 			logger.info("TAY");
-			//return 2;
+			this.cyclesTaken += Opcode.TAY.getCycles();
 		}
 
 		private void TXS() {
 			incrementPC();
 			S.set(X);
 			logger.info("TXS");
-			//return 2;
+			this.cyclesTaken += Opcode.TXS.getCycles();
 		}
 
 		private void TYA() {
@@ -867,7 +856,7 @@ public class CPU {
 			A = Y;
 			P.setNegative(Y.isNegative());
 			P.setZero(Y.get() == 0);
-			//return 2;
+			this.cyclesTaken += Opcode.TYA.getCycles();
 		}
 // ------------------------
 // Helper functions
