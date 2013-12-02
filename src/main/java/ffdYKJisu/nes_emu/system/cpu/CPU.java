@@ -150,7 +150,7 @@ public class CPU {
 	}
 
 	private void incrementPC(int increment) {
-		for ( int i=0; i < increment; i++) {
+		for ( int i=0; i < increment; i++ ) {
 			incrementPC();
 		}
 	}
@@ -373,6 +373,100 @@ public class CPU {
 		logger.info("Reading opcode at PC addr {}. Got byte {} and opcode {}", new Object[] {PC, b, o});
 		return o;
 	}
+	
+	/**
+	 * Get a reference to a byte of memory by addressing mode
+	 * 
+	 **/
+	 private uByte read(uShort address, AddressingMode mode) {
+		switch (mode) {
+			case IMPLICIT:
+				break;
+			case ACCUMULATOR:
+				break;
+			case IMMEDIATE:
+				break;
+			case ZERO_PAGE:
+				addr = new uShort(memory.read(tempPC.increment()));
+				break;
+			case ZERO_PAGE_X:
+				uByte zpAddr = memory.read(tempPC.increment());
+				addr = new uShort ( zpAddr.increment(X.get()) );
+				break;
+			case ZERO_PAGE_Y:	
+				addr = new uShort ( 
+					memory.read(tempPC.increment())
+						.increment(Y.get()) 
+				);
+				break;
+			case RELATIVE:
+				uByte relOffset = memory.read(tempPC.increment());
+				addr = tempPC.increment(2 + relOffset.get());
+				break;
+			case ABSOLUTE:
+				/*
+				uByte L = memory.read(tempPC.increment());
+				uByte H = memory.read(tempPC.increment(2));
+				System.err.println(
+					tempPC + "," + tempPC.increment() + "," + tempPC.increment(2));
+				System.err.println("Absolute " + L+H+" @" + PC);
+				*/
+				addr = new uShort(
+					memory.read(tempPC.increment(2)),
+					memory.read(tempPC.increment())
+				);
+				break;
+			case ABSOLUTE_X:
+				addr = new uShort(
+					memory.read(tempPC).increment(2),
+					memory.read(tempPC).increment()
+				).increment(X.get());
+				break;
+			case ABSOLUTE_Y:
+				addr = new uShort(
+					memory.read(tempPC).increment(2),
+					memory.read(tempPC).increment()
+				).increment(Y.get());
+				break;
+			case INDIRECT:
+				addr = new uShort(
+					memory.read(tempPC).increment(2),
+					memory.read(tempPC).increment()
+				);
+				addr = new uShort(
+					memory.read(addr.increment()),
+					memory.read(addr)
+					);
+				break;
+			case INDIRECT_X:
+				addr = new uShort(
+					memory.read(tempPC).increment(2),
+					memory.read(tempPC).increment()
+				).increment(X.get());
+				addr = new uShort(
+					memory.read(addr.increment()),
+					memory.read(addr)
+					);
+				break;
+			case INDIRECT_Y:
+				addr = new uShort(
+					memory.read(tempPC).increment(2),
+					memory.read(tempPC).increment()
+				);				
+				addr = new uShort(
+					memory.read(addr.increment()),
+					memory.read(addr)
+					).increment(Y.get());
+				break;
+			default:
+				logger.error("No matching addressing mode for {}", mode);
+				throw new AddressingModeException(mode.toString());
+		}
+		
+		logger.info("Reading opcode {} at PC {} with mode {}. Got final address {}", new Object[]{o, PC, mode, addr});
+		return addr;
+	 }
+	 
 	
 	
 	/**
