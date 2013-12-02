@@ -149,6 +149,12 @@ public class CPU {
 		S.set(new uByte(0xff));
 	}
 
+	private void incrementPC(int increment) {
+		for ( int i=0; i < increment; i++) {
+			incrementPC();
+		}
+	}
+	
 	private void incrementPC() {
 		PC = PC.increment();
 	}
@@ -460,7 +466,7 @@ public class CPU {
 			A = new uByte(temp);
 			P.setZero(A.get() == 0);
 			P.setNegative(A.isNegative());
-			// return 2;
+			incrementPC(2);
 		}
 
 		private void BEQ() {
@@ -731,8 +737,8 @@ public class CPU {
 		}
 
 		private void RTS() {
-			uByte L = S.pull();
-			uByte H = S.pull();
+			uByte L = S.pop();
+			uByte H = S.pop();
 			uShort addr = new uShort(H, L);
 			CPU.this.setPC(addr);
 			incrementPC();

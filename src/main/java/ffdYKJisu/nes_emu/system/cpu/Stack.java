@@ -35,7 +35,7 @@ public class Stack implements Memory {
         stackPointer = sp;
     }
 
-    public uByte pull() {
+    public uByte pop() {
         stackPointer = new uByte(stackPointer.increment());
         uShort addr = new uShort(stackPointer.get() + stackOffset.get());
         uByte val = this.read(addr);
