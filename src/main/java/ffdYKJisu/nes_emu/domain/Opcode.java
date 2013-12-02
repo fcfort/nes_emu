@@ -36,7 +36,7 @@ public enum Opcode {
 	ORAay("19", "ORA", 4, 3, false, true, AddressingMode.ABSOLUTE_Y),
 	ORAax("1D", "ORA", 4, 3, false, true, AddressingMode.ABSOLUTE_X),
 	ASLax("1E", "ASL", 7, 3, AddressingMode.ABSOLUTE_X),
-	JSRa("20", "JSR", 6, 3, AddressingMode.ABSOLUTE),
+	JSR("20", "JSR", 6, 3, AddressingMode.ABSOLUTE),
 	ANDix("21", "AND", 6, 2, AddressingMode.INDIRECT_X),
 	BITz("24", "BIT", 3, 2, AddressingMode.ZERO_PAGE),
 	ANDz("25", "AND", 3, 2, AddressingMode.ZERO_PAGE),
