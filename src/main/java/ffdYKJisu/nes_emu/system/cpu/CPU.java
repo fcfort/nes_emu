@@ -379,6 +379,9 @@ public class CPU {
 	 * 
 	 **/
 	 private uByte read(uShort address, AddressingMode mode) {
+		 uByte addressRead;
+		 
+		 
 		switch (mode) {
 			case IMPLICIT:
 				break;
@@ -387,21 +390,21 @@ public class CPU {
 			case IMMEDIATE:
 				break;
 			case ZERO_PAGE:
-				addr = new uShort(memory.read(tempPC.increment()));
+				addressRead = memory.read(address);
 				break;
 			case ZERO_PAGE_X:
-				uByte zpAddr = memory.read(tempPC.increment());
-				addr = new uShort ( zpAddr.increment(X.get()) );
+				uByte zeroPageIndex = memory.read(address);
+				uShort zeroPageXOffset = new uShort(zeroPageIndex.get()+X.get());
+				addressRead = memory.read(zeroPageXOffset);
 				break;
 			case ZERO_PAGE_Y:	
-				addr = new uShort ( 
-					memory.read(tempPC.increment())
-						.increment(Y.get()) 
-				);
+				uByte zeroPageIndex = memory.read(address);
+				uShort zeroPageXOffset = new uShort(zeroPageIndex.get()+X.get());
+				addressRead = memory.read(zeroPageXOffset);
 				break;
 			case RELATIVE:
 				uByte relOffset = memory.read(tempPC.increment());
-				addr = tempPC.increment(2 + relOffset.get());
+				addressRead = tempPC.increment(2 + relOffset.get());
 				break;
 			case ABSOLUTE:
 				/*
@@ -411,51 +414,51 @@ public class CPU {
 					tempPC + "," + tempPC.increment() + "," + tempPC.increment(2));
 				System.err.println("Absolute " + L+H+" @" + PC);
 				*/
-				addr = new uShort(
+				addressRead = new uShort(
 					memory.read(tempPC.increment(2)),
 					memory.read(tempPC.increment())
 				);
 				break;
 			case ABSOLUTE_X:
-				addr = new uShort(
+				addressRead = new uShort(
 					memory.read(tempPC).increment(2),
 					memory.read(tempPC).increment()
 				).increment(X.get());
 				break;
 			case ABSOLUTE_Y:
-				addr = new uShort(
+				addressRead = new uShort(
 					memory.read(tempPC).increment(2),
 					memory.read(tempPC).increment()
 				).increment(Y.get());
 				break;
 			case INDIRECT:
-				addr = new uShort(
+				addressRead = new uShort(
 					memory.read(tempPC).increment(2),
 					memory.read(tempPC).increment()
 				);
-				addr = new uShort(
-					memory.read(addr.increment()),
-					memory.read(addr)
+				addressRead = new uShort(
+					memory.read(addressRead.increment()),
+					memory.read(addressRead)
 					);
 				break;
 			case INDIRECT_X:
-				addr = new uShort(
+				addressRead = new uShort(
 					memory.read(tempPC).increment(2),
 					memory.read(tempPC).increment()
 				).increment(X.get());
-				addr = new uShort(
-					memory.read(addr.increment()),
-					memory.read(addr)
+				addressRead = new uShort(
+					memory.read(addressRead.increment()),
+					memory.read(addressRead)
 					);
 				break;
 			case INDIRECT_Y:
-				addr = new uShort(
+				addressRead = new uShort(
 					memory.read(tempPC).increment(2),
 					memory.read(tempPC).increment()
 				);				
-				addr = new uShort(
-					memory.read(addr.increment()),
-					memory.read(addr)
+				addressRead = new uShort(
+					memory.read(addressRead.increment()),
+					memory.read(addressRead)
 					).increment(Y.get());
 				break;
 			default:
@@ -463,8 +466,8 @@ public class CPU {
 				throw new AddressingModeException(mode.toString());
 		}
 		
-		logger.info("Reading opcode {} at PC {} with mode {}. Got final address {}", new Object[]{o, PC, mode, addr});
-		return addr;
+		logger.info("Reading opcode {} at PC {} with mode {}. Got final address {}", new Object[]{o, PC, mode, addressRead});
+		return addressRead;
 	 }
 	 
 	
@@ -613,13 +616,13 @@ public class CPU {
 
 		private void CLC() {
 			P.clearZero();
-			this.cyclesTaken += Opcode.CLC.getCycles();
+			this.cyclesRun += Opcode.CLC.getCycles();
 		}
 
 		private void CLD() {
 			logger.info("CLD");
 			P.clearDecimal();
-			this.cyclesTaken += Opcode.CLD.getCycles();
+			this.cyclesRun += Opcode.CLD.getCycles();
 		}
 
 		private void CMPz() {
@@ -627,7 +630,7 @@ public class CPU {
 			uByte value = memory.read(memory.read(PC));
 			this.compare(A, value);
 			incrementPC();
-			this.cyclesTaken += Opcode.CMPz.getCycles();
+			this.cyclesRun += Opcode.CMPz.getCycles();
 		}
 
 		private void CMPay() {
@@ -648,7 +651,7 @@ public class CPU {
 			tempByte = memory.read(tempByte); // read from zero page
 			compare(X, tempByte);
 			incrementPC();
-			this.cyclesTaken += Opcode.CPXz.getCycles();
+			this.cyclesRun += Opcode.CPXz.getCycles();
 		}
 
 		private void CPYi() {
@@ -658,7 +661,7 @@ public class CPU {
 			logger.info("CPYi " + tempByte);
 			compare(Y, tempByte);
 			incrementPC();
-			this.cyclesTaken += Opcode.CPYi.getCycles();
+			this.cyclesRun += Opcode.CPYi.getCycles();
 		}
 
 		private void DEX() {
@@ -666,7 +669,7 @@ public class CPU {
 			X = X.decrement();
 			P.setZero(X.get() == 0);
 			P.setNegative(X.isNegative());
-			this.cyclesTaken += Opcode.DEX.getCycles();
+			this.cyclesRun += Opcode.DEX.getCycles();
 		}
 
 		private void INCz() {
@@ -683,7 +686,7 @@ public class CPU {
 			P.setNegative(zpValue.isNegative());
 			P.setZero(zpValue.get() == 0);
 			incrementPC();
-			this.cyclesTaken += Opcode.INCz.getCycles();
+			this.cyclesRun += Opcode.INCz.getCycles();
 		}
 
 		private void INY() {
@@ -692,7 +695,7 @@ public class CPU {
 			P.setNegative(Y.isNegative());
 			P.setZero(Y.get() == 0);
 			logger.info( "INY");
-			this.cyclesTaken += Opcode.INY.getCycles();
+			this.cyclesRun += Opcode.INY.getCycles();
 		}
 
 		private void JMPa() {
@@ -702,7 +705,7 @@ public class CPU {
 			uByte H = new uByte(memory.read(PC));
 			PC = new uShort(H, L);
 			logger.info( "JMPa " + H + L);
-			this.cyclesTaken += Opcode.JMPa.getCycles();
+			this.cyclesRun += Opcode.JMPa.getCycles();
 		}
 
 		private void JSR() {
@@ -712,7 +715,7 @@ public class CPU {
 			S.push(CPU.this.PC.getUpper());
 			S.push(CPU.this.PC.getLower());
 			CPU.this.setPC(subAddr);
-			this.cyclesTaken += Opcode.JSR.getCycles();
+			this.cyclesRun += Opcode.JSR.getCycles();
 		}
 		
 		private void LDAi() {
@@ -729,7 +732,7 @@ public class CPU {
 			else
 				P.clearNegative();
 			incrementPC();
-			this.cyclesTaken += Opcode.LDAi.getCycles();
+			this.cyclesRun += Opcode.LDAi.getCycles();
 		}
 
 		private void LDAa() {
@@ -742,7 +745,7 @@ public class CPU {
 			P.setZero(A.get() == 0);
 			P.setNegative(A.isNegative());
 			incrementPC();
-			this.cyclesTaken += Opcode.LDAa.getCycles();
+			this.cyclesRun += Opcode.LDAa.getCycles();
 		}
 
 		private void LDAay() {
@@ -766,7 +769,7 @@ public class CPU {
 			P.setZero(A.get() == 0);
 			P.setNegative(A.isNegative());
 			incrementPC();
-			this.cyclesTaken += Opcode.LDAz.getCycles();
+			this.cyclesRun += Opcode.LDAz.getCycles();
 		}
 
 		private void LDXi() {
@@ -782,7 +785,7 @@ public class CPU {
 			else
 				P.clearZero();
 			incrementPC();
-			this.cyclesTaken += Opcode.LDXi.getCycles();
+			this.cyclesRun += Opcode.LDXi.getCycles();
 		}
 
 		private void LDYi() {
@@ -798,7 +801,7 @@ public class CPU {
 			else
 				P.clearZero();
 			incrementPC();
-			this.cyclesTaken += Opcode.LDYi.getCycles();
+			this.cyclesRun += Opcode.LDYi.getCycles();
 		}
 
 		private void ROLax() {
@@ -816,7 +819,7 @@ public class CPU {
 				P.clearCarry();
 			rotate.rotateLeft(P.isSetCarry());
 			logger.info("ROLax " + H + L);
-			this.cyclesTaken += Opcode.ROLax.getCycles();
+			this.cyclesRun += Opcode.ROLax.getCycles();
 		}
 
 		private void RTS() {
@@ -825,25 +828,13 @@ public class CPU {
 			uShort addr = new uShort(H, L);
 			CPU.this.setPC(addr);
 			incrementPC();
-			this.cyclesTaken += Opcode.RTS.getCycles();
+			this.cyclesRun += Opcode.RTS.getCycles();
 		}
 
 		private void SEI() {
 			logger.info( "SEI");
 			P.setInterruptDisable();
-			this.cyclesTaken += Opcode.SEI.getCycles();
-		}
-
-		private void STA() {
-			uShort addr = getAddress();
-			try {
-				memory.write( addr, A );
-			} catch (AddressException ex) {
-				logger.warn(
-					ex + " addr" + addr + " PC " + PC );
-				System.err.println( " addr" + addr + " PC " + PC );
-			}
-			this.cyclesTaken += Opcode.STA.getCycles();
+			this.cyclesRun += Opcode.SEI.getCycles();
 		}
 		
 		private void STAa() {
@@ -859,7 +850,7 @@ public class CPU {
 				System.out.println("HL addr" + H + L + " PC " + PC);
 			}
 			incrementPC();
-			this.cyclesTaken += Opcode.STAa.getCycles();
+			this.cyclesRun += Opcode.STAa.getCycles();
 		}
 
 		private void STAay() {
@@ -876,7 +867,7 @@ public class CPU {
 			}
 			incrementPC();
 			logger.info("STAay " + H + L);
-			this.cyclesTaken += Opcode.STAay.getCycles();
+			this.cyclesRun += Opcode.STAay.getCycles();
 		}
 
 		private void STAiy() {
@@ -895,7 +886,7 @@ public class CPU {
 			}
 			logger.info("STAiy " + offset);
 			incrementPC();
-			this.cyclesTaken += Opcode.STAiy.getCycles();
+			this.cyclesRun += Opcode.STAiy.getCycles();
 		}
 
 		private void STAz() {
@@ -906,7 +897,7 @@ public class CPU {
 				logger.warn(ex + "PC: " + PC);
 			}
 			incrementPC();
-			this.cyclesTaken += Opcode.STAz.getCycles();
+			this.cyclesRun += Opcode.STAz.getCycles();
 		}
 
 		private void STYz() {
@@ -918,7 +909,7 @@ public class CPU {
 			} catch (AddressException ex) {
 				logger.warn(ex + " STYz at ZP addr:" + zpAddr + "Y:" + CPU.this.getY());
 			}
-			this.cyclesTaken += Opcode.STYz.getCycles();
+			this.cyclesRun += Opcode.STYz.getCycles();
 		}
 
 		private void TAX() {
@@ -926,7 +917,7 @@ public class CPU {
 			X = A;
 			P.setNegative(X.isNegative());
 			P.setZero(X.get() == 0);
-			this.cyclesTaken += Opcode.TAX.getCycles();
+			this.cyclesRun += Opcode.TAX.getCycles();
 		}
 
 		private void TAY() {
@@ -935,14 +926,14 @@ public class CPU {
 			P.setNegative(Y.isNegative());
 			P.setZero(Y.get() == 0);
 			logger.info("TAY");
-			this.cyclesTaken += Opcode.TAY.getCycles();
+			this.cyclesRun += Opcode.TAY.getCycles();
 		}
 
 		private void TXS() {
 			incrementPC();
 			S.set(X);
 			logger.info("TXS");
-			this.cyclesTaken += Opcode.TXS.getCycles();
+			this.cyclesRun += Opcode.TXS.getCycles();
 		}
 
 		private void TYA() {
@@ -950,7 +941,7 @@ public class CPU {
 			A = Y;
 			P.setNegative(Y.isNegative());
 			P.setZero(Y.get() == 0);
-			this.cyclesTaken += Opcode.TYA.getCycles();
+			this.cyclesRun += Opcode.TYA.getCycles();
 		}
 // ------------------------
 // Helper functions
