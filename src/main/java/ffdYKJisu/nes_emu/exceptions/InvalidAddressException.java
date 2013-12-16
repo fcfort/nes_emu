@@ -4,7 +4,7 @@ package ffdYKJisu.nes_emu.exceptions;
  * Invalid address exception
  * @author fcf
  */
-public class InvalidAddressException extends Exception {
+public class InvalidAddressException extends RuntimeException {
     /**
 	 * 
 	 */

@@ -99,7 +99,7 @@ public class CPU {
 	public void setY(uByte Y) {
 		this.Y = Y;
 	}
-
+/*
 	public uByte getSP() {
 		return this.S.get();
 	}
@@ -107,7 +107,7 @@ public class CPU {
 	public void setSP(uByte SP) {
 		this.S.set(SP);
 	}
-	
+	*/
 	public CPUMemory getMemory() {
 		return memory;
 	}

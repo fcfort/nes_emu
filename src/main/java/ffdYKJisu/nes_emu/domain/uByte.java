@@ -10,7 +10,7 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 public final class uByte {
 
     final private short value;
-
+      
     public uByte(short initVal) {
         this.value = (short) Math.abs(initVal & 0xff);
     }
@@ -25,6 +25,11 @@ public final class uByte {
 
     public short get() {
         return this.value;
+    }
+    
+    // Static constructors
+    public uByte ofInteger(int val) {
+    	return new uByte(val);
     }
     
     @Override public String toString() {
