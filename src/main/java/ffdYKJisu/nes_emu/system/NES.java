@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ffdYKJisu.nes_emu.system;
 
 import org.slf4j.Logger;
@@ -20,7 +16,7 @@ import ffdYKJisu.nes_emu.system.ppu.PPU;
  */
 public class NES {
 
-	private static final Logger logger = LoggerFactory.getLogger(NES.class);
+	private final Logger logger = LoggerFactory.getLogger(NES.class);
 
 	private /* final */ Cartridge cart;
 	private final CPU cpu;

@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ffdYKJisu.nes_emu.system;
 
 import java.io.File;
@@ -20,7 +16,7 @@ import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
 import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 
 /**
- * 
+ * A cartridge that can be loaded into an NES 
  * @author fe01106
  */
 public class Cartridge {

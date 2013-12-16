@@ -1,14 +1,10 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ffdYKJisu.nes_emu.domain;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
 /**
- *
+ * Fundamental addressing size for the NES system.
  * @author Administrator
  */
 public final class uShort {

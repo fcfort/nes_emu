@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ffdYKJisu.nes_emu.domain;
 
 import java.util.EnumSet;
@@ -9,7 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
+ * All possible addressing modes available to operations
+ * on the system.
  * @author fe01106
  */
 public enum AddressingMode {

@@ -1,12 +1,7 @@
 package ffdYKJisu.nes_emu.domain;
 
 import java.util.Map;
-import java.util.Map.Entry;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
-import org.apache.commons.lang.builder.ToStringStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -171,7 +166,7 @@ public enum Opcode {
 	SBCax("FD", "SBC", 4, 3, false, true, AddressingMode.ABSOLUTE_X),
 	INCax("FE", "INC", 7, 3, AddressingMode.ABSOLUTE_X);
 
-	private static final Logger logger = LoggerFactory.getLogger(Opcode.class);
+	private final Logger logger = LoggerFactory.getLogger(Opcode.class);
 	
 	private final String opcodeBytes;
 	private final String codeName;
@@ -208,6 +203,7 @@ public enum Opcode {
 		this.extraCycleOnBranch = extraCycleOnBranch;
 		this.extraCycleOnPageJump = extraCycleOnPageJump;
 		this.addressingMode = addressingMode;
+		logger.info("Done creating opcode {}", codeName);
 	}
 
 	public uByte getOpcodeBytes() {

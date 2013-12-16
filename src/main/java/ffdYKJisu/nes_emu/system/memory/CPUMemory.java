@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
-import ffdYKJisu.nes_emu.exceptions.AddressException;
+import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
@@ -18,7 +18,7 @@ import ffdYKJisu.nes_emu.system.NES;
  *
  * @author Administrator
  */
-public class CPUMemory implements Memory {
+public class CPUMemory implements IMemory {
 
 	private static Logger logger = LoggerFactory.getLogger(CPUMemory.class);
 	
@@ -112,14 +112,14 @@ public class CPUMemory implements Memory {
 		return read(address);
 	}
 
- 	public void write(uShort address, uByte val) throws AddressException {
+ 	public void write(uShort address, uByte val) throws InvalidAddressException {
  		logger.info("Write at address {} of {}", address, val);
  		
 		char addr = address.get();
 		if (addr > 0xFFFF)
-			throw new AddressException("Over 0xFFFF");
+			throw new InvalidAddressException("Over 0xFFFF");
 		if (addr >= 0x8000)
-			throw new AddressException("In PRGROM");
+			throw new InvalidAddressException("In PRGROM");
 		if (addr >= 0x0000 && addr < 0x2000) {
 			//Logger.getLogger(CPUMemory.class.getName()).log(Level.INFO, 
 			//	"Writing " + val + " to " + address);
@@ -129,11 +129,11 @@ public class CPUMemory implements Memory {
 		}
 	}
 
-	public void write(uByte zeroPageAddress, uByte val) throws AddressException {
+	public void write(uByte zeroPageAddress, uByte val) throws InvalidAddressException {
 		write(new uShort(zeroPageAddress), val);
 	}
 
-	public void write(uByte addrH, uByte addrL, uByte val) throws AddressException {
+	public void write(uByte addrH, uByte addrL, uByte val) throws InvalidAddressException {
 		write(new uShort(addrH, addrL), val);
 	}
 

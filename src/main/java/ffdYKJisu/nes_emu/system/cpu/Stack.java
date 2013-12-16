@@ -1,28 +1,29 @@
 package ffdYKJisu.nes_emu.system.cpu;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Deque;
+
+import com.google.common.collect.Queues;
 
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
-import ffdYKJisu.nes_emu.exceptions.AddressException;
-import ffdYKJisu.nes_emu.system.memory.Memory;
+import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
+import ffdYKJisu.nes_emu.system.memory.IMemory;
 
-public class Stack implements Memory {
+
+public class Stack implements IMemory {
 
     /**
      * Holds the current offset into the 1-page (stack) for the next 
-     * available
-     * empty spot for pushing to the stack
+     * available empty spot for pushing to the stack
      */
-	private uByte[] stack;
     private uByte stackPointer;
     private final uShort stackOffset;
+    private final Deque<uByte> stack;
     
     private static final int STACK_SIZE = 0x100;
     
     public Stack() {
-    	stack = new uByte[STACK_SIZE];
+    	stack = Queues.newArrayDeque();    	
     	stackPointer = new uByte(STACK_SIZE - 1);
     	stackOffset  = new uShort(STACK_SIZE);
     }
@@ -35,45 +36,27 @@ public class Stack implements Memory {
         stackPointer = sp;
     }
 
-    public uByte pop() {
-        stackPointer = new uByte(stackPointer.increment());
-        uShort addr = new uShort(stackPointer.get() + stackOffset.get());
-        uByte val = this.read(addr);
-        //System.out.println("Pulling " + val + " from " + addr);
-        return val;
+    public uByte pop() {       
+    	return stack.pop();
     }
 
     public void push(uByte val) {
-        uShort addr = new uShort(stackPointer.get() + stackOffset.get());
-        try {
-            this.write(addr, val);
-        //System.out.println("Pushing " + val + " to " + addr);
-        } catch (AddressException ex) {
-            Logger.getLogger(CPU.class.getName()).log(Level.SEVERE, null,
-                ex + "Error pushing " + val + " to " + addr);
-        }
-        stackPointer = new uByte(stackPointer.decrement());
+        stack.push(val);
+        stack.toArray(new uByte[0]);
+    }
+    
+    private uByte uByteAt(final int i) {
+    	return stack.toArray(new uByte[0])[i];
     }
 
 	public uByte read(uShort address) {
-		return stack[address.get()];
+		return uByteAt(address.get());
 	}
 
-	public uByte read(uByte addrH, uByte addrL) {
-		return stack[addrL.get()];
+	public void write(uShort address, uByte val) throws InvalidAddressException {
+		
 	}
 
-	public uByte read(uByte zeroPageAddress) {
-		return stack[zeroPageAddress.get()];
-	}
-
-	public void write(uShort address, uByte val) throws AddressException {
-		stack[address.get()] = val;
-	}
-
-	public void write(uByte addrH, uByte addrL, uByte val)
-			throws AddressException {
-		stack[addrL.get()] = val;
-	}
+    
 	
 }

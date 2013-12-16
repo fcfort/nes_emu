@@ -6,13 +6,13 @@ package ffdYKJisu.nes_emu.system.memory;
 
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
-import ffdYKJisu.nes_emu.exceptions.AddressException;
+import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 
 /**
  *
  * @author fe01106
  */
-public class PPUMemory implements Memory {
+public class PPUMemory implements IMemory {
 
 	// PPU memory
 	uByte[] PatternTable0 = new uByte[PATTERN_TABLE_SIZE];
@@ -129,11 +129,11 @@ public class PPUMemory implements Memory {
         return read(address);
 	}
 
-	public void write(uShort address, uByte val) throws AddressException {
+	public void write(uShort address, uByte val) throws InvalidAddressException {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
-	public void write(uByte addrH, uByte addrL, uByte val) throws AddressException {
+	public void write(uByte addrH, uByte addrL, uByte val) throws InvalidAddressException {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
 }

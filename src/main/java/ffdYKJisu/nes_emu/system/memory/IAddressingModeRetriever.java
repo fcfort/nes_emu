@@ -41,5 +41,7 @@ public interface IAddressingModeRetriever {
 	
 	public uByte readZeroPageAddress(uShort address);
 	
-	public uByte readRelative
+	public uByte readRelative(uShort address);
+
 }
+

@@ -1,7 +1,3 @@
- /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package ffdYKJisu.nes_emu.system.cpu;
 
 
@@ -13,7 +9,7 @@ import ffdYKJisu.nes_emu.domain.Opcode;
 import ffdYKJisu.nes_emu.domain.StatusBit;
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
-import ffdYKJisu.nes_emu.exceptions.AddressException;
+import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 import ffdYKJisu.nes_emu.exceptions.AddressingModeException;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
@@ -589,11 +585,14 @@ public class CPU {
 			logger.info("BNE " + relOffset + " @" + newPC);
 			if (!P.isSetZero()) {
 				CPU.this.setPC(PC.increment(relOffset.toSigned()));
-				if (PC.getUpper().get() != pageBeforeJump){}
-					//return 4; 
-				//return 3;
+				if (PC.getUpper().get() != pageBeforeJump) {
+					this.cyclesRun += Opcode.BNE.getCycles(true, true);
+				} else {
+					this.cyclesRun += Opcode.BNE.getCycles(true, false);
+				}			
+			} else {
+				this.cyclesRun += Opcode.BNE.getCycles(false, false);
 			}
-			//return 2;
 		}
 
 		private void BPL() {
@@ -607,11 +606,14 @@ public class CPU {
 
 			if (!P.isSetNegative()) {
 				CPU.this.setPC(PC.increment(relOffset.toSigned()));
-				if (PC.getUpper().get() != pageBeforeJump){}
-					//return 4;
-				//return 3;
+				if (PC.getUpper().get() != pageBeforeJump){
+					this.cyclesRun += Opcode.BPL.getCycles(true, true);
+				} else {
+					this.cyclesRun += Opcode.BPL.getCycles(true, false);
+				}
+			} else {
+				this.cyclesRun += Opcode.BPL.getCycles(false, false);
 			}
-			//return 2;
 		}
 
 		private void CLC() {
@@ -639,9 +641,11 @@ public class CPU {
 			CPU.this.setPC(PC.increment(2));
 			uShort newAddr = this.toAbsoluteYAddress(addr);
 			this.compare(CPU.this.getA(), CPU.this.memory.read(newAddr));
-			if (this.pageJumped(addr, newAddr)) {}
-				//return 5;
-			//return 4;
+			if (this.pageJumped(addr, newAddr)) {
+				this.cyclesRun += Opcode.CMPay.getCycles(false, true);				
+			} else {
+				this.cyclesRun += Opcode.CMPay.getCycles();
+			}
 		}
 
 		private void CPXz() {
@@ -680,7 +684,7 @@ public class CPU {
 			zpValue = zpValue.increment();
 			try {
 				CPU.this.memory.write(zpAddress, zpValue);
-			} catch (AddressException ex) {
+			} catch (InvalidAddressException ex) {
 				logger.warn(ex + "Error in INCz address:" + zpAddress + " value:" + zpValue);
 			}
 			P.setNegative(zpValue.isNegative());
@@ -757,10 +761,12 @@ public class CPU {
 			P.setZero(A.get() == 0);
 			P.setNegative(A.isNegative());
 			//CPU.this.setPC(PC.increment());
-			if (this.pageJumped(addr, newAddr)) {}
-				//return 5;
-			else {}
-				//return 4;
+			if (this.pageJumped(addr, newAddr)) {
+				this.cyclesRun += Opcode.LDAay.getCycles(false, true);
+			} else { 
+				this.cyclesRun += Opcode.LDAay.getCycles();
+			}
+				
 		}
 
 		private void LDAz() {
@@ -846,7 +852,7 @@ public class CPU {
 			// A.set(memory.read(H,L));
 			try {
 				memory.write(H, L, A);
-			} catch (AddressException e) {
+			} catch (InvalidAddressException e) {
 				System.out.println("HL addr" + H + L + " PC " + PC);
 			}
 			incrementPC();
@@ -862,7 +868,7 @@ public class CPU {
 			temp.increment(Y.get());
 			try {
 				memory.write(temp, A);
-			} catch (AddressException ex) {
+			} catch (InvalidAddressException ex) {
 				logger.warn(ex.getMessage());
 			}
 			incrementPC();
@@ -880,7 +886,7 @@ public class CPU {
 			temp.increment(Y.get());
 			try {
 				memory.write(temp, A);
-			} catch (AddressException ex) {
+			} catch (InvalidAddressException ex) {
 				logger.warn(
 					ex + "PC: " + PC);
 			}
@@ -893,7 +899,7 @@ public class CPU {
 			incrementPC();
 			try {
 				memory.write(memory.read(memory.read(PC)), CPU.this.getA());
-			} catch (AddressException ex) {
+			} catch (InvalidAddressException ex) {
 				logger.warn(ex + "PC: " + PC);
 			}
 			incrementPC();
@@ -906,7 +912,7 @@ public class CPU {
 			incrementPC();
 			try {
 				CPU.this.memory.write(zpAddr, CPU.this.getY());
-			} catch (AddressException ex) {
+			} catch (InvalidAddressException ex) {
 				logger.warn(ex + " STYz at ZP addr:" + zpAddr + "Y:" + CPU.this.getY());
 			}
 			this.cyclesRun += Opcode.STYz.getCycles();

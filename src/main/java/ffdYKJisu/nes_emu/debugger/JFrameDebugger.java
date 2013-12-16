@@ -1,23 +1,17 @@
-/*
- * DebuggerJFrame.java
- *
- * Created on June 29, 2008, 5:15 AM
- */
 package ffdYKJisu.nes_emu.debugger;
 
 
-import java.io.File;
 import java.io.InputStream;
 
 import ffdYKJisu.nes_emu.domain.uByte;
 import ffdYKJisu.nes_emu.domain.uShort;
-import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
-import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
 
 /**
+ *	A visual interface to a running NES system. Allows
+ *  for visual inspection and UI controls to the system.
  *
- * @author  Administrator
+ * @author  fcf
  */
 public class JFrameDebugger extends javax.swing.JFrame {
 
