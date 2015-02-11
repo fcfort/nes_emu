@@ -81,7 +81,7 @@ public class JFrameDebugger extends javax.swing.JFrame {
 		this.jTextFieldX.setText(this.nes.getCpu().getX().toString().replaceAll("^\\$", ""));
 		this.jTextFieldY.setText(this.nes.getCpu().getY().toString().replaceAll("^\\$", ""));
 		// And Stack pointer
-		this.jTextFieldSP.setText(this.nes.getCpu().getSP().toString().replaceAll("^\\$", ""));
+		// this.jTextFieldSP.setText(this.nes.getCpu().getSP().toString().replaceAll("^\\$", ""));
 	}
 
 	private void runStep() {
@@ -471,8 +471,8 @@ private void jTextFieldYKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:ev
 private void jTextFieldSPKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextFieldSPKeyReleased
 	String valueString = this.jTextFieldSP.getText();
 	if (valueString.matches("^[0-9A-Fa-f]{2}$")) {
-		this.nes.getCpu().setSP(new uByte(Integer.decode("0x" + valueString)));
-		System.out.println("Setting SP to " + valueString + ", SP is now " + this.nes.getCpu().getSP());
+		// this.nes.getCpu().setSP(new uByte(Integer.decode("0x" + valueString)));
+		// System.out.println("Setting SP to " + valueString + ", SP is now " + this.nes.getCpu().getSP());
 	}
 }//GEN-LAST:event_jTextFieldSPKeyReleased
 

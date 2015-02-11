@@ -119,7 +119,7 @@ public class Cartridge {
         output.append("There are " + this.num16PRGBanks + " PRG16 Bank(s)\n");
         for (int i = 0; i < this.num16PRGBanks; i++) {
             output.append("PRG16 Bank " + i + "\n");
-            Byte[] temp = null;
+            byte[] temp = null;
             try {
                 temp = this.get16PRGBank(i);
             } catch (BankNotFoundException ex) {
@@ -203,13 +203,13 @@ public class Cartridge {
      * @return Byte array of the specific bank requested
      * @throws BankNotFoundException.bankNotFoundException
      */
-    public Byte[] get16PRGBank(int bankNum) throws BankNotFoundException {
+    public byte[] get16PRGBank(int bankNum) throws BankNotFoundException {
         if (bankNum > this.num16PRGBanks) {
             throw new BankNotFoundException("Bank " + bankNum
                     + " doesn't exist");
         }
         int bankLength = Bank.PRG16.length;
-        Byte[] bank = new Byte[bankLength];
+        byte[] bank = new byte[bankLength];
         for (int i = 0; i < bankLength; i++) {
             // System.out.println("Bank length " + bankLength + " Bank offset "
             // +

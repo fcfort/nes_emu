@@ -28,6 +28,7 @@ public class CPU {
 	 * Program counter, holds memory location of current position
 	 */
 	private uShort PC;
+	private short _PC;
 	/** Accumulator */
 	private uByte A;
 	/** Index register X */
@@ -40,15 +41,17 @@ public class CPU {
 	private boolean cpuIsRunning;
 	private int cyclesRun;
 	/** Holds Stack object for stack instructions to use */
-	Stack S;	
+	private byte[] _stack;
+	private byte _stackPointer;
+	
 	private final NES nes;
 	
 	public CPU(NES nes) {		
 		logger.info("CPU has been initiated");	
 		this.nes = nes;
 		cyclesRun = 0;
-		// Initialize stack
-		S = new Stack();
+		// Initialize stack	
+		_stack = new byte[256];
 		// Set up State registers
 		initStateRegisters();
 		// Load cart into memory
@@ -142,7 +145,7 @@ public class CPU {
 		Y = new uByte(0);
 
 		// Stack pointer
-		S.set(new uByte(0xff));
+		_stackPointer = (byte) 0xFF;
 	}
 
 	private void incrementPC(int increment) {
@@ -375,6 +378,7 @@ public class CPU {
 	 * 
 	 **/
 	 private uByte read(uShort address, AddressingMode mode) {
+		 		
 		 uByte addressRead;
 		 
 		 
@@ -394,14 +398,12 @@ public class CPU {
 				addressRead = memory.read(zeroPageXOffset);
 				break;
 			case ZERO_PAGE_Y:	
-				uByte zeroPageIndex = memory.read(address);
-				uShort zeroPageXOffset = new uShort(zeroPageIndex.get()+X.get());
-				addressRead = memory.read(zeroPageXOffset);
+				uByte zeroPageIndexY = memory.read(address);
+				uShort zeroPageXOffsetY = new uShort(zeroPageIndexY.get()+X.get());
+				addressRead = memory.read(zeroPageXOffsetY);
 				break;
 			case RELATIVE:
-				uByte relOffset = memory.read(tempPC.increment());
-				addressRead = tempPC.increment(2 + relOffset.get());
-				break;
+				throw new UnsupportedOperationException();
 			case ABSOLUTE:
 				/*
 				uByte L = memory.read(tempPC.increment());
@@ -410,15 +412,12 @@ public class CPU {
 					tempPC + "," + tempPC.increment() + "," + tempPC.increment(2));
 				System.err.println("Absolute " + L+H+" @" + PC);
 				*/
-				addressRead = new uShort(
-					memory.read(tempPC.increment(2)),
-					memory.read(tempPC.increment())
-				);
+				addressRead = new uByte(memory.read(PC));
+
 				break;
 			case ABSOLUTE_X:
 				addressRead = new uShort(
-					memory.read(tempPC).increment(2),
-					memory.read(tempPC).increment()
+					memory.read(PC)
 				).increment(X.get());
 				break;
 			case ABSOLUTE_Y:
@@ -714,10 +713,11 @@ public class CPU {
 
 		private void JSR() {
 			incrementPC();
+			byte upperByte = (byte) PC.getUpper().get();
+			_stack[_stackPointer--] = upperByte;
+			byte lowerByte = (byte) PC.getLower().get();
+			_stack[_stackPointer--] = lowerByte;	
 			uShort subAddr = this.readBytesAsAddress(PC);
-			incrementPC();
-			S.push(CPU.this.PC.getUpper());
-			S.push(CPU.this.PC.getLower());
 			CPU.this.setPC(subAddr);
 			this.cyclesRun += Opcode.JSR.getCycles();
 		}
@@ -828,9 +828,9 @@ public class CPU {
 			this.cyclesRun += Opcode.ROLax.getCycles();
 		}
 
-		private void RTS() {
-			uByte L = S.pop();
-			uByte H = S.pop();
+		private void RTS() {			
+			uByte L = new uByte(_stack[_stackPointer++]);
+			uByte H = new uByte(_stack[_stackPointer++]);
 			uShort addr = new uShort(H, L);
 			CPU.this.setPC(addr);
 			incrementPC();
@@ -937,7 +937,7 @@ public class CPU {
 
 		private void TXS() {
 			incrementPC();
-			S.set(X);
+			_stackPointer = (byte) X.get();
 			logger.info("TXS");
 			this.cyclesRun += Opcode.TXS.getCycles();
 		}
