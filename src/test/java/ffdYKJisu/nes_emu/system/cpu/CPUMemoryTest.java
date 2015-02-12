@@ -7,17 +7,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ffdYKJisu.nes_emu.system.memory.CPUMemory2;
+import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 
-public class CPUMemory2Test {
+public class CPUMemoryTest {
 
-	private static Logger logger = LoggerFactory.getLogger(CPUMemory2Test.class);
+	private static Logger logger = LoggerFactory.getLogger(CPUMemoryTest.class);
 
-	CPUMemory2 _mem;
+	CPUMemory _mem;
 	
 	@Before
 	public void initialize() {
-		_mem = new CPUMemory2(null);
+		_mem = new CPUMemory(null);
 	}
 	
 	@Test

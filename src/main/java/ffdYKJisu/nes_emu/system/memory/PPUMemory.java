@@ -4,7 +4,7 @@
  */
 package ffdYKJisu.nes_emu.system.memory;
 
-import ffdYKJisu.nes_emu.domain.uByte;
+import ffdYKJisu.nes_emu.domain.byte;
 import ffdYKJisu.nes_emu.domain.uShort;
 import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 
@@ -15,23 +15,23 @@ import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 public class PPUMemory implements IMemory {
 
 	// PPU memory
-	uByte[] PatternTable0 = new uByte[PATTERN_TABLE_SIZE];
-	uByte[] PatternTable1 = new uByte[PATTERN_TABLE_SIZE];
+	byte[] PatternTable0 = new byte[PATTERN_TABLE_SIZE];
+	byte[] PatternTable1 = new byte[PATTERN_TABLE_SIZE];
 	
-	uByte[] NameTable0 = new uByte[NAME_TABLE_SIZE];
-	uByte[] NameTable1 = new uByte[NAME_TABLE_SIZE];
-	uByte[] NameTable2 = new uByte[NAME_TABLE_SIZE];
-	uByte[] NameTable3 = new uByte[NAME_TABLE_SIZE];
+	byte[] NameTable0 = new byte[NAME_TABLE_SIZE];
+	byte[] NameTable1 = new byte[NAME_TABLE_SIZE];
+	byte[] NameTable2 = new byte[NAME_TABLE_SIZE];
+	byte[] NameTable3 = new byte[NAME_TABLE_SIZE];
 	
-	uByte[] AttributeTable0 = new uByte[ATTRIBUTE_TABLE_SIZE];
-	uByte[] AttributeTable1 = new uByte[ATTRIBUTE_TABLE_SIZE];
-	uByte[] AttributeTable2 = new uByte[ATTRIBUTE_TABLE_SIZE];
-	uByte[] AttributeTable3 = new uByte[ATTRIBUTE_TABLE_SIZE];
+	byte[] AttributeTable0 = new byte[ATTRIBUTE_TABLE_SIZE];
+	byte[] AttributeTable1 = new byte[ATTRIBUTE_TABLE_SIZE];
+	byte[] AttributeTable2 = new byte[ATTRIBUTE_TABLE_SIZE];
+	byte[] AttributeTable3 = new byte[ATTRIBUTE_TABLE_SIZE];
 	
-	uByte[] ImagePalette = new uByte[PALETTE_SIZE];
-	uByte[] PaletteTable = new uByte[PALETTE_SIZE];
+	byte[] ImagePalette = new byte[PALETTE_SIZE];
+	byte[] PaletteTable = new byte[PALETTE_SIZE];
 	
-	uByte[] SpriteMemory = new uByte[SPRITE_RAM_SIZE];
+	byte[] SpriteMemory = new byte[SPRITE_RAM_SIZE];
 	
 	// Some useful constants
 	static final int PATTERN_TABLE_SIZE = 0x1000;
@@ -40,8 +40,7 @@ public class PPUMemory implements IMemory {
 	static final int PALETTE_SIZE = 0x10;
 	static final int SPRITE_RAM_SIZE = 0x100;
 
-	public uByte read(uShort address) {
-		char addr = address.get();
+	public byte read(short address) {
 		// Mirror of all PPU memory
 		if (addr > 0x4000) {
 			addr %= 0x4000;
@@ -51,11 +50,11 @@ public class PPUMemory implements IMemory {
 			addr = (char) ((addr % 0x20) + 0x3F00);
 			// Image Palette
 			if (addr >= 0x3F00 && addr < 0x3F10) {
-				return new uByte(this.ImagePalette[addr % PALETTE_SIZE]);
+				return new byte(this.ImagePalette[addr % PALETTE_SIZE]);
 			}
 			// Sprite Palette
 			if (addr >= 0x3F10 && addr < 0x3F20) {
-				return new uByte(this.ImagePalette[addr % PALETTE_SIZE]);
+				return new byte(this.ImagePalette[addr % PALETTE_SIZE]);
 			}
 		}
 		// Weird mirror
@@ -67,73 +66,68 @@ public class PPUMemory implements IMemory {
 
 		// Attribute 3
 		if (addr < 0x3000 && addr >= 0x2FC0) {
-			return new uByte(
+			return new byte(
 				this.AttributeTable3[addr % ATTRIBUTE_TABLE_SIZE]);
 		}
 		// Name 3
 		if (addr < 0x2FC0 && addr >= 0x2C00) {
-			return new uByte(
+			return new byte(
 				this.NameTable3[addr % NAME_TABLE_SIZE]);
 		}
 		// Attribute 2
 		if (addr < 0x2C00 && addr >= 0x2BC0) {
-			return new uByte(
-				this.AttributeTable2[addr % ATTRIBUTE_TABLE_SIZE]);
+			return this.AttributeTable2[addr % ATTRIBUTE_TABLE_SIZE];
 		}
 		// Name 2
 		if (addr < 0x2BC0 && addr >= 0x2800) {
-			return new uByte(
-				this.NameTable2[addr % NAME_TABLE_SIZE]);
+			return this.NameTable2[addr % NAME_TABLE_SIZE];
 		}
 		// Attribute 1
 		if (addr < 0x2800 && addr >= 0x27C0) {
-			return new uByte(
-				this.AttributeTable1[addr % ATTRIBUTE_TABLE_SIZE]);
+			return this.AttributeTable1[addr % ATTRIBUTE_TABLE_SIZE];
 		}
 		// Name 1
 		if (addr < 0x27C0 && addr >= 0x2400) {
-			return new uByte(
-				this.NameTable1[addr % NAME_TABLE_SIZE]);
+			return this.NameTable1[addr % NAME_TABLE_SIZE];
 		}
 		// Attribute 0
 		if (addr < 0x2400 && addr >= 0x23C0) {
-			return new uByte(
-				this.AttributeTable0[addr % ATTRIBUTE_TABLE_SIZE]);
+			return this.AttributeTable0[addr % ATTRIBUTE_TABLE_SIZE];
 		}
 		// Name 0
 		if (addr < 0x23C0 && addr >= 0x2000) {
-			return new uByte(
+			return new byte(
 				this.NameTable0[addr % NAME_TABLE_SIZE]);
 		}
 		// Pattern table 1
 		if (addr < 0x2000 && addr >= 0x1000) {
-			return new uByte(this.PatternTable1[addr & PATTERN_TABLE_SIZE]);
+			return new byte(this.PatternTable1[addr & PATTERN_TABLE_SIZE]);
 		}
 		// Pattern table 0
 		if (addr < 0x1000) {
-			return new uByte(this.PatternTable1[addr]);
+			return new byte(this.PatternTable1[addr]);
 		}
 		System.out.println("Unrecognized address " + address);
-		return new uByte(0);
+		return new byte(0);
 
 	}
 
-	public uByte read(uByte addrH, uByte addrL) {
+	public byte read(byte addrH, byte addrL) {
 		uShort address = new uShort(addrH, addrL);
         return this.read(address);
 	}
 
-	public uByte read(uByte zeroPageAddress) {
+	public byte read(byte zeroPageAddress) {
 		uShort address =
                 new uShort(uShort.toAddress(zeroPageAddress));
         return read(address);
 	}
 
-	public void write(uShort address, uByte val) throws InvalidAddressException {
+	public void write(uShort address, byte val) throws InvalidAddressException {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
-	public void write(uByte addrH, uByte addrL, uByte val) throws InvalidAddressException {
+	public void write(byte addrH, byte addrL, byte val) throws InvalidAddressException {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
 }

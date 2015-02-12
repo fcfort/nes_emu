@@ -4,13 +4,17 @@ package ffdYKJisu.nes_emu.system.cpu;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.primitives.Bytes;
+import com.google.common.primitives.Shorts;
+import com.google.common.primitives.UnsignedBytes;
+import com.google.common.primitives.UnsignedInteger;
+
 import ffdYKJisu.nes_emu.domain.AddressingMode;
 import ffdYKJisu.nes_emu.domain.Opcode;
 import ffdYKJisu.nes_emu.domain.StatusBit;
-import ffdYKJisu.nes_emu.domain.uByte;
-import ffdYKJisu.nes_emu.domain.uShort;
-import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 import ffdYKJisu.nes_emu.exceptions.AddressingModeException;
+import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
+import ffdYKJisu.nes_emu.system.HexUtils;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 
@@ -20,112 +24,39 @@ import ffdYKJisu.nes_emu.system.memory.CPUMemory;
  * The cart is loaded and restarted and emulation begins in this class.
  * @author fe01106
  */
-public class CPU {
+public class CPU implements ICPU {
 
 	private static Logger logger = LoggerFactory.getLogger(CPU.class);
 
 	/**
 	 * Program counter, holds memory location of current position
 	 */
-	private uShort PC;
-	private short _PC;
+	private short PC;
 	/** Accumulator */
-	private uByte A;
+	private byte A;
 	/** Index register X */
-	private uByte X;
+	private byte X;
 	/** Index register X */
-	private uByte Y;
+	private byte Y;
 	/** Holds the bits of the status byte for the processor */
 	private StatusBit P;
 	private final CPUMemory memory;
-	private boolean cpuIsRunning;
 	private int cyclesRun;
 	/** Holds Stack object for stack instructions to use */
 	private byte[] _stack;
 	private byte _stackPointer;
-	
-	private final NES nes;
-	
-	public CPU(NES nes) {		
+
+	public CPU(CPUMemory memory_) {		
 		logger.info("CPU has been initiated");	
-		this.nes = nes;
+		memory = memory_;
 		cyclesRun = 0;
 		// Initialize stack	
 		_stack = new byte[256];
 		// Set up State registers
 		initStateRegisters();
 		// Load cart into memory
-		memory = new CPUMemory(nes);
 		// Loads cartridge banks to cpu memory banks
 		//memory.writeCartToMemory(cart);
-		// Start the cpu
-		cpuIsRunning = false;
-	}
-
-	// Getters/Setters for CPU registers
-	public StatusBit getP() {
-		return P;
-	}
-
-	public void setP(StatusBit P) {
-		this.P = P;
-	}
-
-	public uShort getPC() {
-		return PC;
-	}
-
-	public void setPC(uShort PC) {
-		this.PC = PC;
-	}
-
-	public uByte getA() {
-		return A;
-	}
-
-	public void setA(uByte A) {
-		this.A = A;
-	}
-
-	public uByte getX() {
-		return X;
-	}
-
-	public void setX(uByte X) {
-		this.X = X;
-	}
-
-	public uByte getY() {
-		return Y;
-	}
-
-	public void setY(uByte Y) {
-		this.Y = Y;
-	}
-/*
-	public uByte getSP() {
-		return this.S.get();
-	}
-
-	public void setSP(uByte SP) {
-		this.S.set(SP);
-	}
-	*/
-	public CPUMemory getMemory() {
-		return memory;
-	}
-
-	public void resetInterrupt() {				
-		uShort resetAddrL = new uShort((char) 0xfffc);
-		uShort resetAddrH = new uShort((char) 0xfffd);
-		//uByte jumpLocL = new uByte(memory.read(resetAddrL));
-		uByte jumpLocL = memory.read(resetAddrL);
-		//uByte jumpLocH = new uByte(memory.read(resetAddrH));
-		uByte jumpLocH = memory.read(resetAddrH);
-		uShort address = new uShort(jumpLocH, jumpLocL);
-		logger.info( "Reset, jumping to " + address);
-		
-		PC = address;
 	}
 
 	private void initStateRegisters() {
@@ -140,9 +71,9 @@ public class CPU {
 		P.clearNegative();
 
 		// A,X,Y
-		A = new uByte(0);
-		X = new uByte(0);
-		Y = new uByte(0);
+		A = 0;
+		X = 0;
+		Y = 0;
 
 		// Stack pointer
 		_stackPointer = (byte) 0xFF;
@@ -155,46 +86,18 @@ public class CPU {
 	}
 	
 	private void incrementPC() {
-		PC = PC.increment();
+		PC++;
 	}
-
-	/**
-	 * Runs until cpuIsRunning is false
-	 */
-	void emulate() {
-		while (cpuIsRunning) {
-			runStep();
-		}
-	}
-
-	/**
-	 * Holds the main loop of the emulator. Retrieves the next opcode from
-	 * memory and passes it to processOp().
-	 */
-	public void emulateFor(long cyclesToRun) {
-		if (!this.cpuIsRunning) {
-			logger.info( "CPU has been started to run for " + cyclesToRun + " cycles");
-			this.cpuIsRunning = true;
-		}
-		long cycleCount = 0;
-		while (this.cpuIsRunning) {
-			cycleCount += this.runStep();			
-			if (cycleCount > cyclesToRun) {
-				this.cpuIsRunning = false;
-				logger.info( "CPU has been stopped after " + cycleCount + " cycles");
-			}
-		}
-	}
-
+	
 	/**
 	 * Runs the CPU for one operation regardless of how long it will take
 	 * @return returns how many cycles the step took
 	 */
-	public int runStep() {
+	public void runStep() {
 		// Read Opcode from PC
 		Opcode op = getOpcode();
 		
-		uByte opcodeBytes = op.getOpcodeBytes();
+		byte opcodeBytes = op.getOpcodeBytes();
 		// Print instruction to logger
 		logger.info("Got opcode {} with bytes {} at PC {}", new Object[]{op, opcodeBytes, PC});
 		// Print CPU state to log
@@ -205,7 +108,6 @@ public class CPU {
 		incrementPC(op.getLength());
 		
 		// Return time taken
-		return this.cyclesRun - cyclesBefore;
 	}
 
 	/**
@@ -214,22 +116,22 @@ public class CPU {
 	 * @param address Location where you want to read an instruction from
 	 * @return A string formatted for debugger display.
 	 */
-	public String instructionToString(uShort address) {
+	public String instructionToString(short address) {
 		StringBuffer sb = new StringBuffer(address + ": ");
 		int instructionLength = this.instructionLength(address);
 
-		uByte[] bytes = new uByte[instructionLength];
+		byte[] bytes = new byte[instructionLength];
 
 		StringBuffer sbBytes = new StringBuffer();
 
 		sbBytes.append("(");
 		for (int j = 0; j < instructionLength; j++) {
-			uByte b = this.memory.read(address);
+			byte b = this.memory.read(address);
 			sbBytes.append(b);
 			bytes[j] = b;
 			if (j != instructionLength - 1)
 				sbBytes.append(" ");
-			address = address.increment();
+			address++;
 		}
 		sbBytes.append(")");
 		// Pad string to maximum length of bytes possible for one instruction
@@ -243,7 +145,7 @@ public class CPU {
 		sb.append(" " + opcodeName + " ");
 
 		for (int j = 1; j < instructionLength; j++) {
-			sb.append(bytes[j].toString());
+			sb.append(bytes[j]);
 			if (j != instructionLength - 1)
 				sb.append(" ");
 		}
@@ -257,7 +159,7 @@ public class CPU {
 	 * @param address Address at which the instruction is at
 	 * @return Number of bytes until next instruction
 	 */
-	public int instructionLength(uShort address) {
+	public int instructionLength(short address) {
 		return Opcode.getOpcodeByBytes(memory.read(address)).getLength();
 	}
 
@@ -268,11 +170,11 @@ public class CPU {
 	 * for the instruction
 	 * @return Address of where to perform operation
 	 */
-	public uShort getAddress() {
+	private short getAddress() {
 		Opcode o = Opcode.getOpcodeByBytes(memory.read(PC));		
 		AddressingMode mode = o.getAddressingMode();
-		uShort addr = null;
-		uShort tempPC = PC;
+		short addr = 0;
+		short tempPC = PC;
 				
 		switch (mode) {
 			case IMPLICIT:
@@ -282,76 +184,40 @@ public class CPU {
 			case IMMEDIATE:
 				break;
 			case ZERO_PAGE:
-				addr = new uShort(memory.read(tempPC.increment()));
+				addr = memory.read((short)(PC + 1));
 				break;
 			case ZERO_PAGE_X:
-				uByte zpAddr = memory.read(tempPC.increment());
-				addr = new uShort ( zpAddr.increment(X.get()) );
+				byte zpAddrX = memory.read((short)(PC + 1));
+				addr = (short)(zpAddrX + X);
 				break;
-			case ZERO_PAGE_Y:	
-				addr = new uShort ( 
-					memory.read(tempPC.increment())
-						.increment(Y.get()) 
-				);
+			case ZERO_PAGE_Y:
+				byte zpAddrY = memory.read((short)(PC + 1));
+				addr = (short)(zpAddrY + Y);
 				break;
 			case RELATIVE:
-				uByte relOffset = memory.read(tempPC.increment());
-				addr = tempPC.increment(2 + relOffset.get());
+				byte relOffset = memory.read((short)(PC + 1));
+				addr = (short) relOffset;
 				break;
 			case ABSOLUTE:
-				/*
-				uByte L = memory.read(tempPC.increment());
-				uByte H = memory.read(tempPC.increment(2));
-				System.err.println(
-					tempPC + "," + tempPC.increment() + "," + tempPC.increment(2));
-				System.err.println("Absolute " + L+H+" @" + PC);
-				*/
-				addr = new uShort(
-					memory.read(tempPC.increment(2)),
-					memory.read(tempPC.increment())
-				);
+				addr = (short) (readShort((short) (PC + 1)));
 				break;
 			case ABSOLUTE_X:
-				addr = new uShort(
-					memory.read(tempPC).increment(2),
-					memory.read(tempPC).increment()
-				).increment(X.get());
+				addr = (short) (readShortIndirect((short) (PC + 1), X));
 				break;
 			case ABSOLUTE_Y:
-				addr = new uShort(
-					memory.read(tempPC).increment(2),
-					memory.read(tempPC).increment()
-				).increment(Y.get());
+				addr = (short) (readShortIndirect((short) (PC + 1), Y));
 				break;
 			case INDIRECT:
-				addr = new uShort(
-					memory.read(tempPC).increment(2),
-					memory.read(tempPC).increment()
-				);
-				addr = new uShort(
-					memory.read(addr.increment()),
-					memory.read(addr)
-					);
+				addr = readShort((short) (PC + 1));
+				addr = readShort(addr);
 				break;
 			case INDIRECT_X:
-				addr = new uShort(
-					memory.read(tempPC).increment(2),
-					memory.read(tempPC).increment()
-				).increment(X.get());
-				addr = new uShort(
-					memory.read(addr.increment()),
-					memory.read(addr)
-					);
+				addr = (short) (readShortIndirect((short) (PC + 1), X));
+				addr = readShort(addr);
 				break;
 			case INDIRECT_Y:
-				addr = new uShort(
-					memory.read(tempPC).increment(2),
-					memory.read(tempPC).increment()
-				);				
-				addr = new uShort(
-					memory.read(addr.increment()),
-					memory.read(addr)
-					).increment(Y.get());
+				addr = (short) (readShort((short) (PC + 1)));
+				addr = readShortIndirect(addr, Y);
 				break;
 			default:
 				logger.error("No matching addressing mode for {}", mode);
@@ -361,111 +227,33 @@ public class CPU {
 		logger.info("Reading opcode {} at PC {} with mode {}. Got final address {}", new Object[]{o, PC, mode, addr});
 		return addr;
 	}
+	
+	/** Reads an address for two consecutive bytes and forms
+	 * that into an address */
+	private short readShort(short address) {
+		return Shorts.fromBytes(
+			memory.read((short)(address + 1)),
+			memory.read((address)
+		));
+	}
+	
+	private short readShortIndirect(short address, byte offset) {
+		return (short) (readShort(address) + offset);
+	}
+	
+	
 
 	/**
 	 * Retrieves the next opcode from memory and returns it as a uByte
 	 * @return opCode as a uByte
 	 */
 	private Opcode getOpcode() {
-		uByte b = memory.read(PC);		
+		byte b = memory.read(PC);		
 		Opcode o = Opcode.getOpcodeByBytes(b);
 		logger.info("Reading opcode at PC addr {}. Got byte {} and opcode {}", new Object[] {PC, b, o});
 		return o;
 	}
-	
-	/**
-	 * Get a reference to a byte of memory by addressing mode
-	 * 
-	 **/
-	 private uByte read(uShort address, AddressingMode mode) {
-		 		
-		 uByte addressRead;
-		 
-		 
-		switch (mode) {
-			case IMPLICIT:
-				break;
-			case ACCUMULATOR:
-				break;
-			case IMMEDIATE:
-				break;
-			case ZERO_PAGE:
-				addressRead = memory.read(address);
-				break;
-			case ZERO_PAGE_X:
-				uByte zeroPageIndex = memory.read(address);
-				uShort zeroPageXOffset = new uShort(zeroPageIndex.get()+X.get());
-				addressRead = memory.read(zeroPageXOffset);
-				break;
-			case ZERO_PAGE_Y:	
-				uByte zeroPageIndexY = memory.read(address);
-				uShort zeroPageXOffsetY = new uShort(zeroPageIndexY.get()+X.get());
-				addressRead = memory.read(zeroPageXOffsetY);
-				break;
-			case RELATIVE:
-				throw new UnsupportedOperationException();
-			case ABSOLUTE:
-				/*
-				uByte L = memory.read(tempPC.increment());
-				uByte H = memory.read(tempPC.increment(2));
-				System.err.println(
-					tempPC + "," + tempPC.increment() + "," + tempPC.increment(2));
-				System.err.println("Absolute " + L+H+" @" + PC);
-				*/
-				addressRead = new uByte(memory.read(PC));
 
-				break;
-			case ABSOLUTE_X:
-				addressRead = new uShort(
-					memory.read(PC)
-				).increment(X.get());
-				break;
-			case ABSOLUTE_Y:
-				addressRead = new uShort(
-					memory.read(tempPC).increment(2),
-					memory.read(tempPC).increment()
-				).increment(Y.get());
-				break;
-			case INDIRECT:
-				addressRead = new uShort(
-					memory.read(tempPC).increment(2),
-					memory.read(tempPC).increment()
-				);
-				addressRead = new uShort(
-					memory.read(addressRead.increment()),
-					memory.read(addressRead)
-					);
-				break;
-			case INDIRECT_X:
-				addressRead = new uShort(
-					memory.read(tempPC).increment(2),
-					memory.read(tempPC).increment()
-				).increment(X.get());
-				addressRead = new uShort(
-					memory.read(addressRead.increment()),
-					memory.read(addressRead)
-					);
-				break;
-			case INDIRECT_Y:
-				addressRead = new uShort(
-					memory.read(tempPC).increment(2),
-					memory.read(tempPC).increment()
-				);				
-				addressRead = new uShort(
-					memory.read(addressRead.increment()),
-					memory.read(addressRead)
-					).increment(Y.get());
-				break;
-			default:
-				logger.error("No matching addressing mode for {}", mode);
-				throw new AddressingModeException(mode.toString());
-		}
-		
-		logger.info("Reading opcode {} at PC {} with mode {}. Got final address {}", new Object[]{o, PC, mode, addressRead});
-		return addressRead;
-	 }
-	 
-	
 	
 	/**
 	 * Main function to emulate operations of the processor to actions
@@ -542,9 +330,27 @@ public class CPU {
 		}
 	}
 
+	
+	public void ADC(byte val_) {
+		byte initialA = A;
+		int temp = Byte.toUnsignedInt(A) + Byte.toUnsignedInt(val_) + (P.isSetCarry() ? 1 : 0); 
+		// int temp = A + val_ + (P.isSetCarry() ? 1 : 0);
+		P.setCarry(temp > 0xFF);
+		P.setZero((temp & 0xFF) == 0);
+		P.setNegative(((byte)temp) < 0);
+		P.setOverflow(((A ^ temp) & 0x80) != 0 && ((A ^ temp) & 0x80) != 0);
+		A = (byte) temp;
+		logger.info("Added {} to {} and got {} with status {}", new Object[] {
+				HexUtils.toHex(val_),
+				HexUtils.toHex(initialA),
+				HexUtils.toHex(A),
+				P
+		});
+	}
+	
 		private void ADCi() {
 			incrementPC();
-			uByte val = memory.read(PC);
+			byte val = memory.read(PC);
 			incrementPC();
 			int temp = A.get() + val.get() + (P.isSetCarry() ? 1 : 0);
 			P.setCarry(temp > 0xFF);
@@ -615,16 +421,53 @@ public class CPU {
 			}
 		}
 
-		private void CLC() {
-			P.clearZero();
+
+		/* ******************* 
+		 * Sets
+		 ******************* */		
+
+		public void SEC() {
+			P.setCarry();
+			this.cyclesRun += Opcode.SEC.getCycles();
+		}
+		
+		public void SED() {
+			P.setDecimal();
+			this.cyclesRun += Opcode.SED.getCycles();
+		}
+		
+		private void SEI() {
+			P.setInterruptDisable();
+			this.cyclesRun += Opcode.SEI.getCycles();
+		}
+		
+		/* ******************* 
+		 * Clears 
+		 ******************* */
+		
+		public void CLC() {
+			P.clearCarry();
 			this.cyclesRun += Opcode.CLC.getCycles();
 		}
 
-		private void CLD() {
-			logger.info("CLD");
+		public void CLD() {
 			P.clearDecimal();
 			this.cyclesRun += Opcode.CLD.getCycles();
 		}
+		
+		public void CLI() {
+			P.clearInterruptDisable();
+			this.cyclesRun += Opcode.CLI.getCycles();
+		}
+
+		public void CLV() {
+			P.clearOverflow();
+			this.cyclesRun += Opcode.CLV.getCycles();
+		}
+		
+		/* ******************* 
+		 * Compares 
+		 ******************* */
 
 		private void CMPz() {
 			incrementPC();
@@ -836,12 +679,6 @@ public class CPU {
 			incrementPC();
 			this.cyclesRun += Opcode.RTS.getCycles();
 		}
-
-		private void SEI() {
-			logger.info( "SEI");
-			P.setInterruptDisable();
-			this.cyclesRun += Opcode.SEI.getCycles();
-		}
 		
 		private void STAa() {
 			incrementPC();
@@ -1026,5 +863,47 @@ public class CPU {
 				P.setCarry();
 			}
 		}
+		
+		void compare(byte A, byte B) {
+			if (A < B) {
+				P.setNegative(A - B < 0);
+				P.clearZero();
+				P.clearCarry();
+			} else if (A == B) {
+				P.clearNegative();
+				P.setZero();
+				P.setCarry();
+			} else {
+				P.setNegative(A - B < 0);
+				P.clearZero();
+				P.setCarry();
+			}
+		}
+
+		public void reset() { 
+			short resetAddrL = (short)0xfffc;
+			short resetAddrH = (short)0xfffd;
+			//uByte jumpLocL = new uByte(memory.read(resetAddrL));
+			byte jumpLocL = memory.read(resetAddrL);
+			//uByte jumpLocH = new uByte(memory.read(resetAddrH));
+			byte jumpLocH = memory.read(resetAddrH);
+					
+			short address = Shorts.fromBytes(jumpLocH, jumpLocL);
+			logger.info( "Reset, jumping to {}", HexUtils.toHex(address));		
+			PC = address;
+		}
+		
+		public short getPC() { return PC; }
+		public byte getSP() { return _stackPointer; }
+		public byte getA() { return A; }
+		public byte getX() { return X; }
+		public byte getY() { return Y; }
+		public boolean getCarryFlag() { return P.isSetCarry(); }
+		public boolean getZeroFlag() { return P.isSetZero(); }
+		public boolean getInterruptDisable() { return P.isSetInterruptDisable(); }
+		public boolean getDecimalMode() { return P.isSetDecimal(); }
+		public boolean getBreakCommand() { return P.isSetBreak(); }
+		public boolean getOverflowFlag() { return P.isSetOverflow(); }
+		public boolean getNegativeFlag() { return P.isSetNegative(); }
 	}
 
