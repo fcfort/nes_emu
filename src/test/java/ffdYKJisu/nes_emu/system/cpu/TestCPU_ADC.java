@@ -10,7 +10,7 @@ import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 
-public class CPUTest {
+public class TestCPU_ADC {
 
 	NES _n;
 	CPU _c;
@@ -79,8 +79,34 @@ public class CPUTest {
 	public void testADCSetNegativeAndOverflow() {
 		_c.ADC((byte) 2);
 		_c.ADC((byte) 253);
-		assertEquals(0xFF, _c.getA());
+		assertEquals((byte)0xFF, _c.getA());
 		assertTrue(_c.getNegativeFlag());
+		assertTrue(_c.getOverflowFlag());
+	}
+	
+	@Test
+	public void testADCSetCarryOverflowUnsetNegative() {		
+		_c.ADC((byte) 253);
+		_c.CLV();
+		assertTrue(_c.getNegativeFlag());
+		assertTrue(!_c.getOverflowFlag());
+		_c.ADC((byte) 6);
+		assertEquals((byte) 3, _c.getA());
+		assertTrue(!_c.getNegativeFlag());
+		assertTrue(_c.getCarryFlag());
+		assertTrue(_c.getOverflowFlag());
+	}
+	
+	@Test
+	public void testADCNegativeOverflowSetCarryUnset() {		
+		_c.ADC((byte) 125);
+		_c.SEC();
+		assertTrue(_c.getCarryFlag());
+		assertTrue(!_c.getOverflowFlag());
+		_c.ADC((byte) 2);
+		assertEquals((byte) 128, _c.getA());
+		assertTrue(_c.getNegativeFlag());
+		assertTrue(!_c.getCarryFlag());
 		assertTrue(_c.getOverflowFlag());
 	}
 

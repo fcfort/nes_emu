@@ -262,6 +262,8 @@ public class CPU implements ICPU {
 	 * @return Number of cycles taken for the instruction
 	 */
 	private void processOp(Opcode op) {
+		this.getClass().getMethod(op.getCodeName(), Byte.class).invoke(obj, args)
+		
 		switch (op) {
 			// ADCi - Add with Carry immediate
 			case ADCi: ADCi(); break;
@@ -329,17 +331,15 @@ public class CPU implements ICPU {
 				//PC.increment(op.getLength());
 		}
 	}
-
 	
 	public void ADC(byte val_) {
 		byte initialA = A;
 		int temp = Byte.toUnsignedInt(A) + Byte.toUnsignedInt(val_) + (P.isSetCarry() ? 1 : 0); 
-		// int temp = A + val_ + (P.isSetCarry() ? 1 : 0);
 		P.setCarry(temp > 0xFF);
-		P.setZero((temp & 0xFF) == 0);
-		P.setNegative(((byte)temp) < 0);
-		P.setOverflow(((A ^ temp) & 0x80) != 0 && ((A ^ temp) & 0x80) != 0);
 		A = (byte) temp;
+		setZero();
+		setNegative();
+		setOverflow(initialA, A);
 		logger.info("Added {} to {} and got {} with status {}", new Object[] {
 				HexUtils.toHex(val_),
 				HexUtils.toHex(initialA),
@@ -348,23 +348,47 @@ public class CPU implements ICPU {
 		});
 	}
 	
-		private void ADCi() {
-			incrementPC();
-			byte val = memory.read(PC);
-			incrementPC();
-			int temp = A.get() + val.get() + (P.isSetCarry() ? 1 : 0);
-			P.setCarry(temp > 0xFF);
-			// I don't actually understand this overflow thing myself.
-			// Just copied it from 6502.txt
-			if (((A.get() ^ val.get()) & 0x80) != 0)
-				if (((A.get() ^ temp) & 0x80) != 0)
-					P.clearOverflow();
-				else
-					P.setOverflow();
-			A = new uByte(temp);
-			P.setZero(A.get() == 0);
-			P.setNegative(A.isNegative());
-		}
+	public void AND(byte val_) {
+		A = (byte) (A & val_);
+		setZero();
+		setNegative();		
+	}
+	
+	public void ASL() {
+		P.setCarry((A & 0x80) != 0);			
+		A = (byte) (A << 1);		
+		setZero();
+		setNegative();
+	}
+	
+	public void BIT(byte val_) {
+		setZero((byte) (A & val_));
+		setNegative(val_); // set if value is negative
+		P.setOverflow((val_& 1 << 6) != 0); // Set overflow to value of bit 6
+	}
+	
+	private void setOverflow(byte initial_, byte final_) {
+		P.setOverflow((final_ & (byte)0x80) != (initial_ & 0x80));
+	}
+	
+	private void setZero(byte val_) {
+		P.setZero((val_ & 0xFF) == 0);
+	}
+	
+	private void setZero() {
+		setZero(A);
+	}
+	
+	private void setNegative(byte val_) {
+		P.setNegative(val_ < 0);	
+	}
+	
+	private void setNegative() {
+		setNegative(A);
+	}
+	
+	
+	
 
 		private void BEQ() {
 			uShort curAddr = PC;
@@ -421,7 +445,17 @@ public class CPU implements ICPU {
 			}
 		}
 
+		/* ******************* 
+		 * Loads
+		 ******************* */		
 
+		// TODO: Write tests for LDX
+		public void LDX(byte val_) {
+			X = val_;
+			setZero(X);
+			setNegative(X);
+		}
+		
 		/* ******************* 
 		 * Sets
 		 ******************* */		

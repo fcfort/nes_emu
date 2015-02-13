@@ -17,7 +17,7 @@ public class CPUMemoryTest {
 	
 	@Before
 	public void initialize() {
-		_mem = new CPUMemory(null);
+		_mem = new CPUMemory();
 	}
 	
 	@Test
