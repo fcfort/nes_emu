@@ -332,8 +332,6 @@ public class CPU implements ICPU {
 	private short readShortIndirect(short address, byte offset) {
 		return (short) (readShort(address) + offset);
 	}
-	
-	
 
 	/**
 	 * Retrieves the next opcode from memory and returns it 
@@ -456,430 +454,284 @@ public class CPU implements ICPU {
 		setNegative(Y);
 		setZero(Y);
 	}
+
+	/* ******************* 
+	 * Sets
+	 ******************* */		
+
+	public void SEC() {
+		P.setCarry();
+		this.cyclesRun += Opcode.SEC.getCycles();
+	}
 	
+	public void SED() {
+		P.setDecimal();
+		this.cyclesRun += Opcode.SED.getCycles();
+	}
 	
+	private void SEI() {
+		P.setInterruptDisable();
+		this.cyclesRun += Opcode.SEI.getCycles();
+	}
+	
+	/* ******************* 
+	 * Clears 
+	 ******************* */
+	
+	public void CLC() {
+		P.clearCarry();
+		this.cyclesRun += Opcode.CLC.getCycles();
+	}
+
+	public void CLD() {
+		P.clearDecimal();
+		this.cyclesRun += Opcode.CLD.getCycles();
+	}
+	
+	public void CLI() {
+		P.clearInterruptDisable();
+		this.cyclesRun += Opcode.CLI.getCycles();
+	}
+
+	public void CLV() {
+		P.clearOverflow();
+		this.cyclesRun += Opcode.CLV.getCycles();
+	}
+	
+	/* ******************* 
+	 * Compares 
+	 ******************* */
 /*
-		private void BEQ() {
-			uShort curAddr = PC;
-			incrementPC();
-			uByte relOffset = memory.read(PC);
-			incrementPC();
-			if (CPU.this.P.isSetZero()) {
-				uShort newAddr = PC.increment(relOffset.toSigned());
-				CPU.this.setPC(newAddr);
-				if (this.pageJumped(curAddr, newAddr)){}
-					//return 4;
-				//return 3;
-			}
-			//return 2;
+	private void CMPz() {
+		incrementPC();
+		uByte value = memory.read(memory.read(PC));
+		this.compare(A, value);
+		incrementPC();
+		this.cyclesRun += Opcode.CMPz.getCycles();
+	}
+
+	private void CMPay() {
+		incrementPC();
+		uShort addr = readBytesAsAddress(PC);
+		CPU.this.setPC(PC.increment(2));
+		uShort newAddr = this.toAbsoluteYAddress(addr);
+		this.compare(CPU.this.getA(), CPU.this.memory.read(newAddr));
+		if (this.pageJumped(addr, newAddr)) {
+			this.cyclesRun += Opcode.CMPay.getCycles(false, true);				
+		} else {
+			this.cyclesRun += Opcode.CMPay.getCycles();
 		}
+	}
 
-		private void BNE() {
-			short pageBeforeJump = PC.getUpper().get();
-			incrementPC();
-			uByte relOffset = memory.read(PC);
-			incrementPC();
-			uShort newPC = new uShort(PC.get() + relOffset.toSigned());
-			logger.info("BNE " + relOffset + " @" + newPC);
-			if (!P.isSetZero()) {
-				CPU.this.setPC(PC.increment(relOffset.toSigned()));
-				if (PC.getUpper().get() != pageBeforeJump) {
-					this.cyclesRun += Opcode.BNE.getCycles(true, true);
-				} else {
-					this.cyclesRun += Opcode.BNE.getCycles(true, false);
-				}			
-			} else {
-				this.cyclesRun += Opcode.BNE.getCycles(false, false);
-			}
+	private void CPXz() {
+		incrementPC();
+		uByte tempByte = memory.read(PC); // get zero page offset
+		logger.info( "CPXz " + tempByte);
+		tempByte = memory.read(tempByte); // read from zero page
+		compare(X, tempByte);
+		incrementPC();
+		this.cyclesRun += Opcode.CPXz.getCycles();
+	}
+
+	private void CPYi() {
+		incrementPC();
+		// Check zero
+		uByte tempByte = new uByte(memory.read(PC));
+		logger.info("CPYi " + tempByte);
+		compare(Y, tempByte);
+		incrementPC();
+		this.cyclesRun += Opcode.CPYi.getCycles();
+	}
+
+	private void DEX() {
+		incrementPC();
+		X = X.decrement();
+		P.setZero(X.get() == 0);
+		P.setNegative(X.isNegative());
+		this.cyclesRun += Opcode.DEX.getCycles();
+	}
+
+	private void INCz() {
+		incrementPC();
+		uByte zpAddress = new uByte(memory.read(PC));
+		logger.info("INCz " + zpAddress);
+		uByte zpValue = memory.read(zpAddress);
+		zpValue = zpValue.increment();
+		try {
+			CPU.this.memory.write(zpAddress, zpValue);
+		} catch (InvalidAddressException ex) {
+			logger.warn(ex + "Error in INCz address:" + zpAddress + " value:" + zpValue);
 		}
+		P.setNegative(zpValue.isNegative());
+		P.setZero(zpValue.get() == 0);
+		incrementPC();
+		this.cyclesRun += Opcode.INCz.getCycles();
+	}
 
-		private void BPL() {
-			short pageBeforeJump = PC.getUpper().get();
-			incrementPC();
-			uByte relOffset = memory.read(PC);
-			incrementPC();
-			uShort newPC = new uShort(PC.get() + relOffset.toSigned());
+	private void INY() {
+		incrementPC();
+		CPU.this.setY(Y.increment());
+		P.setNegative(Y.isNegative());
+		P.setZero(Y.get() == 0);
+		logger.info( "INY");
+		this.cyclesRun += Opcode.INY.getCycles();
+	}
 
-			logger.info("BPL " + relOffset + " @" + newPC);
+	private void JMPa() {
+		incrementPC();
+		uByte L = new uByte(memory.read(PC));
+		incrementPC();
+		uByte H = new uByte(memory.read(PC));
+		PC = new uShort(H, L);
+		logger.info( "JMPa " + H + L);
+		this.cyclesRun += Opcode.JMPa.getCycles();
+	}
 
-			if (!P.isSetNegative()) {
-				CPU.this.setPC(PC.increment(relOffset.toSigned()));
-				if (PC.getUpper().get() != pageBeforeJump){
-					this.cyclesRun += Opcode.BPL.getCycles(true, true);
-				} else {
-					this.cyclesRun += Opcode.BPL.getCycles(true, false);
-				}
-			} else {
-				this.cyclesRun += Opcode.BPL.getCycles(false, false);
-			}
-		}
-		*/
-		
-		/* ******************* 
-		 * Sets
-		 ******************* */		
-
-		public void SEC() {
+	private void JSR() {
+		incrementPC();
+		byte upperByte = (byte) PC.getUpper().get();
+		_stack[_stackPointer--] = upperByte;
+		byte lowerByte = (byte) PC.getLower().get();
+		_stack[_stackPointer--] = lowerByte;	
+		uShort subAddr = this.readBytesAsAddress(PC);
+		CPU.this.setPC(subAddr);
+		this.cyclesRun += Opcode.JSR.getCycles();
+	}
+	
+	private void ROLax() {
+		incrementPC();
+		uByte L = new uByte(memory.read(PC));
+		incrementPC();
+		uByte H = new uByte(memory.read(PC));
+		uShort temp = new uShort(H, L);
+		temp.increment(X.get());
+		uByte rotate = memory.read(temp);
+		// If bit 7, we need to carry that bit to status register
+		if (rotate.isNegative())
 			P.setCarry();
-			this.cyclesRun += Opcode.SEC.getCycles();
-		}
-		
-		public void SED() {
-			P.setDecimal();
-			this.cyclesRun += Opcode.SED.getCycles();
-		}
-		
-		private void SEI() {
-			P.setInterruptDisable();
-			this.cyclesRun += Opcode.SEI.getCycles();
-		}
-		
-		/* ******************* 
-		 * Clears 
-		 ******************* */
-		
-		public void CLC() {
+		else
 			P.clearCarry();
-			this.cyclesRun += Opcode.CLC.getCycles();
-		}
+		rotate.rotateLeft(P.isSetCarry());
+		logger.info("ROLax " + H + L);
+		this.cyclesRun += Opcode.ROLax.getCycles();
+	}
 
-		public void CLD() {
-			P.clearDecimal();
-			this.cyclesRun += Opcode.CLD.getCycles();
+	private void RTS() {			
+		uByte L = new uByte(_stack[_stackPointer++]);
+		uByte H = new uByte(_stack[_stackPointer++]);
+		uShort addr = new uShort(H, L);
+		CPU.this.setPC(addr);
+		incrementPC();
+		this.cyclesRun += Opcode.RTS.getCycles();
+	}
+	
+	private void STAa() {
+		incrementPC();
+		uByte L = new uByte(memory.read(PC));
+		incrementPC();
+		uByte H = new uByte(memory.read(PC));
+		logger.info("STAa " + H + L);
+		// A.set(memory.read(H,L));
+		try {
+			memory.write(H, L, A);
+		} catch (InvalidAddressException e) {
+			System.out.println("HL addr" + H + L + " PC " + PC);
 		}
-		
-		public void CLI() {
-			P.clearInterruptDisable();
-			this.cyclesRun += Opcode.CLI.getCycles();
-		}
+		incrementPC();
+		this.cyclesRun += Opcode.STAa.getCycles();
+	}
 
-		public void CLV() {
-			P.clearOverflow();
-			this.cyclesRun += Opcode.CLV.getCycles();
+	private void STAay() {
+		incrementPC();
+		uByte L = new uByte(memory.read(PC));
+		incrementPC();
+		uByte H = new uByte(memory.read(PC));
+		uShort temp = new uShort(H, L);
+		temp.increment(Y.get());
+		try {
+			memory.write(temp, A);
+		} catch (InvalidAddressException ex) {
+			logger.warn(ex.getMessage());
 		}
-		
-		/* ******************* 
-		 * Compares 
-		 ******************* */
-/*
-		private void CMPz() {
-			incrementPC();
-			uByte value = memory.read(memory.read(PC));
-			this.compare(A, value);
-			incrementPC();
-			this.cyclesRun += Opcode.CMPz.getCycles();
-		}
+		incrementPC();
+		logger.info("STAay " + H + L);
+		this.cyclesRun += Opcode.STAay.getCycles();
+	}
 
-		private void CMPay() {
-			incrementPC();
-			uShort addr = readBytesAsAddress(PC);
-			CPU.this.setPC(PC.increment(2));
-			uShort newAddr = this.toAbsoluteYAddress(addr);
-			this.compare(CPU.this.getA(), CPU.this.memory.read(newAddr));
-			if (this.pageJumped(addr, newAddr)) {
-				this.cyclesRun += Opcode.CMPay.getCycles(false, true);				
-			} else {
-				this.cyclesRun += Opcode.CMPay.getCycles();
-			}
+	private void STAiy() {
+		incrementPC();
+		uByte offset = new uByte(memory.read(PC));
+		uByte L = new uByte(memory.read(offset));
+		offset.increment();
+		uByte H = new uByte(memory.read(offset));
+		uShort temp = new uShort(H, L);
+		temp.increment(Y.get());
+		try {
+			memory.write(temp, A);
+		} catch (InvalidAddressException ex) {
+			logger.warn(
+				ex + "PC: " + PC);
 		}
+		logger.info("STAiy " + offset);
+		incrementPC();
+		this.cyclesRun += Opcode.STAiy.getCycles();
+	}
 
-		private void CPXz() {
-			incrementPC();
-			uByte tempByte = memory.read(PC); // get zero page offset
-			logger.info( "CPXz " + tempByte);
-			tempByte = memory.read(tempByte); // read from zero page
-			compare(X, tempByte);
-			incrementPC();
-			this.cyclesRun += Opcode.CPXz.getCycles();
+	private void STAz() {
+		incrementPC();
+		try {
+			memory.write(memory.read(memory.read(PC)), CPU.this.getA());
+		} catch (InvalidAddressException ex) {
+			logger.warn(ex + "PC: " + PC);
 		}
+		incrementPC();
+		this.cyclesRun += Opcode.STAz.getCycles();
+	}
 
-		private void CPYi() {
-			incrementPC();
-			// Check zero
-			uByte tempByte = new uByte(memory.read(PC));
-			logger.info("CPYi " + tempByte);
-			compare(Y, tempByte);
-			incrementPC();
-			this.cyclesRun += Opcode.CPYi.getCycles();
+	private void STYz() {
+		incrementPC();
+		uByte zpAddr = CPU.this.memory.read(CPU.this.getPC());
+		incrementPC();
+		try {
+			CPU.this.memory.write(zpAddr, CPU.this.getY());
+		} catch (InvalidAddressException ex) {
+			logger.warn(ex + " STYz at ZP addr:" + zpAddr + "Y:" + CPU.this.getY());
 		}
+		this.cyclesRun += Opcode.STYz.getCycles();
+	}
 
-		private void DEX() {
-			incrementPC();
-			X = X.decrement();
-			P.setZero(X.get() == 0);
-			P.setNegative(X.isNegative());
-			this.cyclesRun += Opcode.DEX.getCycles();
-		}
+	private void TAX() {
+		incrementPC();
+		X = A;
+		P.setNegative(X.isNegative());
+		P.setZero(X.get() == 0);
+		this.cyclesRun += Opcode.TAX.getCycles();
+	}
 
-		private void INCz() {
-			incrementPC();
-			uByte zpAddress = new uByte(memory.read(PC));
-			logger.info("INCz " + zpAddress);
-			uByte zpValue = memory.read(zpAddress);
-			zpValue = zpValue.increment();
-			try {
-				CPU.this.memory.write(zpAddress, zpValue);
-			} catch (InvalidAddressException ex) {
-				logger.warn(ex + "Error in INCz address:" + zpAddress + " value:" + zpValue);
-			}
-			P.setNegative(zpValue.isNegative());
-			P.setZero(zpValue.get() == 0);
-			incrementPC();
-			this.cyclesRun += Opcode.INCz.getCycles();
-		}
+	private void TAY() {
+		incrementPC();
+		Y = A;
+		P.setNegative(Y.isNegative());
+		P.setZero(Y.get() == 0);
+		logger.info("TAY");
+		this.cyclesRun += Opcode.TAY.getCycles();
+	}
 
-		private void INY() {
-			incrementPC();
-			CPU.this.setY(Y.increment());
-			P.setNegative(Y.isNegative());
-			P.setZero(Y.get() == 0);
-			logger.info( "INY");
-			this.cyclesRun += Opcode.INY.getCycles();
-		}
+	private void TXS() {
+		incrementPC();
+		_stackPointer = (byte) X.get();
+		logger.info("TXS");
+		this.cyclesRun += Opcode.TXS.getCycles();
+	}
 
-		private void JMPa() {
-			incrementPC();
-			uByte L = new uByte(memory.read(PC));
-			incrementPC();
-			uByte H = new uByte(memory.read(PC));
-			PC = new uShort(H, L);
-			logger.info( "JMPa " + H + L);
-			this.cyclesRun += Opcode.JMPa.getCycles();
-		}
-
-		private void JSR() {
-			incrementPC();
-			byte upperByte = (byte) PC.getUpper().get();
-			_stack[_stackPointer--] = upperByte;
-			byte lowerByte = (byte) PC.getLower().get();
-			_stack[_stackPointer--] = lowerByte;	
-			uShort subAddr = this.readBytesAsAddress(PC);
-			CPU.this.setPC(subAddr);
-			this.cyclesRun += Opcode.JSR.getCycles();
-		}
-		
-		private void LDAi() {
-			logger.info("Beginning operation LDAi");
-			incrementPC();
-			A = memory.read(PC);
-			logger.info("LDAi " + A);
-			if (A.get() == 0)
-				P.setZero();
-			else
-				P.clearZero();
-			if ((A.get() >> 7) == 1)
-				P.setNegative();
-			else
-				P.clearNegative();
-			incrementPC();
-			this.cyclesRun += Opcode.LDAi.getCycles();
-		}
-
-		private void LDAa() {
-			incrementPC();
-			uByte L = new uByte(memory.read(PC));
-			incrementPC();
-			uByte H = new uByte(memory.read(PC));
-			logger.info( "LDAa " + H + L);
-			A = memory.read(H, L);
-			P.setZero(A.get() == 0);
-			P.setNegative(A.isNegative());
-			incrementPC();
-			this.cyclesRun += Opcode.LDAa.getCycles();
-		}
-
-		private void LDAay() {
-			incrementPC();
-			uShort addr = readBytesAsAddress(PC);
-			CPU.this.setPC(PC.increment(2));
-			uShort newAddr = this.toAbsoluteYAddress(addr);
-			A = memory.read(newAddr);
-			P.setZero(A.get() == 0);
-			P.setNegative(A.isNegative());
-			//CPU.this.setPC(PC.increment());
-			if (this.pageJumped(addr, newAddr)) {
-				this.cyclesRun += Opcode.LDAay.getCycles(false, true);
-			} else { 
-				this.cyclesRun += Opcode.LDAay.getCycles();
-			}
-				
-		}
-
-		private void LDAz() {
-			incrementPC();
-			A = memory.read(memory.read(PC));
-			P.setZero(A.get() == 0);
-			P.setNegative(A.isNegative());
-			incrementPC();
-			this.cyclesRun += Opcode.LDAz.getCycles();
-		}
-
-		private void LDXi() {
-			incrementPC();
-			X = memory.read(PC);
-			logger.info( "LDXi " + X);
-			if (X.isNegative())
-				P.setNegative();
-			else
-				P.clearNegative();
-			if (X.get() == 0)
-				P.setZero();
-			else
-				P.clearZero();
-			incrementPC();
-			this.cyclesRun += Opcode.LDXi.getCycles();
-		}
-
-		private void LDYi() {
-			incrementPC();
-			Y = memory.read(PC);
-			logger.info("LDYi " + Y);
-			if (Y.isNegative())
-				P.setNegative();
-			else
-				P.clearNegative();
-			if (Y.get() == 0)
-				P.setZero();
-			else
-				P.clearZero();
-			incrementPC();
-			this.cyclesRun += Opcode.LDYi.getCycles();
-		}
-
-		private void ROLax() {
-			incrementPC();
-			uByte L = new uByte(memory.read(PC));
-			incrementPC();
-			uByte H = new uByte(memory.read(PC));
-			uShort temp = new uShort(H, L);
-			temp.increment(X.get());
-			uByte rotate = memory.read(temp);
-			// If bit 7, we need to carry that bit to status register
-			if (rotate.isNegative())
-				P.setCarry();
-			else
-				P.clearCarry();
-			rotate.rotateLeft(P.isSetCarry());
-			logger.info("ROLax " + H + L);
-			this.cyclesRun += Opcode.ROLax.getCycles();
-		}
-
-		private void RTS() {			
-			uByte L = new uByte(_stack[_stackPointer++]);
-			uByte H = new uByte(_stack[_stackPointer++]);
-			uShort addr = new uShort(H, L);
-			CPU.this.setPC(addr);
-			incrementPC();
-			this.cyclesRun += Opcode.RTS.getCycles();
-		}
-		
-		private void STAa() {
-			incrementPC();
-			uByte L = new uByte(memory.read(PC));
-			incrementPC();
-			uByte H = new uByte(memory.read(PC));
-			logger.info("STAa " + H + L);
-			// A.set(memory.read(H,L));
-			try {
-				memory.write(H, L, A);
-			} catch (InvalidAddressException e) {
-				System.out.println("HL addr" + H + L + " PC " + PC);
-			}
-			incrementPC();
-			this.cyclesRun += Opcode.STAa.getCycles();
-		}
-
-		private void STAay() {
-			incrementPC();
-			uByte L = new uByte(memory.read(PC));
-			incrementPC();
-			uByte H = new uByte(memory.read(PC));
-			uShort temp = new uShort(H, L);
-			temp.increment(Y.get());
-			try {
-				memory.write(temp, A);
-			} catch (InvalidAddressException ex) {
-				logger.warn(ex.getMessage());
-			}
-			incrementPC();
-			logger.info("STAay " + H + L);
-			this.cyclesRun += Opcode.STAay.getCycles();
-		}
-
-		private void STAiy() {
-			incrementPC();
-			uByte offset = new uByte(memory.read(PC));
-			uByte L = new uByte(memory.read(offset));
-			offset.increment();
-			uByte H = new uByte(memory.read(offset));
-			uShort temp = new uShort(H, L);
-			temp.increment(Y.get());
-			try {
-				memory.write(temp, A);
-			} catch (InvalidAddressException ex) {
-				logger.warn(
-					ex + "PC: " + PC);
-			}
-			logger.info("STAiy " + offset);
-			incrementPC();
-			this.cyclesRun += Opcode.STAiy.getCycles();
-		}
-
-		private void STAz() {
-			incrementPC();
-			try {
-				memory.write(memory.read(memory.read(PC)), CPU.this.getA());
-			} catch (InvalidAddressException ex) {
-				logger.warn(ex + "PC: " + PC);
-			}
-			incrementPC();
-			this.cyclesRun += Opcode.STAz.getCycles();
-		}
-
-		private void STYz() {
-			incrementPC();
-			uByte zpAddr = CPU.this.memory.read(CPU.this.getPC());
-			incrementPC();
-			try {
-				CPU.this.memory.write(zpAddr, CPU.this.getY());
-			} catch (InvalidAddressException ex) {
-				logger.warn(ex + " STYz at ZP addr:" + zpAddr + "Y:" + CPU.this.getY());
-			}
-			this.cyclesRun += Opcode.STYz.getCycles();
-		}
-
-		private void TAX() {
-			incrementPC();
-			X = A;
-			P.setNegative(X.isNegative());
-			P.setZero(X.get() == 0);
-			this.cyclesRun += Opcode.TAX.getCycles();
-		}
-
-		private void TAY() {
-			incrementPC();
-			Y = A;
-			P.setNegative(Y.isNegative());
-			P.setZero(Y.get() == 0);
-			logger.info("TAY");
-			this.cyclesRun += Opcode.TAY.getCycles();
-		}
-
-		private void TXS() {
-			incrementPC();
-			_stackPointer = (byte) X.get();
-			logger.info("TXS");
-			this.cyclesRun += Opcode.TXS.getCycles();
-		}
-
-		private void TYA() {
-			incrementPC();
-			A = Y;
-			P.setNegative(Y.isNegative());
-			P.setZero(Y.get() == 0);
-			this.cyclesRun += Opcode.TYA.getCycles();
-		}
-		*/
+	private void TYA() {
+		incrementPC();
+		A = Y;
+		P.setNegative(Y.isNegative());
+		P.setZero(Y.get() == 0);
+		this.cyclesRun += Opcode.TYA.getCycles();
+	}
+	*/
 // ------------------------
 // Helper functions
 // ------------------------
