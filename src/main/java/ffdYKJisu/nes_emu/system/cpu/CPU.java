@@ -401,44 +401,37 @@ public class CPU implements ICPU {
 		setNegative(A);
 	}
 	
-	
 	/* ******************* 
 	 * Branches
 	 ******************* */
 	
 	public void BCC(byte val_) {
-		if(!P.isSetCarry()) {
-			PC += val_;
-		}	
+		branch(!P.isSetCarry(), val_);
 	}
 	
 	public void BCS(byte val_) {
-		if(P.isSetCarry()) {
-			PC += val_;
-		}
+		branch(P.isSetCarry(), val_);
 	}
 		
 	public void BEQ(byte val_) {
-		if(P.isSetZero()) {
-			PC += val_;
-		}
+		branch(P.isSetZero(), val_);
 	}
 	
 	public void BNE(byte val_) {
-		if(!P.isSetZero()) {
-			PC += val_;
-		}
+		branch(!P.isSetZero(), val_);
 	}
 	
 	public void BMI(byte val_) {
-		if(P.isSetNegative()) {
-			PC += val_;
-		}
+		branch(P.isSetNegative(), val_);
 	}
 	
 	public void BPL(byte val_) {
-		if(!P.isSetNegative()) {
-			PC += val_;
+		branch(!P.isSetNegative(), val_);
+	}
+	
+	private void branch(boolean status_, byte offset_) {
+		if(status_) {
+			PC += offset_;
 		}
 	}
 	
