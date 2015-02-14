@@ -1,21 +1,21 @@
 package ffdYKJisu.nes_emu.system.cpu;
 
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Shorts;
-import com.google.common.primitives.UnsignedBytes;
-import com.google.common.primitives.UnsignedInteger;
 
 import ffdYKJisu.nes_emu.domain.AddressingMode;
 import ffdYKJisu.nes_emu.domain.Opcode;
 import ffdYKJisu.nes_emu.domain.StatusBit;
 import ffdYKJisu.nes_emu.exceptions.AddressingModeException;
-import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 import ffdYKJisu.nes_emu.system.HexUtils;
-import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 
 /**
@@ -42,16 +42,12 @@ public class CPU implements ICPU {
 	private StatusBit P;
 	private final CPUMemory memory;
 	private int cyclesRun;
-	/** Holds Stack object for stack instructions to use */
-	private byte[] _stack;
 	private byte _stackPointer;
 
 	public CPU(CPUMemory memory_) {		
 		logger.info("CPU has been initiated");	
 		memory = memory_;
 		cyclesRun = 0;
-		// Initialize stack	
-		_stack = new byte[256];
 		// Set up State registers
 		initStateRegisters();
 		// Load cart into memory
@@ -96,18 +92,86 @@ public class CPU implements ICPU {
 	public void runStep() {
 		// Read Opcode from PC
 		Opcode op = getOpcode();
+		/* 
+		Result
+			ResultLocation
+				ResultLocationType: MEMORY, REGISTER_X, REGISTER_Y
+				ResultLocationValue: short (MEMORY)
+			ResultValue
 		
+		createResult(AddressingMode m_, short addr_)
+		createResult(AddressingMode m_, byte val_)  
+		
+		Result r = OPCODE(byte val_) or OPCODE (short addr_)
+		
+		*/
 		byte opcodeBytes = op.getOpcodeBytes();
+		short address = getAddress(op.getAddressingMode());
+		
 		// Print instruction to logger
 		logger.info("Got opcode {} with bytes {} at PC {}", new Object[]{op, opcodeBytes, PC});
+		
+		if(hasOperand(op.getAddressingMode())) {
+			byte operand = getOperand(op.getAddressingMode(), address);
+			doOperation(op, operand);
+		} else {
+			doOperation(op);
+		}
+		
 		// Print CPU state to log
 		// Process instructions for op
-		int cyclesBefore = this.cyclesRun; 
-		this.processOp(op);
+		int cyclesBefore = this.cyclesRun;
+		// this.processOp(op, operand);
 		// Increment PC
 		incrementPC(op.getLength());
 		
 		// Return time taken
+	}
+
+	private void doOperation(Opcode op_) {		
+		try {
+			Method opCodeImplementation = getClass().getDeclaredMethod(op_.getCodeName());
+			opCodeImplementation.invoke(this);
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	private void doOperation(Opcode op_, byte operand_) {		
+		try {	
+			logger.info("Looking for method with name {} for operation {} with operands {}", 
+					new Object[] {op_.getCodeName(), op_, operand_});
+			Method opCodeImplementation = getClass().getDeclaredMethod(op_.getCodeName(), byte.class);
+			logger.info("Found method {} for op {}, calling with {} operands of length {}", 
+					new Object[] {opCodeImplementation, op_, operand_, 1});							
+			opCodeImplementation.invoke(this, operand_);
+		} catch (NoSuchMethodException e) {
+			logger.error("{}", e);
+			throw new UnsupportedOperationException();
+		} catch (SecurityException e) {
+			throw new UnsupportedOperationException();
+		} catch (IllegalAccessException e) {
+			throw new UnsupportedOperationException();
+		} catch (IllegalArgumentException e) {
+			logger.error("{}", e);
+			throw new UnsupportedOperationException();
+		} catch (InvocationTargetException e) {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 	/**
@@ -122,8 +186,8 @@ public class CPU implements ICPU {
 
 		byte[] bytes = new byte[instructionLength];
 
-		StringBuffer sbBytes = new StringBuffer();
-
+		StringBuffer sbBytes = new StringBuffer();		
+		
 		sbBytes.append("(");
 		for (int j = 0; j < instructionLength; j++) {
 			byte b = this.memory.read(address);
@@ -162,26 +226,54 @@ public class CPU implements ICPU {
 	public int instructionLength(short address) {
 		return Opcode.getOpcodeByBytes(memory.read(address)).getLength();
 	}
+	
+	
 
+	private boolean hasOperand(AddressingMode mode_) {
+		return mode_ != AddressingMode.IMPLICIT;
+	}
+	
+	private byte getOperand(AddressingMode mode_, short address_) {
+		switch (mode_) {
+		case IMPLICIT:
+			throw new UnsupportedOperationException();
+		case ACCUMULATOR:
+			return A;
+		case IMMEDIATE:
+		case ZERO_PAGE:			
+		case ZERO_PAGE_X:
+		case ZERO_PAGE_Y:
+		case RELATIVE:
+		case ABSOLUTE:
+		case ABSOLUTE_X:
+		case ABSOLUTE_Y:
+		case INDIRECT:
+		case INDIRECT_X:
+		case INDIRECT_Y:
+			return memory.read(address_);
+		default:
+			logger.error("No matching addressing mode for {}", mode_);
+			throw new UnsupportedOperationException();
+		}
+	}
+	
 	/**
 	 * Reads current PC, reads the opcode there, determines the addressing mode
 	 * and returns an address by determining what bytes to read from the parameters
 	 * of the instruction. The address returned is either the read/write address
 	 * for the instruction
 	 * @return Address of where to perform operation
-	 */
-	private short getAddress() {
-		Opcode o = Opcode.getOpcodeByBytes(memory.read(PC));		
-		AddressingMode mode = o.getAddressingMode();
+	 */	
+	private short getAddress(AddressingMode mode_) {
 		short addr = 0;
-		short tempPC = PC;
 				
-		switch (mode) {
+		switch (mode_) {
 			case IMPLICIT:
 				break;
 			case ACCUMULATOR:
 				break;
 			case IMMEDIATE:
+				addr = (short) (PC + 1);
 				break;
 			case ZERO_PAGE:
 				addr = memory.read((short)(PC + 1));
@@ -220,11 +312,11 @@ public class CPU implements ICPU {
 				addr = readShortIndirect(addr, Y);
 				break;
 			default:
-				logger.error("No matching addressing mode for {}", mode);
-				throw new AddressingModeException(mode.toString());
+				logger.error("No matching addressing mode for {}", mode_);
+				throw new AddressingModeException(mode_.toString());
 		}
 		
-		logger.info("Reading opcode {} at PC {} with mode {}. Got final address {}", new Object[]{o, PC, mode, addr});
+		logger.info("At PC {} with mode {}. Got final address {}", new Object[]{PC, mode_, addr});
 		return addr;
 	}
 	
@@ -244,92 +336,14 @@ public class CPU implements ICPU {
 	
 
 	/**
-	 * Retrieves the next opcode from memory and returns it as a uByte
-	 * @return opCode as a uByte
+	 * Retrieves the next opcode from memory and returns it 
+	 * @return opCode
 	 */
 	private Opcode getOpcode() {
 		byte b = memory.read(PC);		
 		Opcode o = Opcode.getOpcodeByBytes(b);
 		logger.info("Reading opcode at PC addr {}. Got byte {} and opcode {}", new Object[] {PC, b, o});
 		return o;
-	}
-
-	
-	/**
-	 * Main function to emulate operations of the processor to actions
-	 * upon the CPU class and others.
-	 * @param Opcode value as a uByte
-	 * @return Number of cycles taken for the instruction
-	 */
-	private void processOp(Opcode op) {
-		this.getClass().getMethod(op.getCodeName(), Byte.class).invoke(obj, args)
-		
-		switch (op) {
-			// ADCi - Add with Carry immediate
-			case ADCi: ADCi(); break;
-			// BEQ - Branch if Equal
-			case BEQ: BEQ(); break;
-			// BNE - Branch if Not Equal
-			case BNE: BNE(); break;
-			// BPL - Branch if Positive
-			case BPL: BPL(); break;
-			// CLC - Clear Carry Flag
-			case CLC: CLC(); break;
-			// CLD - Clear Decimal Mode
-			case CLD: CLD(); break;
-			// CMPay - Compare A register absolute Y
-			case CMPay: CMPay(); break;
-			// CMPz - Compare A register zero page
-			case CMPz: CMPz(); break;
-			// CPXz - Compare X Register
-			case CPXz: CPXz(); break;
-			// CPYi - Compare Y Register immediate
-			case CPYi: CPYi(); break;
-			// DEX - Decrement X Register
-			case DEX: DEX(); break;
-			// INCz - Increment CPUMemory zero page
-			case INCz: INCz(); break;
-			// INY - Increment Y Register
-			case INY: INY(); break;
-			// JMPa - Jump
-			case JMPa: JMPa(); break;
-			// JSR - Jump to Subroutine
-			case JSR: JSR(); break;
-			// LDA - Load Accumulator
-			case LDAa: LDAa(); break;			
-			case LDAay: LDAay(); break;
-			case LDAi: LDAi(); break;
-			case LDAz: LDAz(); break;
-			// LDXi - Load X Register
-			case LDXi: LDXi(); break;
-			// LDYi - Load Y Register immediate
-			case LDYi: LDYi(); break;
-			// ROLax - Rotate Left absolute X
-			case ROLax: ROLax(); break;
-			// RTS - Return from Subroutine
-			case RTS: RTS(); break;
-			// SEI - Set Interrupt Disable
-			case SEI: SEI(); break;
-			// STA - Store Accumulator
-			case STAa: STAa(); break;
-			case STAay: STAay(); break;
-			case STAiy: STAiy(); break;
-			case STAz: STAz(); break;
-			// STYz - Store Y Register zero page
-			case STYz: STYz(); break;
-			// TAX - Transfer Accumulator to X	
-			case TAX: TAX(); break;
-			// TAY - Transfer Accumulator to Y
-			case TAY: TAY(); break;
-			// TXS - Transfer X to Stack Pointer
-			case TXS: TXS(); break;
-			// TYA - Transfer Y to Accumulator
-			case TYA: TYA(); break;
-			default:
-				logger.info("Opcode {} not yet implemented", op);
-				throw new UnsupportedOperationException("Opcode (" + op + ") not yet implemented");
-				//PC.increment(op.getLength());
-		}
 	}
 	
 	public void ADC(byte val_) {
@@ -388,8 +402,70 @@ public class CPU implements ICPU {
 	}
 	
 	
+	/* ******************* 
+	 * Branches
+	 ******************* */
 	
-
+	public void BCC(byte val_) {
+		if(!P.isSetCarry()) {
+			PC += val_;
+		}	
+	}
+	
+	public void BCS(byte val_) {
+		if(P.isSetCarry()) {
+			PC += val_;
+		}
+	}
+		
+	public void BEQ(byte val_) {
+		if(P.isSetZero()) {
+			PC += val_;
+		}
+	}
+	
+	public void BNE(byte val_) {
+		if(!P.isSetZero()) {
+			PC += val_;
+		}
+	}
+	
+	public void BMI(byte val_) {
+		if(P.isSetNegative()) {
+			PC += val_;
+		}
+	}
+	
+	public void BPL(byte val_) {
+		if(!P.isSetNegative()) {
+			PC += val_;
+		}
+	}
+	
+	/* ******************* 
+	 * Loads
+	 ******************* */
+	
+	public void LDA(byte val_) {
+		A = val_;
+		setNegative(A);
+		setZero(A);
+	}
+		
+	public void LDX(byte val_) {
+		X = val_;
+		setNegative(X);
+		setZero(X);
+	}
+	
+	public void LDY(byte val_) {
+		Y = val_;
+		setNegative(Y);
+		setZero(Y);
+	}
+	
+	
+/*
 		private void BEQ() {
 			uShort curAddr = PC;
 			incrementPC();
@@ -444,17 +520,7 @@ public class CPU implements ICPU {
 				this.cyclesRun += Opcode.BPL.getCycles(false, false);
 			}
 		}
-
-		/* ******************* 
-		 * Loads
-		 ******************* */		
-
-		// TODO: Write tests for LDX
-		public void LDX(byte val_) {
-			X = val_;
-			setZero(X);
-			setNegative(X);
-		}
+		*/
 		
 		/* ******************* 
 		 * Sets
@@ -502,7 +568,7 @@ public class CPU implements ICPU {
 		/* ******************* 
 		 * Compares 
 		 ******************* */
-
+/*
 		private void CMPz() {
 			incrementPC();
 			uByte value = memory.read(memory.read(PC));
@@ -820,6 +886,7 @@ public class CPU implements ICPU {
 			P.setZero(Y.get() == 0);
 			this.cyclesRun += Opcode.TYA.getCycles();
 		}
+		*/
 // ------------------------
 // Helper functions
 // ------------------------
@@ -833,32 +900,9 @@ public class CPU implements ICPU {
 		 * @return Returns true if the two addresses lie on different pages,
 		 * false otherwise.
 		 */
-		boolean pageJumped(uShort startAddress, uShort endAddress) {
-			return !startAddress.getUpper().equals(endAddress.getUpper());
-		}
-
-		/**
-		 * accepts two bytes and returns an address that is calculated based
-		 * on absolute Y addressing. Combines upper and lower address bytes
-		 * and reads that location in memory and ten increments that address
-		 * by the value of the Y register.
-		 * @param lowerAddress
-		 * @param upperAddress
-		 * @return Address to read or write from
-		 */
-		uShort toAbsoluteYAddress(uByte upperAddress, uByte lowerAddress) {
-			uShort temp = new uShort(upperAddress, lowerAddress);
-			return toAbsoluteYAddress(temp);
-		}
-
-		uShort toAbsoluteYAddress(uShort address) {
-			return address.increment(CPU.this.Y.get());
-		}
-
-		uShort toAbsoluteXAddress(uByte upperAddress, uByte lowerAddress) {
-			uShort temp = new uShort(upperAddress, lowerAddress);
-			temp = temp.increment(CPU.this.X.get());
-			return temp;
+		boolean pageJumped(short startAddress, short endAddress) {
+			// return !startAddress.getUpper().equals(endAddress.getUpper());
+			return false;
 		}
 
 		/**
@@ -868,36 +912,21 @@ public class CPU implements ICPU {
 		 * @param address Where to read the bytes from, will typically be the PC
 		 * @return Next two bytes in memory as an address
 		 */
+		/*
 		uShort readBytesAsAddress(uShort address) {
 			uByte L = memory.read(address);
 			uByte H = memory.read(address.increment());
 			return new uShort(H, L);
 		// or as 1-liner: return new uShort(memory.read(address),memory.read(address.increment()));
 		}
+		*/
 
 		/**
 		 * Compares two bytes, used by all comparison operations.
 		 * Simulates A - B and changes status flags based on results
 		 * @param A minuend (usually a register)
 		 * @param B subtrahend (usually from memory)
-		 */
-		void compare(uByte A, uByte B) {
-			byte s = (byte) (A.toSigned() - B.toSigned());
-			if (A.get() < B.get()) {
-				P.setNegative(s < 0);
-				P.clearZero();
-				P.clearCarry();
-			} else if (A.get() == B.get()) {
-				P.clearNegative();
-				P.setZero();
-				P.setCarry();
-			} else {
-				P.setNegative(s < 0);
-				P.clearZero();
-				P.setCarry();
-			}
-		}
-		
+		 */		
 		void compare(byte A, byte B) {
 			if (A < B) {
 				P.setNegative(A - B < 0);
@@ -940,4 +969,5 @@ public class CPU implements ICPU {
 		public boolean getOverflowFlag() { return P.isSetOverflow(); }
 		public boolean getNegativeFlag() { return P.isSetNegative(); }
 	}
+
 
