@@ -349,8 +349,8 @@ public class CPU implements ICPU {
 		int temp = Byte.toUnsignedInt(A) + Byte.toUnsignedInt(val_) + (P.isSetCarry() ? 1 : 0); 
 		P.setCarry(temp > 0xFF);
 		A = (byte) temp;
-		setZero();
-		setNegative();
+		setZero(A);
+		setNegative(A);
 		setOverflow(initialA, A);
 		logger.info("Added {} to {} and got {} with status {}", new Object[] {
 				HexUtils.toHex(val_),
@@ -362,15 +362,15 @@ public class CPU implements ICPU {
 	
 	public void AND(byte val_) {
 		A = (byte) (A & val_);
-		setZero();
-		setNegative();		
+		setZero(A);
+		setNegative(A);		
 	}
 	
 	public void ASL() {
 		P.setCarry((A & 0x80) != 0);			
 		A = (byte) (A << 1);		
-		setZero();
-		setNegative();
+		setZero(A);
+		setNegative(A);
 	}
 	
 	public void BIT(byte val_) {
@@ -387,16 +387,8 @@ public class CPU implements ICPU {
 		P.setZero((val_ & 0xFF) == 0);
 	}
 	
-	private void setZero() {
-		setZero(A);
-	}
-	
 	private void setNegative(byte val_) {
 		P.setNegative(val_ < 0);	
-	}
-	
-	private void setNegative() {
-		setNegative(A);
 	}
 	
 	/* ******************* 
@@ -454,6 +446,33 @@ public class CPU implements ICPU {
 		setNegative(Y);
 		setZero(Y);
 	}
+	
+	/* ******************* 
+	 * Transfers
+	 ******************* */
+
+	public void TAX() {
+		X = A;
+		setNegative(X);
+		setZero(X);
+	}
+
+	public void TAY() {
+		Y = A;
+		setNegative(Y);
+		setZero(Y);
+	}
+
+	public void TXS() {
+		_stackPointer = X;
+	}
+
+	public void TYA() {
+		A = Y;
+		setNegative(A);
+		setZero(A);
+	}
+
 
 	/* ******************* 
 	 * Sets
@@ -700,37 +719,6 @@ public class CPU implements ICPU {
 		this.cyclesRun += Opcode.STYz.getCycles();
 	}
 
-	private void TAX() {
-		incrementPC();
-		X = A;
-		P.setNegative(X.isNegative());
-		P.setZero(X.get() == 0);
-		this.cyclesRun += Opcode.TAX.getCycles();
-	}
-
-	private void TAY() {
-		incrementPC();
-		Y = A;
-		P.setNegative(Y.isNegative());
-		P.setZero(Y.get() == 0);
-		logger.info("TAY");
-		this.cyclesRun += Opcode.TAY.getCycles();
-	}
-
-	private void TXS() {
-		incrementPC();
-		_stackPointer = (byte) X.get();
-		logger.info("TXS");
-		this.cyclesRun += Opcode.TXS.getCycles();
-	}
-
-	private void TYA() {
-		incrementPC();
-		A = Y;
-		P.setNegative(Y.isNegative());
-		P.setZero(Y.get() == 0);
-		this.cyclesRun += Opcode.TYA.getCycles();
-	}
 	*/
 // ------------------------
 // Helper functions
