@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.Shorts;
 
 import ffdYKJisu.nes_emu.domain.AddressingMode;
@@ -96,31 +97,22 @@ public class CPU implements ICPU {
 	public void runStep() {
 		// Read Opcode from PC
 		Opcode op = getOpcode();
-		/* 
-		Result
-			ResultLocation
-				ResultLocationType: MEMORY, REGISTER_X, REGISTER_Y
-				ResultLocationValue: short (MEMORY)
-			ResultValue
 		
-		createResult(AddressingMode m_, short addr_)
-		createResult(AddressingMode m_, byte val_)  
-		
-		Result r = OPCODE(byte val_) or OPCODE (short addr_)
-		
-		*/
 		byte opcodeBytes = op.getOpcodeBytes();
-		short address = getAddress(op.getAddressingMode());
 		
 		// Print instruction to logger
-		logger.info("Got opcode {} with bytes {} at PC {}", new Object[]{op, opcodeBytes, PC});
+		logger.info("Got instruction {} opcode {} with bytes {} at PC {}", new Object[]{instructionToString(PC), op, HexUtils.toHex(opcodeBytes), HexUtils.toHex(PC)});
+		
+		Byte result;
 		
 		if(hasOperand(op.getAddressingMode())) {
-			byte operand = getOperand(op.getAddressingMode(), address);
-			doOperation(op, operand);
+			byte operand = getOperand(op.getAddressingMode(), getAddress(op.getAddressingMode()));
+			result = doOperation(op, operand);
 		} else {
-			doOperation(op);
+			result = doOperation(op);
 		}
+
+		persistResult(op, result);
 		
 		// Print CPU state to log
 		// Process instructions for op
@@ -132,10 +124,39 @@ public class CPU implements ICPU {
 		// Return time taken
 	}
 
-	private void doOperation(Opcode op_) {		
+	private void persistResult(Opcode op_, Byte result_) {
+		// void functions return null. Don't have to do anything.
+		if(result_ == null) { return; }
+		
+		switch(op_.getAddressingMode()) {
+			case ABSOLUTE:
+			case ABSOLUTE_X:
+			case ABSOLUTE_Y:
+			case INDIRECT:
+			case INDIRECT_X:
+			case INDIRECT_Y:
+			case ZERO_PAGE:
+			case ZERO_PAGE_X:
+			case ZERO_PAGE_Y:			
+				short address = getAddress(op_.getAddressingMode());
+				memory.write(address, result_);
+				break;
+			case ACCUMULATOR:
+				A = result_;		
+				break;
+			case IMMEDIATE: // Some ops read immediate results but these should return results
+			case IMPLICIT:
+			case RELATIVE: // all branching functions don't have results			
+			default:
+				throw new UnsupportedOperationException();
+		}		
+	}
+
+	// TODO: generalize doOperation with one or zero operands
+	private Byte doOperation(Opcode op_) {		
 		try {
 			Method opCodeImplementation = getClass().getDeclaredMethod(op_.getCodeName());
-			opCodeImplementation.invoke(this);
+			return (Byte) opCodeImplementation.invoke(this);
 		} catch (NoSuchMethodException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -153,16 +174,17 @@ public class CPU implements ICPU {
 			e.printStackTrace();
 		}
 		
+		return null;
 	}
 	
-	private void doOperation(Opcode op_, byte operand_) {		
+	private Byte doOperation(Opcode op_, byte operand_) {		
 		try {	
 			logger.info("Looking for method with name {} for operation {} with operands {}", 
 					new Object[] {op_.getCodeName(), op_, operand_});
 			Method opCodeImplementation = getClass().getDeclaredMethod(op_.getCodeName(), byte.class);
 			logger.info("Found method {} for op {}, calling with {} operands of length {}", 
 					new Object[] {opCodeImplementation, op_, operand_, 1});							
-			opCodeImplementation.invoke(this, operand_);
+			return (Byte) opCodeImplementation.invoke(this, operand_);
 		} catch (NoSuchMethodException e) {
 			logger.error("{}", e);
 			throw new UnsupportedOperationException();
@@ -185,7 +207,7 @@ public class CPU implements ICPU {
 	 * @return A string formatted for debugger display.
 	 */
 	public String instructionToString(short address) {
-		StringBuffer sb = new StringBuffer(address + ": ");
+		StringBuffer sb = new StringBuffer(HexUtils.toHex(address) + ": ");
 		int instructionLength = this.instructionLength(address);
 
 		byte[] bytes = new byte[instructionLength];
@@ -194,8 +216,8 @@ public class CPU implements ICPU {
 		
 		sbBytes.append("(");
 		for (int j = 0; j < instructionLength; j++) {
-			byte b = this.memory.read(address);
-			sbBytes.append(b);
+			byte b = memory.read(address);
+			sbBytes.append(HexUtils.toHex(b));
 			bytes[j] = b;
 			if (j != instructionLength - 1)
 				sbBytes.append(" ");
@@ -231,8 +253,6 @@ public class CPU implements ICPU {
 		return Opcode.getOpcodeByBytes(memory.read(address)).getLength();
 	}
 	
-	
-
 	private boolean hasOperand(AddressingMode mode_) {
 		return mode_ != AddressingMode.IMPLICIT;
 	}
@@ -320,7 +340,7 @@ public class CPU implements ICPU {
 				throw new AddressingModeException(mode_.toString());
 		}
 		
-		logger.info("At PC {} with mode {}. Got final address {}", new Object[]{PC, mode_, addr});
+		logger.info("At PC {} with mode {}. Got final address {}", new Object[]{HexUtils.toHex(PC), mode_, HexUtils.toHex(addr)});
 		return addr;
 	}
 	
@@ -344,7 +364,7 @@ public class CPU implements ICPU {
 	private Opcode getOpcode() {
 		byte b = memory.read(PC);		
 		Opcode o = Opcode.getOpcodeByBytes(b);
-		logger.info("Reading opcode at PC addr {}. Got byte {} and opcode {}", new Object[] {PC, b, o});
+		logger.info("Reading opcode at PC addr {}. Got byte {} and opcode {}", new Object[] {HexUtils.toHex(PC), HexUtils.toHex(b), o});
 		return o;
 	}
 	
@@ -403,11 +423,11 @@ public class CPU implements ICPU {
 	 */ 	
 	private byte shift(byte val_, int direction_, boolean carry_) {
 		if(direction_ > 0) {
-			val_ <<= 1;
-			val_ = (byte) (carry_ ? val_ | 1 : val_ & ~1);
+			val_ <<= 1; // do shift
+			val_ = (byte) (carry_ ? val_ | 1 : val_ & ~1); // account for carry
 		} else {
-			val_ >>= 1;
-			val_ = (byte) (carry_ ? val_ | (1 << 8): val_ & ~(1 << 8));
+			val_ >>= 1; 
+			val_ = (byte) (carry_ ? val_ | (1 << 8): val_ & ~(1 << 8)); 
 		}
 		setZero(val_);
 		setNegative(val_);
@@ -434,20 +454,23 @@ public class CPU implements ICPU {
 		});
 	}
 	
-	public void DEX() {
-		X--;
-	}
+	public void INX() { X = increment(X, 1); }
 	
-	public void DEY() {
-		Y--;
-	}
+	public void DEX() { X = increment(X, -1); }
 	
-	public void INX() {
-		X++;
-	}
+	public void INY() { Y = increment(Y, 1); }
 	
-	public void INY() {
-		Y++;
+	public void DEY() { Y = increment(Y, -1); }
+		
+	public byte INC(byte val_) { return increment(val_, 1); }
+	
+	public byte DEC(byte val_) { return increment(val_, -1); } 
+	
+	private byte increment(byte val_, int increment_) {
+		byte result = (byte) (val_ + increment_);
+		setNegative(result);
+		setZero(result);
+		return result;
 	}
 
 	private void setOverflow(byte initial_, byte final_) {
