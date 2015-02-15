@@ -4,8 +4,8 @@
  */
 package ffdYKJisu.nes_emu.system.memory;
 
-import ffdYKJisu.nes_emu.domain.byte;
-import ffdYKJisu.nes_emu.domain.uShort;
+import com.google.common.primitives.Shorts;
+
 import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 
 /**
@@ -41,6 +41,7 @@ public class PPUMemory implements IMemory {
 	static final int SPRITE_RAM_SIZE = 0x100;
 
 	public byte read(short address) {
+		char addr = (char) address;
 		// Mirror of all PPU memory
 		if (addr > 0x4000) {
 			addr %= 0x4000;
@@ -50,11 +51,11 @@ public class PPUMemory implements IMemory {
 			addr = (char) ((addr % 0x20) + 0x3F00);
 			// Image Palette
 			if (addr >= 0x3F00 && addr < 0x3F10) {
-				return new byte(this.ImagePalette[addr % PALETTE_SIZE]);
+				return this.ImagePalette[addr % PALETTE_SIZE];
 			}
 			// Sprite Palette
 			if (addr >= 0x3F10 && addr < 0x3F20) {
-				return new byte(this.ImagePalette[addr % PALETTE_SIZE]);
+				return this.ImagePalette[addr % PALETTE_SIZE];
 			}
 		}
 		// Weird mirror
@@ -66,13 +67,13 @@ public class PPUMemory implements IMemory {
 
 		// Attribute 3
 		if (addr < 0x3000 && addr >= 0x2FC0) {
-			return new byte(
-				this.AttributeTable3[addr % ATTRIBUTE_TABLE_SIZE]);
+			return 
+				this.AttributeTable3[addr % ATTRIBUTE_TABLE_SIZE];
 		}
 		// Name 3
 		if (addr < 0x2FC0 && addr >= 0x2C00) {
-			return new byte(
-				this.NameTable3[addr % NAME_TABLE_SIZE]);
+			return 
+				this.NameTable3[addr % NAME_TABLE_SIZE];
 		}
 		// Attribute 2
 		if (addr < 0x2C00 && addr >= 0x2BC0) {
@@ -96,34 +97,33 @@ public class PPUMemory implements IMemory {
 		}
 		// Name 0
 		if (addr < 0x23C0 && addr >= 0x2000) {
-			return new byte(
-				this.NameTable0[addr % NAME_TABLE_SIZE]);
+			return 
+				this.NameTable0[addr % NAME_TABLE_SIZE];
 		}
 		// Pattern table 1
 		if (addr < 0x2000 && addr >= 0x1000) {
-			return new byte(this.PatternTable1[addr & PATTERN_TABLE_SIZE]);
+			return this.PatternTable1[addr & PATTERN_TABLE_SIZE];
 		}
 		// Pattern table 0
 		if (addr < 0x1000) {
-			return new byte(this.PatternTable1[addr]);
+			return this.PatternTable1[addr];
 		}
 		System.out.println("Unrecognized address " + address);
-		return new byte(0);
+		return 0;
 
 	}
 
 	public byte read(byte addrH, byte addrL) {
-		uShort address = new uShort(addrH, addrL);
+		short address = Shorts.fromBytes(addrH, addrL);
         return this.read(address);
 	}
 
 	public byte read(byte zeroPageAddress) {
-		uShort address =
-                new uShort(uShort.toAddress(zeroPageAddress));
+		short address = zeroPageAddress;
         return read(address);
 	}
 
-	public void write(uShort address, byte val) throws InvalidAddressException {
+	public void write(short address, byte val) throws InvalidAddressException {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
 

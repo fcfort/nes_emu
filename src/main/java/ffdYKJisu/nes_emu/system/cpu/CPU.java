@@ -358,9 +358,9 @@ public class CPU implements ICPU {
 		setNegative(A);		
 	}
 	
-	public void ASL() {
-		P.setCarry((A & 0x80) != 0);
-		A = shift(A, 1);		
+	public byte ASL(byte val_) {
+		P.setCarry((val_ & 0x80) != 0);
+		return shift(val_, 1, false);		
 	}
 	
 	public void BIT(byte val_) {
@@ -383,19 +383,34 @@ public class CPU implements ICPU {
 	
 	public byte LSR(byte val_) {
 		P.setCarry((val_ & 0x01) != 0);
-		return shift(val_, -1);
+		return shift(val_, -1, false);
 	}
 	
-	// positive shiftAmount <<
-	// negative shiftAmount >> 
-	private byte shift(byte val_, int shiftAmount_) {
-		if(shiftAmount_ > 0) {
-			val_ <<= shiftAmount_;		
+	public byte ROL(byte val_) {
+		boolean carry = (val_ & 0x80) != 0;
+		P.setCarry(carry);
+		return shift(val_, 1, carry);
+	}
+	
+	public byte ROR(byte val_) {
+		boolean carry = (val_ & 0x01) != 0;
+		P.setCarry(carry);
+		return shift(val_, -1, carry);
+	}
+	
+	/** positive shiftAmount <<, 
+	 *  negative shiftAmount >>
+	 */ 	
+	private byte shift(byte val_, int direction_, boolean carry_) {
+		if(direction_ > 0) {
+			val_ <<= 1;
+			val_ = (byte) (carry_ ? val_ | 1 : val_ & ~1);
 		} else {
-			val_ >>= shiftAmount_;
+			val_ >>= 1;
+			val_ = (byte) (carry_ ? val_ | (1 << 8): val_ & ~(1 << 8));
 		}
 		setZero(val_);
-		setNegative(val_);		
+		setNegative(val_);
 		return val_;
 	}
 	
@@ -451,37 +466,21 @@ public class CPU implements ICPU {
 	 * Branches
 	 ******************* */
 	
-	public void BCS(byte val_) {
-		branch(P.isSetCarry(), val_);
-	}
+	public void BCS(byte val_) { branch(P.isSetCarry(), val_); }
 	
-	public void BCC(byte val_) {
-		branch(!P.isSetCarry(), val_);
-	}	
+	public void BCC(byte val_) { branch(!P.isSetCarry(), val_); }	
 		
-	public void BEQ(byte val_) {
-		branch(P.isSetZero(), val_);
-	}
+	public void BEQ(byte val_) { branch(P.isSetZero(), val_); }
 	
-	public void BNE(byte val_) {
-		branch(!P.isSetZero(), val_);
-	}
+	public void BNE(byte val_) { branch(!P.isSetZero(), val_); }
 	
-	public void BMI(byte val_) {
-		branch(P.isSetNegative(), val_);
-	}
+	public void BMI(byte val_) { branch(P.isSetNegative(), val_); }
 	
-	public void BPL(byte val_) {
-		branch(!P.isSetNegative(), val_);
-	}
+	public void BPL(byte val_) { branch(!P.isSetNegative(), val_); }
 	
-	public void BVS(byte val_) {
-		branch(P.isSetOverflow(), val_);
-	}
+	public void BVS(byte val_) { branch(P.isSetOverflow(), val_); }
 	
-	public void BVC(byte val_) {
-		branch(!P.isSetOverflow(), val_);
-	}
+	public void BVC(byte val_) { branch(!P.isSetOverflow(), val_); }
 	
 	private void branch(boolean status_, byte offset_) {
 		if(status_) {
@@ -520,98 +519,28 @@ public class CPU implements ICPU {
 		setNegative(Y);
 		setZero(Y);
 	}
-	
-	/* ******************* 
-	 * Transfers
-	 ******************* */
 
-	public void TAX() {
-		X = A;
-		setNegative(X);
-		setZero(X);
-	}
-
-	public void TAY() {
-		Y = A;
-		setNegative(Y);
-		setZero(Y);
-	}
-
-	public void TSX() {
-		X = _stackPointer;
-		setNegative(X);
-		setZero(X);
-	}
-	
-	public void TXS() {
-		_stackPointer = X;
-	}
-
-	public void TYA() {
-		A = Y;
-		setNegative(A);
-		setZero(A);
-	}
-
-
-	/* ******************* 
-	 * Sets
-	 ******************* */		
-
-	public void SEC() {
-		P.setCarry();
-		this.cyclesRun += Opcode.SEC.getCycles();
-	}
-	
-	public void SED() {
-		P.setDecimal();
-		this.cyclesRun += Opcode.SED.getCycles();
-	}
-	
-	public void SEI() {
-		P.setInterruptDisable();
-		this.cyclesRun += Opcode.SEI.getCycles();
-	}
-	
 	/* ******************* 
 	 * Clears 
 	 ******************* */
 	
-	public void CLC() {
-		P.clearCarry();
-		this.cyclesRun += Opcode.CLC.getCycles();
-	}
+	public void CLC() { P.clearCarry(); }
 
-	public void CLD() {
-		P.clearDecimal();
-		this.cyclesRun += Opcode.CLD.getCycles();
-	}
+	public void CLD() { P.clearDecimal(); }
 	
-	public void CLI() {
-		P.clearInterruptDisable();
-		this.cyclesRun += Opcode.CLI.getCycles();
-	}
+	public void CLI() { P.clearInterruptDisable(); }
 
-	public void CLV() {
-		P.clearOverflow();
-		this.cyclesRun += Opcode.CLV.getCycles();
-	}
+	public void CLV() { P.clearOverflow(); }
 	
 	/* ******************* 
 	 * Compares 
 	 ******************* */
 	
-	public void CMP(byte val_) {
-		compare(A, val_);
-	}
+	public void CMP(byte val_) { compare(A, val_); }
 	
-	public void CPX(byte val_) {
-		compare(X, val_);
-	}
+	public void CPX(byte val_) { compare(X, val_); }
 	
-	public void CPY(byte val_) {
-		compare(Y, val_);
-	}
+	public void CPY(byte val_) { compare(Y, val_); }
 	
 	/**
 	 * Compares two bytes, used by all comparison operations.
@@ -697,24 +626,6 @@ public class CPU implements ICPU {
 		this.cyclesRun += Opcode.INCz.getCycles();
 	}
 	
-	private void ROLax() {
-		incrementPC();
-		uByte L = new uByte(memory.read(PC));
-		incrementPC();
-		uByte H = new uByte(memory.read(PC));
-		uShort temp = new uShort(H, L);
-		temp.increment(X.get());
-		uByte rotate = memory.read(temp);
-		// If bit 7, we need to carry that bit to status register
-		if (rotate.isNegative())
-			P.setCarry();
-		else
-			P.clearCarry();
-		rotate.rotateLeft(P.isSetCarry());
-		logger.info("ROLax " + H + L);
-		this.cyclesRun += Opcode.ROLax.getCycles();
-	}
-
 	private void RTS() {			
 		uByte L = new uByte(_stack[_stackPointer++]);
 		uByte H = new uByte(_stack[_stackPointer++]);
@@ -724,82 +635,61 @@ public class CPU implements ICPU {
 		this.cyclesRun += Opcode.RTS.getCycles();
 	}
 	
-	private void STAa() {
-		incrementPC();
-		uByte L = new uByte(memory.read(PC));
-		incrementPC();
-		uByte H = new uByte(memory.read(PC));
-		logger.info("STAa " + H + L);
-		// A.set(memory.read(H,L));
-		try {
-			memory.write(H, L, A);
-		} catch (InvalidAddressException e) {
-			System.out.println("HL addr" + H + L + " PC " + PC);
-		}
-		incrementPC();
-		this.cyclesRun += Opcode.STAa.getCycles();
-	}
-
-	private void STAay() {
-		incrementPC();
-		uByte L = new uByte(memory.read(PC));
-		incrementPC();
-		uByte H = new uByte(memory.read(PC));
-		uShort temp = new uShort(H, L);
-		temp.increment(Y.get());
-		try {
-			memory.write(temp, A);
-		} catch (InvalidAddressException ex) {
-			logger.warn(ex.getMessage());
-		}
-		incrementPC();
-		logger.info("STAay " + H + L);
-		this.cyclesRun += Opcode.STAay.getCycles();
-	}
-
-	private void STAiy() {
-		incrementPC();
-		uByte offset = new uByte(memory.read(PC));
-		uByte L = new uByte(memory.read(offset));
-		offset.increment();
-		uByte H = new uByte(memory.read(offset));
-		uShort temp = new uShort(H, L);
-		temp.increment(Y.get());
-		try {
-			memory.write(temp, A);
-		} catch (InvalidAddressException ex) {
-			logger.warn(
-				ex + "PC: " + PC);
-		}
-		logger.info("STAiy " + offset);
-		incrementPC();
-		this.cyclesRun += Opcode.STAiy.getCycles();
-	}
-
-	private void STAz() {
-		incrementPC();
-		try {
-			memory.write(memory.read(memory.read(PC)), CPU.this.getA());
-		} catch (InvalidAddressException ex) {
-			logger.warn(ex + "PC: " + PC);
-		}
-		incrementPC();
-		this.cyclesRun += Opcode.STAz.getCycles();
-	}
-
-	private void STYz() {
-		incrementPC();
-		uByte zpAddr = CPU.this.memory.read(CPU.this.getPC());
-		incrementPC();
-		try {
-			CPU.this.memory.write(zpAddr, CPU.this.getY());
-		} catch (InvalidAddressException ex) {
-			logger.warn(ex + " STYz at ZP addr:" + zpAddr + "Y:" + CPU.this.getY());
-		}
-		this.cyclesRun += Opcode.STYz.getCycles();
-	}
-
 	*/
+	
+	/* ******************* 
+	 * Sets
+	 ******************* */		
+
+	public void SEC() { P.setCarry(); }
+	
+	public void SED() { P.setDecimal(); }
+	
+	public void SEI() { P.setInterruptDisable(); }	
+	
+	/* ******************* 
+	 * Stores
+	 ******************* */
+	
+	public byte STA() { return A; }
+	
+	public byte STX() { return X; }
+	
+	public byte STY() { return Y; }
+	
+	/* ******************* 
+	 * Transfers
+	 ******************* */
+
+	public void TAX() {
+		X = A;
+		setNegative(X);
+		setZero(X);
+	}
+
+	public void TAY() {
+		Y = A;
+		setNegative(Y);
+		setZero(Y);
+	}
+
+	public void TSX() {
+		X = _stackPointer;
+		setNegative(X);
+		setZero(X);
+	}
+	
+	public void TXS() {
+		_stackPointer = X;
+	}
+
+	public void TYA() {
+		A = Y;
+		setNegative(A);
+		setZero(A);
+	}
+
+	
 // ------------------------
 // Helper functions
 // ------------------------
@@ -848,8 +738,9 @@ public class CPU implements ICPU {
 			PC = address;
 		}
 		
-		public short getPC() { return PC; }
+		public short getPC() { return PC; }		
 		public byte getSP() { return _stackPointer; }
+		public byte getSR() { return P.asByte(); }
 		public byte getA() { return A; }
 		public byte getX() { return X; }
 		public byte getY() { return Y; }

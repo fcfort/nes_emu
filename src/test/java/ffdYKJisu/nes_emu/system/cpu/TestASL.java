@@ -35,10 +35,10 @@ public class TestASL {
 		assertTrue(!_c.getZeroFlag());
 		
 		// operation
-		_c.ASL();
+		byte result = _c.ASL(_c.getA());
 		
 		// after	
-		assertEquals(0, _c.getA());
+		assertEquals(0, result);
 		assertTrue(!_c.getNegativeFlag());
 		assertTrue(_c.getCarryFlag());
 		assertTrue(_c.getZeroFlag());
@@ -53,10 +53,10 @@ public class TestASL {
 		assertTrue(!_c.getZeroFlag());
 		
 		// operation
-		_c.ASL();
+		byte result = _c.ASL(_c.getA());
 		
 		// after	
-		assertEquals((byte)128, _c.getA());
+		assertEquals((byte)128, result);
 		assertTrue(_c.getNegativeFlag());
 		assertTrue(!_c.getCarryFlag());
 		assertTrue(!_c.getZeroFlag());
@@ -71,10 +71,10 @@ public class TestASL {
 		assertTrue(!_c.getZeroFlag());
 		
 		// operation
-		_c.ASL();
+		byte result = _c.ASL(_c.getA());
 		
 		// after	
-		assertEquals((byte)128, _c.getA());
+		assertEquals((byte)128, result);
 		assertTrue(_c.getNegativeFlag());
 		assertTrue(_c.getCarryFlag());
 		assertTrue(!_c.getZeroFlag());
@@ -89,10 +89,10 @@ public class TestASL {
 		assertTrue(!_c.getZeroFlag());
 		
 		// operation
-		_c.ASL();
+		byte result = _c.ASL(_c.getA());
 		
 		// after	
-		assertEquals(16, _c.getA());
+		assertEquals(16, result);
 		assertTrue(!_c.getNegativeFlag());
 		assertTrue(!_c.getCarryFlag());
 		assertTrue(!_c.getZeroFlag());

@@ -1,4 +1,4 @@
-package ffdYKJisu.nes_emu.debugger;
+package ffdYKJisu.nes_emu.main;
 
 
 import java.io.IOException;
