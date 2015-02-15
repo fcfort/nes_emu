@@ -1,4 +1,4 @@
-package ffdYKJisu.nes_emu.system.cpu;
+package ffdYKJisu.nes_emu.system.memory;
 
 import static org.junit.Assert.assertEquals;
 

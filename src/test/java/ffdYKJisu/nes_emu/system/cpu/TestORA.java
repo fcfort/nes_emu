@@ -11,7 +11,7 @@ import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 
-public class TestCPU_AND {
+public class TestORA {
 
 	NES _n;
 	CPU _c;
@@ -27,24 +27,8 @@ public class TestCPU_AND {
 	}
 	
 	@Test
-	public void testSetZero() {
-		_c.ADC((byte) 5);
-		assertTrue(!_c.getZeroFlag());
-		assertTrue(!_c.getNegativeFlag());
-		_c.AND((byte) 8);
-		assertEquals(0, _c.getA());
-		assertTrue(_c.getZeroFlag());
-		assertTrue(!_c.getNegativeFlag());
+	public void testORA() {
+		_c.LDA((byte) 0b1001_1001);
 	}
-	
-	@Test
-	public void testResetNegative() {
-		_c.ADC((byte) 0xFE);
-		assertTrue(!_c.getZeroFlag());
-		assertTrue(_c.getNegativeFlag());
-		_c.AND((byte) 0x5F);
-		assertEquals(0x5E, _c.getA());
-		assertTrue(!_c.getZeroFlag());
-		assertTrue(!_c.getNegativeFlag());
-	}
+
 }

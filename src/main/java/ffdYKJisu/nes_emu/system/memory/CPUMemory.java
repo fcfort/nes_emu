@@ -4,15 +4,14 @@
  */
 package ffdYKJisu.nes_emu.system.memory;
 
+import static ffdYKJisu.nes_emu.system.HexUtils.toHex;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.primitives.Shorts;
 
 import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 import ffdYKJisu.nes_emu.system.Cartridge;
-import static ffdYKJisu.nes_emu.system.HexUtils.*;
 
 /**
  * New version of memory based on shorts and bytes instead of encapsulated
@@ -28,8 +27,10 @@ public class CPUMemory implements IMemory {
 	private static final int PPU_IO_OFFSET = 0x4000;	
 	private static final int BANK_LEN = 0x4000; // 16kB
 	private static final int PRGROM_LEN = BANK_LEN * 2;
-	private static final int PRGROM_OFFSET = 0x8000;
+	private static final int PRGROM_OFFSET = 0x8000;	
 	private byte[] PRGROM;
+	private byte[] STACK;	
+	private static final short STACK_OFFSET = 0x100;
 	private byte[] SRAM;
 	private byte[] EROM;
 	private byte[] PPUio;
@@ -68,6 +69,10 @@ public class CPUMemory implements IMemory {
 		PPUio
 	}
 	
+	public void push(byte address_, byte val_) {
+		write((short) (Byte.toUnsignedInt(address_) + STACK_OFFSET), val_);
+	}
+	
 	private static AddressLocation getAddressLocation(short address) {
 		if(compareAddress(address,(short)0x2000) < 0) {
 			return AddressLocation.RAM; 
@@ -93,7 +98,6 @@ public class CPUMemory implements IMemory {
 			logger.info("PGR-ROM read value {} at address {} with array index {}", new Object[] { toHex(val), toHex(address), toHex((short)romAddress)});
 			return val;
 		case RAM:
-			logger.info("RAM I/O read at address {}", toHex(address));
 			val = RAM[address]; // PPU/VRAM I/O Registers
 			logger.info("RAM I/O read value {} at address {}", toHex(val), toHex(address));
 			return val;
@@ -119,15 +123,13 @@ public class CPUMemory implements IMemory {
 	}
 
  	public void write(short address, byte val) throws InvalidAddressException {
- 		logger.info("Write at address {} of {}", toHex(address), toHex(val)); 		 	
+ 		logger.info("Writing {} to address {}", toHex(val), toHex(address)); 		 	
  		switch(getAddressLocation(address)) {
 		case PPUio:
 			throw new UnsupportedOperationException();
 		case PRGROM:
 			throw new InvalidAddressException("In PRGROM");
 		case RAM:
-			logger.info("Writing " + val + " to " + address);
-			//System.out.println("Writing " + val + " to " + address);
 			RAMwrite(address, val);
 			break;
 		case SRAM:			
@@ -144,13 +146,13 @@ public class CPUMemory implements IMemory {
 		write((short)(addrH << 8 + addrL), val);
 	}
 
-	private void RAMwrite(short address, byte val) {			
-		short zpAddress = (short) (address & 0x07ff);		
-		int unsignedAddress = zpAddress & 0xffff;
-		RAM[unsignedAddress] = val;
-		RAM[unsignedAddress + 0x0800] = val;
-		RAM[unsignedAddress + 0x1000] = val;
-		RAM[unsignedAddress + 0x1800] = val;
+	private void RAMwrite(short address, byte val) {
+		int unsignedAddress = Short.toUnsignedInt(address);
+		int ramOffset = unsignedAddress % 0x800;
+		RAM[ramOffset] = val;
+		RAM[ramOffset + 0x0800] = val;
+		RAM[ramOffset + 0x1000] = val;
+		RAM[ramOffset + 0x1800] = val;
 	}
 
 	private static int compareAddress(short address1_, short address2_) {

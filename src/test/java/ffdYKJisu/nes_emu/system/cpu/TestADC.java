@@ -10,7 +10,7 @@ import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 
-public class TestCPU_ADC {
+public class TestADC {
 
 	NES _n;
 	CPU _c;

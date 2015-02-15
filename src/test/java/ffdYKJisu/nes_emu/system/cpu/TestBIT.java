@@ -11,7 +11,7 @@ import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 
-public class TestCPU_BIT {
+public class TestBIT {
 
 	NES _n;
 	CPU _c;

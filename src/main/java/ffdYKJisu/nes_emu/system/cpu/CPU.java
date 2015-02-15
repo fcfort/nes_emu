@@ -3,12 +3,10 @@ package ffdYKJisu.nes_emu.system.cpu;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Shorts;
 
 import ffdYKJisu.nes_emu.domain.AddressingMode;
@@ -44,6 +42,12 @@ public class CPU implements ICPU {
 	private int cyclesRun;
 	private byte _stackPointer;
 
+	private static short RESET_VECTOR_LOW = (short) 0xFFFC;
+	private static short RESET_VECTOR_HIGH = (short) 0xFFFD;
+	
+	private static short INTERRUPT_VECTOR_LOW = (short) 0xFFFE;
+	private static short INTERRUPT_VECTOR_HIGH = (short) 0xFFFF;
+	
 	public CPU(CPUMemory memory_) {		
 		logger.info("CPU has been initiated");	
 		memory = memory_;
@@ -344,6 +348,61 @@ public class CPU implements ICPU {
 		return o;
 	}
 	
+	/* ******************* 
+	 * Logic
+	 ******************* */
+	
+	public void AND(byte val_) {
+		A = (byte) (A & val_);
+		setZero(A);
+		setNegative(A);		
+	}
+	
+	public void ASL() {
+		P.setCarry((A & 0x80) != 0);
+		A = shift(A, 1);		
+	}
+	
+	public void BIT(byte val_) {
+		setZero((byte) (A & val_));
+		setNegative(val_); // set if value is negative
+		P.setOverflow((val_& 1 << 6) != 0); // Set overflow to value of bit 6
+	}
+	
+	public void EOR(byte val_) {
+		A ^= val_;
+		setZero(A);
+		setNegative(A);
+	}
+	
+	public void ORA(byte val_) {
+		A |= val_;
+		setZero(A);
+		setNegative(A);
+	}
+	
+	public byte LSR(byte val_) {
+		P.setCarry((val_ & 0x01) != 0);
+		return shift(val_, -1);
+	}
+	
+	// positive shiftAmount <<
+	// negative shiftAmount >> 
+	private byte shift(byte val_, int shiftAmount_) {
+		if(shiftAmount_ > 0) {
+			val_ <<= shiftAmount_;		
+		} else {
+			val_ >>= shiftAmount_;
+		}
+		setZero(val_);
+		setNegative(val_);		
+		return val_;
+	}
+	
+	/* ******************* 
+	 * Arithmetic
+	 ******************* */
+	
 	public void ADC(byte val_) {
 		byte initialA = A;
 		int temp = Byte.toUnsignedInt(A) + Byte.toUnsignedInt(val_) + (P.isSetCarry() ? 1 : 0); 
@@ -360,25 +419,22 @@ public class CPU implements ICPU {
 		});
 	}
 	
-	public void AND(byte val_) {
-		A = (byte) (A & val_);
-		setZero(A);
-		setNegative(A);		
+	public void DEX() {
+		X--;
 	}
 	
-	public void ASL() {
-		P.setCarry((A & 0x80) != 0);			
-		A = (byte) (A << 1);		
-		setZero(A);
-		setNegative(A);
+	public void DEY() {
+		Y--;
 	}
 	
-	public void BIT(byte val_) {
-		setZero((byte) (A & val_));
-		setNegative(val_); // set if value is negative
-		P.setOverflow((val_& 1 << 6) != 0); // Set overflow to value of bit 6
+	public void INX() {
+		X++;
 	}
 	
+	public void INY() {
+		Y++;
+	}
+
 	private void setOverflow(byte initial_, byte final_) {
 		P.setOverflow((final_ & (byte)0x80) != (initial_ & 0x80));
 	}
@@ -389,19 +445,19 @@ public class CPU implements ICPU {
 	
 	private void setNegative(byte val_) {
 		P.setNegative(val_ < 0);	
-	}
+	}	
 	
 	/* ******************* 
 	 * Branches
 	 ******************* */
 	
-	public void BCC(byte val_) {
-		branch(!P.isSetCarry(), val_);
-	}
-	
 	public void BCS(byte val_) {
 		branch(P.isSetCarry(), val_);
 	}
+	
+	public void BCC(byte val_) {
+		branch(!P.isSetCarry(), val_);
+	}	
 		
 	public void BEQ(byte val_) {
 		branch(P.isSetZero(), val_);
@@ -419,10 +475,28 @@ public class CPU implements ICPU {
 		branch(!P.isSetNegative(), val_);
 	}
 	
+	public void BVS(byte val_) {
+		branch(P.isSetOverflow(), val_);
+	}
+	
+	public void BVC(byte val_) {
+		branch(!P.isSetOverflow(), val_);
+	}
+	
 	private void branch(boolean status_, byte offset_) {
 		if(status_) {
 			PC += offset_;
 		}
+	}
+	
+	public void JMP(short address_) {
+		PC = address_;
+	}
+	
+	public void JSR(short address_) {
+		PC--;
+		pushPC();
+		PC = address_;
 	}
 	
 	/* ******************* 
@@ -463,6 +537,12 @@ public class CPU implements ICPU {
 		setZero(Y);
 	}
 
+	public void TSX() {
+		X = _stackPointer;
+		setNegative(X);
+		setZero(X);
+	}
+	
 	public void TXS() {
 		_stackPointer = X;
 	}
@@ -488,7 +568,7 @@ public class CPU implements ICPU {
 		this.cyclesRun += Opcode.SED.getCycles();
 	}
 	
-	private void SEI() {
+	public void SEI() {
 		P.setInterruptDisable();
 		this.cyclesRun += Opcode.SEI.getCycles();
 	}
@@ -520,6 +600,31 @@ public class CPU implements ICPU {
 	/* ******************* 
 	 * Compares 
 	 ******************* */
+	
+	public void CMP(byte val_) {
+		compare(A, val_);
+	}
+	
+	public void CPX(byte val_) {
+		compare(X, val_);
+	}
+	
+	public void CPY(byte val_) {
+		compare(Y, val_);
+	}
+	
+	/**
+	 * Compares two bytes, used by all comparison operations.
+	 * Simulates A - B and changes status flags based on results
+	 * @param A minuend (usually a register)
+	 * @param B subtrahend (usually from memory)
+	 */		
+	private void compare(byte a_, byte b_) {
+		int result = Byte.toUnsignedInt(a_) - Byte.toUnsignedInt(b_);
+		P.setCarry(result >= 0);
+		P.setZero(result == 0);
+		P.setNegative(result < 0);
+	}
 /*
 	private void CMPz() {
 		incrementPC();
@@ -561,6 +666,35 @@ public class CPU implements ICPU {
 		incrementPC();
 		this.cyclesRun += Opcode.CPYi.getCycles();
 	}
+	
+	*/
+	
+	/* ******************* 
+	 * Other
+	 ******************* */
+	
+	public void BRK() {		
+		pushPC();
+		P.setBreak();
+		push(P.asByte());
+		P.setInterruptDisable();
+		setPCFromVector(INTERRUPT_VECTOR_LOW, INTERRUPT_VECTOR_HIGH);		
+	}
+	
+	private void push(byte val_) {
+		memory.push(_stackPointer, val_);
+		_stackPointer--;
+	}
+	
+	private void pushPC() {
+		byte[] bytesPC = Shorts.toByteArray(PC);
+		push(bytesPC[0]); // Upper
+		push(bytesPC[1]); // Lower
+	}
+	
+	public void NOP() {}
+	
+	/*
 
 	private void DEX() {
 		incrementPC();
@@ -754,38 +888,17 @@ public class CPU implements ICPU {
 		}
 		*/
 
-		/**
-		 * Compares two bytes, used by all comparison operations.
-		 * Simulates A - B and changes status flags based on results
-		 * @param A minuend (usually a register)
-		 * @param B subtrahend (usually from memory)
-		 */		
-		void compare(byte A, byte B) {
-			if (A < B) {
-				P.setNegative(A - B < 0);
-				P.clearZero();
-				P.clearCarry();
-			} else if (A == B) {
-				P.clearNegative();
-				P.setZero();
-				P.setCarry();
-			} else {
-				P.setNegative(A - B < 0);
-				P.clearZero();
-				P.setCarry();
-			}
+		public void reset() {
+			setPCFromVector(RESET_VECTOR_LOW, RESET_VECTOR_HIGH);
 		}
-
-		public void reset() { 
-			short resetAddrL = (short)0xfffc;
-			short resetAddrH = (short)0xfffd;
-			//uByte jumpLocL = new uByte(memory.read(resetAddrL));
-			byte jumpLocL = memory.read(resetAddrL);
-			//uByte jumpLocH = new uByte(memory.read(resetAddrH));
-			byte jumpLocH = memory.read(resetAddrH);
-					
-			short address = Shorts.fromBytes(jumpLocH, jumpLocL);
-			logger.info( "Reset, jumping to {}", HexUtils.toHex(address));		
+		
+		private void setPCFromVector(short vectorLow_, short vectorHigh_) {
+			short address = Shorts.fromBytes(memory.read(vectorHigh_), memory.read(vectorLow_));
+			logger.info( "Jumping to {} from vector {} {}", new Object[] {
+				HexUtils.toHex(address),
+				HexUtils.toHex(vectorHigh_),
+				HexUtils.toHex(vectorLow_),
+			});		
 			PC = address;
 		}
 		

@@ -16,7 +16,7 @@ import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 
 public class TestBCC {
 
-	private static Logger logger = LoggerFactory.getLogger(CPUMemoryTest.class);
+	private static Logger logger = LoggerFactory.getLogger(TestBCC.class);
 
 	NES _n;
 	CPU _c;

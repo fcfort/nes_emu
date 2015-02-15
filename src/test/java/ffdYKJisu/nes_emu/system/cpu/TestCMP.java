@@ -11,7 +11,7 @@ import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 
-public class TestCPU_LDX {
+public class TestCMP {
 
 	NES _n;
 	CPU _c;
@@ -27,31 +27,54 @@ public class TestCPU_LDX {
 	}
 	
 	@Test
-	public void testSetZero() {
-		_c.LDX((byte) 0);
-		assertEquals((byte) 0, _c.getX());
-		assertTrue(_c.getZeroFlag());	
-	}
-
-	@Test
-	public void testResetZero() {
-		_c.LDX((byte) 1);
-		assertEquals((byte) 1, _c.getX());
-		assertTrue(!_c.getZeroFlag());
-	}
-
-	@Test
-	public void testSetNegative() {
-		_c.LDX((byte) 0xFF);
-		assertEquals((byte) 0xFF, _c.getX());
-		assertTrue(_c.getNegativeFlag());
-	}
-	
-	@Test
-	public void testResetNegative() {
-		_c.LDX((byte) 10);
-		assertEquals((byte) 10, _c.getX());
+	public void testSameNumber() {
+		_c.LDA((byte) 26);
+		
+		// op
+		_c.CMP((byte) 26);
+		
+		// after
+		assertTrue(_c.getZeroFlag());
 		assertTrue(!_c.getNegativeFlag());
+		assertTrue(_c.getCarryFlag());
 	}
 	
+	@Test
+	public void testLargeA() {
+		_c.LDA((byte) 48);
+		
+		// op
+		_c.CMP((byte) 26);
+		
+		// after
+		assertTrue(!_c.getZeroFlag());
+		assertTrue(!_c.getNegativeFlag());
+		assertTrue(_c.getCarryFlag());
+	}
+	
+	@Test
+	public void testLargeNegativeA() {
+		_c.LDA((byte) 130);
+		
+		// op
+		_c.CMP((byte) 26);
+		
+		// after
+		assertTrue(!_c.getZeroFlag());
+		assertTrue(!_c.getNegativeFlag());
+		assertTrue(_c.getCarryFlag());
+	}
+	
+	@Test
+	public void testSmallA() {
+		_c.LDA((byte) 8);
+		
+		// op
+		_c.CMP((byte) 26);
+		
+		// after
+		assertTrue(!_c.getZeroFlag());
+		assertTrue(_c.getNegativeFlag());
+		assertTrue(!_c.getCarryFlag());
+	}
 }
