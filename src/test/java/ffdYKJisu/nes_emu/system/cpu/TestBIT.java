@@ -1,0 +1,102 @@
+package ffdYKJisu.nes_emu.system.cpu;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Before;
+import org.junit.Test;
+
+import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
+import ffdYKJisu.nes_emu.system.Cartridge;
+import ffdYKJisu.nes_emu.system.NES;
+import ffdYKJisu.nes_emu.system.memory.CPUMemory;
+
+public class TestBIT {
+
+	NES _n;
+	CPU _c;
+	CPUMemory _mem; 
+	
+	@Before
+	public void initialize() throws UnableToLoadRomException {
+		Cartridge c = new Cartridge(ClassLoader.getSystemResourceAsStream("Pac-Man (U) [!].nes"));
+		_mem = new CPUMemory();
+		_c = new CPU(_mem);
+		_mem.writeCartToMemory(c);
+		_c.reset();
+	}
+	
+	@Test
+	public void testNegativeSet() {
+		// before 
+		_c.ADC((byte) 128);
+		_c.CLV();
+		assertTrue(_c.getNegativeFlag());
+		assertTrue(!_c.getOverflowFlag());
+		assertTrue(!_c.getZeroFlag());
+		
+		// op
+		_c.BIT((byte) 0xF3);
+		
+		// after
+		assertEquals((byte)128, _c.getA());
+		assertTrue(_c.getNegativeFlag());
+		assertTrue(_c.getOverflowFlag());
+		assertTrue(!_c.getZeroFlag());
+	}
+
+	@Test
+	public void testNothingSetInitially() {
+		// before 
+		_c.ADC((byte) 5);
+		assertTrue(!_c.getNegativeFlag());
+		assertTrue(!_c.getOverflowFlag());
+		assertTrue(!_c.getZeroFlag());
+		
+		// op
+		_c.BIT((byte) 0xF3);
+		
+		// after
+		assertEquals(5, _c.getA());
+		assertTrue(_c.getNegativeFlag());
+		assertTrue(_c.getOverflowFlag());
+		assertTrue(!_c.getZeroFlag());
+	}
+
+	@Test
+	public void testAllSetFinally() {
+		// before 
+		_c.ADC((byte) 4);
+		assertTrue(!_c.getNegativeFlag());
+		assertTrue(!_c.getOverflowFlag());
+		assertTrue(!_c.getZeroFlag());
+		
+		// op
+		_c.BIT((byte) 0xF3);
+		
+		// after
+		assertEquals(4, _c.getA());
+		assertTrue(_c.getNegativeFlag());
+		assertTrue(_c.getOverflowFlag());
+		assertTrue(_c.getZeroFlag());
+	}
+	
+	@Test
+	public void testZeroSetInitially() {
+		// before 
+		_c.ADC((byte) 3);
+		_c.LDX((byte) 0);
+		assertTrue(!_c.getNegativeFlag());
+		assertTrue(!_c.getOverflowFlag());
+		assertTrue(_c.getZeroFlag());
+		
+		// op
+		_c.BIT((byte) 0xF3);
+		
+		// after
+		assertEquals(3, _c.getA());
+		assertTrue(_c.getNegativeFlag());
+		assertTrue(_c.getOverflowFlag());
+		assertTrue(!_c.getZeroFlag());
+	}
+}

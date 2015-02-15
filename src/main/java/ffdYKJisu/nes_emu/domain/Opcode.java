@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
-
+import com.google.common.primitives.UnsignedBytes;
 
 /**
  * Stores static information about opcodes
@@ -178,7 +178,8 @@ public enum Opcode {
 
 	private final static int OPCODE_NUMBER_BASE = 16;
 
-	private static final Map<uByte, Opcode> opcodeMap;
+	private static final Map<Byte, Opcode> opcodeMap;
+	
 	static {
 		opcodeMap = Maps.newHashMap();		
 		for (Opcode o : Opcode.values()) {
@@ -203,14 +204,14 @@ public enum Opcode {
 		this.extraCycleOnBranch = extraCycleOnBranch;
 		this.extraCycleOnPageJump = extraCycleOnPageJump;
 		this.addressingMode = addressingMode;
-		logger.info("Done creating opcode {}", codeName);
+		// logger.info("Done creating opcode {}", codeName);
 	}
 
-	public uByte getOpcodeBytes() {
-		return new uByte(Short.parseShort(opcodeBytes, OPCODE_NUMBER_BASE));
+	public byte getOpcodeBytes() {	
+		return UnsignedBytes.parseUnsignedByte(opcodeBytes, OPCODE_NUMBER_BASE);
 	}
 
-	public static Opcode getOpcodeByBytes(uByte b) {		
+	public static Opcode getOpcodeByBytes(byte b) {		
 		return opcodeMap.get(b);
 	}
 

@@ -1,14 +1,8 @@
 package ffdYKJisu.nes_emu.system.memory;
 
-import ffdYKJisu.nes_emu.domain.uByte;
-import ffdYKJisu.nes_emu.domain.uShort;
-
-/**
- * 
- * @author fcf
- */
+/** @author fcf */
 public interface IMemory {
-	uByte read(uShort address);
+	byte read(short address);
 
-	void write(uShort address, uByte val);
+	void write(short address, byte val);
 }
