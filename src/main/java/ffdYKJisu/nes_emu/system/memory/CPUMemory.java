@@ -73,6 +73,10 @@ public class CPUMemory implements IMemory {
 		write((short) (Byte.toUnsignedInt(address_) + STACK_OFFSET), val_);
 	}
 	
+	public byte pop(byte address_) {
+		return read((short) (Byte.toUnsignedInt(address_) + STACK_OFFSET));
+	}
+	
 	private static AddressLocation getAddressLocation(short address) {
 		if(compareAddress(address,(short)0x2000) < 0) {
 			return AddressLocation.RAM; 

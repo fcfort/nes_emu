@@ -625,49 +625,43 @@ public class CPU implements ICPU {
 		P.setZero(result == 0);
 		P.setNegative(result < 0);
 	}
-/*
-	private void CMPz() {
-		incrementPC();
-		uByte value = memory.read(memory.read(PC));
-		this.compare(A, value);
-		incrementPC();
-		this.cyclesRun += Opcode.CMPz.getCycles();
-	}
-
-	private void CMPay() {
-		incrementPC();
-		uShort addr = readBytesAsAddress(PC);
-		CPU.this.setPC(PC.increment(2));
-		uShort newAddr = this.toAbsoluteYAddress(addr);
-		this.compare(CPU.this.getA(), CPU.this.memory.read(newAddr));
-		if (this.pageJumped(addr, newAddr)) {
-			this.cyclesRun += Opcode.CMPay.getCycles(false, true);				
-		} else {
-			this.cyclesRun += Opcode.CMPay.getCycles();
-		}
-	}
-
-	private void CPXz() {
-		incrementPC();
-		uByte tempByte = memory.read(PC); // get zero page offset
-		logger.info( "CPXz " + tempByte);
-		tempByte = memory.read(tempByte); // read from zero page
-		compare(X, tempByte);
-		incrementPC();
-		this.cyclesRun += Opcode.CPXz.getCycles();
-	}
-
-	private void CPYi() {
-		incrementPC();
-		// Check zero
-		uByte tempByte = new uByte(memory.read(PC));
-		logger.info("CPYi " + tempByte);
-		compare(Y, tempByte);
-		incrementPC();
-		this.cyclesRun += Opcode.CPYi.getCycles();
+	
+	/* ******************* 
+	 * Stack
+	 ******************* */
+	
+	public void PHA() {
+		push(A);
 	}
 	
-	*/
+	public void PHP() {
+		push(P.asByte());
+	}
+	
+	public void PLA() {
+		A = pop();
+	}
+	
+	public void PLP() {		
+		P.fromByte(pop());
+	}
+		
+	private void push(byte val_) {
+		memory.push(_stackPointer, val_);
+		_stackPointer--;	
+	}
+	
+	private byte pop() {
+		_stackPointer++;
+		return memory.pop(_stackPointer);		
+	}
+	
+	private void pushPC() {
+		byte[] bytesPC = Shorts.toByteArray(PC);
+		push(bytesPC[0]); // Upper
+		push(bytesPC[1]); // Lower
+	}
+	
 	
 	/* ******************* 
 	 * Other
@@ -680,29 +674,11 @@ public class CPU implements ICPU {
 		P.setInterruptDisable();
 		setPCFromVector(INTERRUPT_VECTOR_LOW, INTERRUPT_VECTOR_HIGH);		
 	}
-	
-	private void push(byte val_) {
-		memory.push(_stackPointer, val_);
-		_stackPointer--;
-	}
-	
-	private void pushPC() {
-		byte[] bytesPC = Shorts.toByteArray(PC);
-		push(bytesPC[0]); // Upper
-		push(bytesPC[1]); // Lower
-	}
-	
+
 	public void NOP() {}
 	
+	
 	/*
-
-	private void DEX() {
-		incrementPC();
-		X = X.decrement();
-		P.setZero(X.get() == 0);
-		P.setNegative(X.isNegative());
-		this.cyclesRun += Opcode.DEX.getCycles();
-	}
 
 	private void INCz() {
 		incrementPC();
@@ -719,36 +695,6 @@ public class CPU implements ICPU {
 		P.setZero(zpValue.get() == 0);
 		incrementPC();
 		this.cyclesRun += Opcode.INCz.getCycles();
-	}
-
-	private void INY() {
-		incrementPC();
-		CPU.this.setY(Y.increment());
-		P.setNegative(Y.isNegative());
-		P.setZero(Y.get() == 0);
-		logger.info( "INY");
-		this.cyclesRun += Opcode.INY.getCycles();
-	}
-
-	private void JMPa() {
-		incrementPC();
-		uByte L = new uByte(memory.read(PC));
-		incrementPC();
-		uByte H = new uByte(memory.read(PC));
-		PC = new uShort(H, L);
-		logger.info( "JMPa " + H + L);
-		this.cyclesRun += Opcode.JMPa.getCycles();
-	}
-
-	private void JSR() {
-		incrementPC();
-		byte upperByte = (byte) PC.getUpper().get();
-		_stack[_stackPointer--] = upperByte;
-		byte lowerByte = (byte) PC.getLower().get();
-		_stack[_stackPointer--] = lowerByte;	
-		uShort subAddr = this.readBytesAsAddress(PC);
-		CPU.this.setPC(subAddr);
-		this.cyclesRun += Opcode.JSR.getCycles();
 	}
 	
 	private void ROLax() {

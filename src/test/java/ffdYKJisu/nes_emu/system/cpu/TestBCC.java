@@ -32,18 +32,19 @@ public class TestBCC {
 	}
 	
 	@Test
-	public void testCarryNotSet() {
-		_c.CLC();
-		assertTrue(!_c.getCarryFlag());
+	public void testCarrySet() {
+		_c.SEC();
+		assertTrue(_c.getCarryFlag());
 		short beforePC = _c.getPC();		
 		_c.BCC((byte) 1);
 		assertEquals(beforePC, _c.getPC());
 	}
 	
+	
 	@Test
 	public void testPositiveBranch() {
-		_c.SEC();
-		assertTrue(_c.getCarryFlag());
+		_c.CLC();
+		assertTrue(!_c.getCarryFlag());
 		short beforePC = _c.getPC();		
 		_c.BCC((byte) 1);
 		assertEquals(beforePC + 1, _c.getPC());
@@ -56,8 +57,8 @@ public class TestBCC {
 	public void testNegativeBranch() {
 		byte branchDistance = -16;
 		
-		_c.SEC();
-		assertTrue(_c.getCarryFlag());
+		_c.CLC();
+		assertTrue(!_c.getCarryFlag());
 		short beforePC = _c.getPC();
 		
 		_c.BCC(branchDistance);
@@ -69,7 +70,7 @@ public class TestBCC {
 	
 	@Test
 	public void testWrapAround() {
-		_c.SEC();
+		_c.CLC();
 		short beforePC = _c.getPC();
 		byte branchDistance = (byte) 127;		
 		_c.BCC(branchDistance);

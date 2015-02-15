@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
-import com.google.common.primitives.Bytes;
 import com.google.common.primitives.UnsignedBytes;
 
 /**
@@ -180,6 +179,7 @@ public enum Opcode {
 	private final static int OPCODE_NUMBER_BASE = 16;
 
 	private static final Map<Byte, Opcode> opcodeMap;
+	
 	static {
 		opcodeMap = Maps.newHashMap();		
 		for (Opcode o : Opcode.values()) {

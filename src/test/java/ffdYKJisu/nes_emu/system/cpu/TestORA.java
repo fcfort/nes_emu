@@ -1,7 +1,6 @@
 package ffdYKJisu.nes_emu.system.cpu;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -28,7 +27,9 @@ public class TestORA {
 	
 	@Test
 	public void testORA() {
-		_c.LDA((byte) 0b1001_1001);
+		_c.LDA((byte) 0b10100101);
+		_c.ORA((byte) 0b01101100);
+		assertEquals((byte)0b11101101, _c.getA());
 	}
 
 }

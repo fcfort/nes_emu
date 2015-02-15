@@ -1,5 +1,7 @@
 package ffdYKJisu.nes_emu.domain;
 
+import java.util.BitSet;
+
 
 /**
  * Holds the status bits for the processor status
@@ -22,7 +24,7 @@ public class StatusBit {
 	private boolean N;
 
 	public byte asByte() {
-		byte b = 0;
+		byte b = 0;		
 		b = setBit(b, 7, N);
 		b = setBit(b, 6, V);
 		b = setBit(b, 5, true);
@@ -31,8 +33,18 @@ public class StatusBit {
 		b = setBit(b, 2, I);
 		b = setBit(b, 1, Z);
 		b = setBit(b, 0, C);
-		return b;
-		
+		return b;	
+	}
+
+	public void fromByte(byte pop_) {
+		BitSet b = BitSet.valueOf(new byte[] {pop_});
+		N = b.get(7);
+		V = b.get(6);
+		B = b.get(4);
+		D = b.get(3);
+		I = b.get(2);
+		Z = b.get(1);
+		C = b.get(0);		
 	}
 	
 	private static byte setBit(byte bitField_, int index_, boolean value_) {		
@@ -229,4 +241,5 @@ public class StatusBit {
 
 		return s.toString();
 	}
+
 }
