@@ -7,7 +7,6 @@ import java.lang.reflect.Method;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.Shorts;
 
 import ffdYKJisu.nes_emu.domain.AddressingMode;
@@ -40,7 +39,7 @@ public class CPU implements ICPU {
 	/** Holds the bits of the status byte for the processor */
 	private StatusBit P;
 	private final CPUMemory memory;
-	private int cyclesRun;
+	//private int cyclesRun;
 	private byte _stackPointer;
 
 	private static short RESET_VECTOR_LOW = (short) 0xFFFC;
@@ -52,7 +51,7 @@ public class CPU implements ICPU {
 	public CPU(CPUMemory memory_) {		
 		logger.info("CPU has been initiated");	
 		memory = memory_;
-		cyclesRun = 0;
+		//cyclesRun = 0;
 		// Set up State registers
 		initStateRegisters();
 		// Load cart into memory
@@ -105,7 +104,7 @@ public class CPU implements ICPU {
 		
 		Byte result;
 		
-		if(hasOperand(op.getAddressingMode())) {
+		if(op.readsMemory()) {
 			byte operand = getOperand(op.getAddressingMode(), getAddress(op.getAddressingMode()));
 			result = doOperation(op, operand);
 		} else {
@@ -116,7 +115,7 @@ public class CPU implements ICPU {
 		
 		// Print CPU state to log
 		// Process instructions for op
-		int cyclesBefore = this.cyclesRun;
+		//int cyclesBefore = this.cyclesRun;
 		// this.processOp(op, operand);
 		// Increment PC
 		incrementPC(op.getLength());
@@ -139,9 +138,11 @@ public class CPU implements ICPU {
 			case ZERO_PAGE_X:
 			case ZERO_PAGE_Y:			
 				short address = getAddress(op_.getAddressingMode());
+				logger.info("Persisting result {} from operation {} to {}", new Object[] {HexUtils.toHex(result_), op_, HexUtils.toHex(address)});
 				memory.write(address, result_);
 				break;
 			case ACCUMULATOR:
+				logger.info("Persisting result {} from operation {} to A", HexUtils.toHex(result_), op_);
 				A = result_;		
 				break;
 			case IMMEDIATE: // Some ops read immediate results but these should return results
@@ -252,11 +253,7 @@ public class CPU implements ICPU {
 	public int instructionLength(short address) {
 		return Opcode.getOpcodeByBytes(memory.read(address)).getLength();
 	}
-	
-	private boolean hasOperand(AddressingMode mode_) {
-		return mode_ != AddressingMode.IMPLICIT;
-	}
-	
+
 	private byte getOperand(AddressingMode mode_, short address_) {
 		switch (mode_) {
 		case IMPLICIT:
@@ -296,6 +293,7 @@ public class CPU implements ICPU {
 				break;
 			case ACCUMULATOR:
 				break;
+			case RELATIVE:
 			case IMMEDIATE:
 				addr = (short) (PC + 1);
 				break;
@@ -309,10 +307,6 @@ public class CPU implements ICPU {
 			case ZERO_PAGE_Y:
 				byte zpAddrY = memory.read((short)(PC + 1));
 				addr = (short)(zpAddrY + Y);
-				break;
-			case RELATIVE:
-				byte relOffset = memory.read((short)(PC + 1));
-				addr = (short) relOffset;
 				break;
 			case ABSOLUTE:
 				addr = (short) (readShort((short) (PC + 1)));
@@ -438,22 +432,32 @@ public class CPU implements ICPU {
 	 * Arithmetic
 	 ******************* */
 	
-	public void ADC(byte val_) {
-		byte initialA = A;
-		int temp = Byte.toUnsignedInt(A) + Byte.toUnsignedInt(val_) + (P.isSetCarry() ? 1 : 0); 
+	public void ADC(byte val_) { add(true, val_); }
+	
+	public void SBC(byte val_) { add(false, val_); }
+	
+	public void add(boolean isAdding_, byte val_) {
+		int temp = Byte.toUnsignedInt(A);
+		if(isAdding_) {
+			temp = temp + Byte.toUnsignedInt(val_) + (P.isSetCarry() ? 1 : 0);			
+		} else {
+			temp = temp - Byte.toUnsignedInt(val_) - (P.isSetCarry() ? 1 : 0);			
+		}
 		P.setCarry(temp > 0xFF);
+		byte initialA = A;
 		A = (byte) temp;
 		setZero(A);
 		setNegative(A);
 		setOverflow(initialA, A);
-		logger.info("Added {} to {} and got {} with status {}", new Object[] {
+		logger.info("{} {} and {}, got {} with status {}", new Object[] {
+				isAdding_ ? "Added" : "Subtracted", 
 				HexUtils.toHex(val_),
 				HexUtils.toHex(initialA),
 				HexUtils.toHex(A),
 				P
 		});
 	}
-	
+
 	public void INX() { X = increment(X, 1); }
 	
 	public void DEX() { X = increment(X, -1); }
@@ -519,6 +523,25 @@ public class CPU implements ICPU {
 		PC--;
 		pushPC();
 		PC = address_;
+	}
+	
+	public void RTS() {
+		byte lowAddr = pop();
+		PC = (short) (Shorts.fromBytes(pop(), lowAddr) + 1);
+	}
+	
+	public void BRK() {		
+		pushPC();
+		P.setBreak();
+		push(P.asByte());
+		P.setInterruptDisable();
+		setPCFromVector(INTERRUPT_VECTOR_LOW, INTERRUPT_VECTOR_HIGH);		
+	}
+	
+	public void RTI() {
+		P.fromByte(pop());
+		byte lowAddr = pop();
+		PC = Shorts.fromBytes(pop(), lowAddr);
 	}
 	
 	/* ******************* 
@@ -618,48 +641,9 @@ public class CPU implements ICPU {
 	/* ******************* 
 	 * Other
 	 ******************* */
-	
-	public void BRK() {		
-		pushPC();
-		P.setBreak();
-		push(P.asByte());
-		P.setInterruptDisable();
-		setPCFromVector(INTERRUPT_VECTOR_LOW, INTERRUPT_VECTOR_HIGH);		
-	}
 
 	public void NOP() {}
-	
-	
-	/*
-
-	private void INCz() {
-		incrementPC();
-		uByte zpAddress = new uByte(memory.read(PC));
-		logger.info("INCz " + zpAddress);
-		uByte zpValue = memory.read(zpAddress);
-		zpValue = zpValue.increment();
-		try {
-			CPU.this.memory.write(zpAddress, zpValue);
-		} catch (InvalidAddressException ex) {
-			logger.warn(ex + "Error in INCz address:" + zpAddress + " value:" + zpValue);
-		}
-		P.setNegative(zpValue.isNegative());
-		P.setZero(zpValue.get() == 0);
-		incrementPC();
-		this.cyclesRun += Opcode.INCz.getCycles();
-	}
-	
-	private void RTS() {			
-		uByte L = new uByte(_stack[_stackPointer++]);
-		uByte H = new uByte(_stack[_stackPointer++]);
-		uShort addr = new uShort(H, L);
-		CPU.this.setPC(addr);
-		incrementPC();
-		this.cyclesRun += Opcode.RTS.getCycles();
-	}
-	
-	*/
-	
+		
 	/* ******************* 
 	 * Sets
 	 ******************* */		
@@ -711,69 +695,51 @@ public class CPU implements ICPU {
 		setNegative(A);
 		setZero(A);
 	}
-
 	
-// ------------------------
-// Helper functions
-// ------------------------
-		/**
-		 * Accepts two addresses and returns true if those two addresses are
-		 * on different pages. I.e. return false if their upper bytes are not 
-		 * equal.
-		 * @param startAddress Starting address, typically the PC of the instruction
-		 * @param endAddress End address, typically the location that is to be
-		 * written to. 
-		 * @return Returns true if the two addresses lie on different pages,
-		 * false otherwise.
-		 */
-		boolean pageJumped(short startAddress, short endAddress) {
-			// return !startAddress.getUpper().equals(endAddress.getUpper());
-			return false;
-		}
-
-		/**
-		 * Reads next two bytes in memory and combines them as if they were an
-		 * address and returns those bytes interpreted as an address. I.e. LDA
-		 * $00 $FF would return the address uShort $FF00.
-		 * @param address Where to read the bytes from, will typically be the PC
-		 * @return Next two bytes in memory as an address
-		 */
-		/*
-		uShort readBytesAsAddress(uShort address) {
-			uByte L = memory.read(address);
-			uByte H = memory.read(address.increment());
-			return new uShort(H, L);
-		// or as 1-liner: return new uShort(memory.read(address),memory.read(address.increment()));
-		}
-		*/
-
-		public void reset() {
-			setPCFromVector(RESET_VECTOR_LOW, RESET_VECTOR_HIGH);
-		}
-		
-		private void setPCFromVector(short vectorLow_, short vectorHigh_) {
-			short address = Shorts.fromBytes(memory.read(vectorHigh_), memory.read(vectorLow_));
-			logger.info( "Jumping to {} from vector {} {}", new Object[] {
-				HexUtils.toHex(address),
-				HexUtils.toHex(vectorHigh_),
-				HexUtils.toHex(vectorLow_),
-			});		
-			PC = address;
-		}
-		
-		public short getPC() { return PC; }		
-		public byte getSP() { return _stackPointer; }
-		public byte getSR() { return P.asByte(); }
-		public byte getA() { return A; }
-		public byte getX() { return X; }
-		public byte getY() { return Y; }
-		public boolean getCarryFlag() { return P.isSetCarry(); }
-		public boolean getZeroFlag() { return P.isSetZero(); }
-		public boolean getInterruptDisable() { return P.isSetInterruptDisable(); }
-		public boolean getDecimalMode() { return P.isSetDecimal(); }
-		public boolean getBreakCommand() { return P.isSetBreak(); }
-		public boolean getOverflowFlag() { return P.isSetOverflow(); }
-		public boolean getNegativeFlag() { return P.isSetNegative(); }
+	/* ******************* 
+	 * Helper functions
+	 ******************* */
+	
+	/**
+	 * Accepts two addresses and returns true if those two addresses are
+	 * on different pages. I.e. return false if their upper bytes are not 
+	 * equal.
+	 * @param startAddress Starting address, typically the PC of the instruction
+	 * @param endAddress End address, typically the location that is to be
+	 * written to. 
+	 * @return Returns true if the two addresses lie on different pages,
+	 * false otherwise.
+	 */
+	boolean pageJumped(short startAddress, short endAddress) {
+		// return !startAddress.getUpper().equals(endAddress.getUpper());
+		return false;
 	}
 
-
+	public void reset() {
+		setPCFromVector(RESET_VECTOR_LOW, RESET_VECTOR_HIGH);
+	}
+	
+	private void setPCFromVector(short vectorLow_, short vectorHigh_) {
+		short address = Shorts.fromBytes(memory.read(vectorHigh_), memory.read(vectorLow_));
+		logger.info( "Jumping to {} from vector {} {}", new Object[] {
+			HexUtils.toHex(address),
+			HexUtils.toHex(vectorHigh_),
+			HexUtils.toHex(vectorLow_),
+		});		
+		PC = address;
+	}
+	
+	public short getPC() { return PC; }		
+	public byte getSP() { return _stackPointer; }
+	public byte getSR() { return P.asByte(); }
+	public byte getA() { return A; }
+	public byte getX() { return X; }
+	public byte getY() { return Y; }
+	public boolean getCarryFlag() { return P.isSetCarry(); }
+	public boolean getZeroFlag() { return P.isSetZero(); }
+	public boolean getInterruptDisable() { return P.isSetInterruptDisable(); }
+	public boolean getDecimalMode() { return P.isSetDecimal(); }
+	public boolean getBreakCommand() { return P.isSetBreak(); }
+	public boolean getOverflowFlag() { return P.isSetOverflow(); }
+	public boolean getNegativeFlag() { return P.isSetNegative(); }
+}

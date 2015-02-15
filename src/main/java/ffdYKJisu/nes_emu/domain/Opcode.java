@@ -5,8 +5,11 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.UnsignedBytes;
+
+import ffdYKJisu.nes_emu.system.HexUtils;
 
 /**
  * Stores static information about opcodes
@@ -165,8 +168,19 @@ public enum Opcode {
 	SBCay("F9", "SBC", 4, 3, false, true, AddressingMode.ABSOLUTE_Y),
 	SBCax("FD", "SBC", 4, 3, false, true, AddressingMode.ABSOLUTE_X),
 	INCax("FE", "INC", 7, 3, AddressingMode.ABSOLUTE_X);
-
-	private final Logger logger = LoggerFactory.getLogger(Opcode.class);
+	
+	private static final Logger logger = LoggerFactory.getLogger(Opcode.class);
+	
+	/** Done so that I could access static fields in enum constructor
+	 * http://stackoverflow.com/a/444000/2825055
+	 */
+	private static class OpcodeBehavior {
+		private static final ImmutableSet<String> MEMORY_READING_OPCODES = ImmutableSet.of(
+			"ADC", "AND", "ASL", "BCC", "BEQ", "BIT", "BMI", "BNE", "BPL", "BVC", "BVC",
+			"CMP", "CPX", "CPY", "DEC", "EOR", "INC", "JMP", "JSR", "LDA", "LDX", "LDY",
+			"LSR", "ORA", "ROL", "ROR", "SBC"
+		);	
+	}
 	
 	private final String opcodeBytes;
 	private final String codeName;
@@ -174,6 +188,7 @@ public enum Opcode {
 	private final int length;
 	private final boolean extraCycleOnBranch;
 	private final boolean extraCycleOnPageJump;
+	private final boolean readsMemory;
 	private final AddressingMode addressingMode;
 
 	private final static int OPCODE_NUMBER_BASE = 16;
@@ -183,7 +198,7 @@ public enum Opcode {
 	static {
 		opcodeMap = Maps.newHashMap();		
 		for (Opcode o : Opcode.values()) {
-			opcodeMap.put(o.getOpcodeBytes(), o);
+			opcodeMap.put(o.getOpcodeBytes(), o);			
 			// logger.info("Mapping byte {} to opcode {}", o.getOpcodeBytes(), o);
 		}
 	}
@@ -203,7 +218,9 @@ public enum Opcode {
 		this.length = length;
 		this.extraCycleOnBranch = extraCycleOnBranch;
 		this.extraCycleOnPageJump = extraCycleOnPageJump;
+		this.readsMemory = OpcodeBehavior.MEMORY_READING_OPCODES.contains(codeName);
 		this.addressingMode = addressingMode;
+		
 		// logger.info("Done creating opcode {}", codeName);
 	}
 
@@ -230,6 +247,11 @@ public enum Opcode {
 	public String getCodeName() {
 		return codeName;
 	}
+	
+	public boolean readsMemory() {
+		return readsMemory;
+	}
+	
 
 	public int getCycles(boolean isBranch, boolean isJump) {
 		int cyclesTaken = cycles;
@@ -246,7 +268,7 @@ public enum Opcode {
 	// extraCycleOnPageJump=false,addressingMode=Immediate,name=LDAi,ordinal=97]
 	@Override public String toString() {
 		// return ToStringBuilder.reflectionToString(this,ToStringStyle.SHORT_PREFIX_STYLE);
-		return "Opcode["+this.name()+","+this.getOpcodeBytes()+","+this.addressingMode+"]";
+		return "Opcode["+this.name()+","+HexUtils.toHex(this.getOpcodeBytes())+","+this.addressingMode+"]";
 	}
-	
+
 }

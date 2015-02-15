@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 import ffdYKJisu.nes_emu.system.Cartridge;
+import ffdYKJisu.nes_emu.system.HexUtils;
 
 /**
  * New version of memory based on shorts and bytes instead of encapsulated
@@ -24,7 +25,7 @@ public class CPUMemory implements IMemory {
 	private static final int SRAM_LEN = 0x2000;
 	private static final int RAM_LEN = 0x2000;
 	private static final int PPU_IO_LEN = 8;
-	private static final int PPU_IO_OFFSET = 0x4000;	
+	private static final int PPU_IO_OFFSET = 0x2000;	
 	private static final int BANK_LEN = 0x4000; // 16kB
 	private static final int PRGROM_LEN = BANK_LEN * 2;
 	private static final int PRGROM_OFFSET = 0x8000;	
@@ -92,8 +93,9 @@ public class CPUMemory implements IMemory {
 	public byte read(short address) {				
 		byte val = 0;
 		switch(getAddressLocation(address)) {
-		case PPUio:			
-			val = PPUio[address - (short)PPU_IO_OFFSET];
+		case PPUio:		
+			int ppuOffset = ppuioAddress(address);
+			val = PPUio[ppuOffset];
 			logger.info("PPU/VRAM I/O read value {} at address {}", toHex(val), toHex(address));
 			return val;
 		case PRGROM:
@@ -130,7 +132,8 @@ public class CPUMemory implements IMemory {
  		logger.info("Writing {} to address {}", toHex(val), toHex(address)); 		 	
  		switch(getAddressLocation(address)) {
 		case PPUio:
-			throw new UnsupportedOperationException();
+			PPUio[ppuioAddress(address)] = val;
+			break;
 		case PRGROM:
 			throw new InvalidAddressException("In PRGROM");
 		case RAM:
@@ -141,6 +144,12 @@ public class CPUMemory implements IMemory {
 			throw new UnsupportedOperationException();
  		} 	
 	}
+ 	
+ 	private int ppuioAddress(short address) {
+ 		short relativeIndex = (short) (address - PPU_IO_OFFSET);
+		int ppuOffset = relativeIndex % PPU_IO_LEN;
+		return ppuOffset;
+ 	}
 
 	public void write(byte zeroPageAddress, byte val) throws InvalidAddressException {
 		write((short)zeroPageAddress, val);
@@ -160,7 +169,14 @@ public class CPUMemory implements IMemory {
 	}
 
 	private static int compareAddress(short address1_, short address2_) {
-		return Integer.compare(Short.toUnsignedInt(address1_), Short.toUnsignedInt(address2_));
-		// return (int)(short)(address1_ - address2_);
+		int unsignedAddr1 = Short.toUnsignedInt(address1_);
+		int unsignedAddr2 = Short.toUnsignedInt(address2_);				
+		int result = Integer.compare(unsignedAddr1, unsignedAddr2);
+		logger.debug("Comparing address {} to {}, got result {}", new Object[] {
+				HexUtils.toHex(address1_),
+				HexUtils.toHex(address2_),
+				result
+		});
+		return result;
 	}
 }
