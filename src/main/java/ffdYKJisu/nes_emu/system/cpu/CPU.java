@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.Shorts;
 
 import ffdYKJisu.nes_emu.domain.AddressingMode;
@@ -38,8 +39,8 @@ public class CPU implements ICPU {
 	private byte Y;
 	/** Holds the bits of the status byte for the processor */
 	private StatusBit P;
-	private final CPUMemory memory;
-	//private int cyclesRun;
+	private final CPUMemory _memory;
+	private int _cyclesRun;
 	private byte _stackPointer;
 
 	private static short RESET_VECTOR_LOW = (short) 0xFFFC;
@@ -50,26 +51,18 @@ public class CPU implements ICPU {
 	
 	public CPU(CPUMemory memory_) {		
 		logger.info("CPU has been initiated");	
-		memory = memory_;
-		//cyclesRun = 0;
+		_memory = memory_;
+		_cyclesRun = 0;
 		// Set up State registers
 		initStateRegisters();
-		// Load cart into memory
-		// Loads cartridge banks to cpu memory banks
-		//memory.writeCartToMemory(cart);
 	}
 
 	private void initStateRegisters() {
 		P = new StatusBit();
-		// Processor status
-		P.clearCarry();
-		P.clearZero();
-		P.clearDecimal();
-		P.clearInterruptDisable();
-		P.clearDecimal();
-		P.clearOverflow();
-		P.clearNegative();
-
+		
+		// Clear all
+		P.fromByte((byte) 0);
+		
 		// A,X,Y
 		A = 0;
 		X = 0;
@@ -79,16 +72,6 @@ public class CPU implements ICPU {
 		_stackPointer = (byte) 0xFF;
 	}
 
-	private void incrementPC(int increment) {
-		for ( int i=0; i < increment; i++ ) {
-			incrementPC();
-		}
-	}
-	
-	private void incrementPC() {
-		PC++;
-	}
-	
 	/**
 	 * Runs the CPU for one operation regardless of how long it will take
 	 * @return returns how many cycles the step took
@@ -98,6 +81,8 @@ public class CPU implements ICPU {
 		Opcode op = getOpcode();
 		
 		byte opcodeBytes = op.getOpcodeBytes();
+		
+		short initialPC = PC;
 		
 		// Print instruction to logger
 		logger.info("Got instruction {} opcode {} with bytes {} at PC {}", new Object[]{instructionToString(PC), op, HexUtils.toHex(opcodeBytes), HexUtils.toHex(PC)});
@@ -112,15 +97,47 @@ public class CPU implements ICPU {
 		}
 
 		persistResult(op, result);
-		
-		// Print CPU state to log
-		// Process instructions for op
-		//int cyclesBefore = this.cyclesRun;
-		// this.processOp(op, operand);
+
+		_cyclesRun += calculateCyclesTaken(op, initialPC, PC);
+
 		// Increment PC
-		incrementPC(op.getLength());
+		PC += op.getLength();
+	}
+
+	/** 
+	 * Two mutually exclusive options, one, for indexed reads, add one cycle if 
+	 * indexing across page boundary. Two, for branches add one cycle if branch 
+	 * is taken, Add one additional if branching operation crosses page boundary
+	 * @param op_
+	 * @return cycles taken
+	 */
+	private int calculateCyclesTaken(Opcode op_, short initialPC_, short finalPC_) {
+		int cyclesTaken = op_.getCycles();
 		
-		// Return time taken
+		// Branches
+		if(AddressingMode.RELATIVE == op_.getAddressingMode()) {
+			if(initialPC_ != finalPC_ && op_.extraCycleOnBranch()) {
+				cyclesTaken++;
+				byte initialPage = Shorts.toByteArray(initialPC_)[0];
+				byte finalPage = Shorts.toByteArray(finalPC_)[0];
+				if(initialPage != finalPage && op_.extraCycleOnPageJump()) {
+					cyclesTaken++;
+				}
+			}
+			return cyclesTaken;
+		} 
+		
+		// Indexed addressing
+		else if(ImmutableSet.of(
+				AddressingMode.ABSOLUTE_X, 
+				AddressingMode.ABSOLUTE_Y, 
+				AddressingMode.INDIRECT_Y).contains(op_.getAddressingMode())
+				&& op_.extraCycleOnPageJump()
+		) {
+			return op_.getCycles() + 1;
+		}
+		
+		return cyclesTaken;
 	}
 
 	private void persistResult(Opcode op_, Byte result_) {
@@ -139,7 +156,7 @@ public class CPU implements ICPU {
 			case ZERO_PAGE_Y:			
 				short address = getAddress(op_.getAddressingMode());
 				logger.info("Persisting result {} from operation {} to {}", new Object[] {HexUtils.toHex(result_), op_, HexUtils.toHex(address)});
-				memory.write(address, result_);
+				_memory.write(address, result_);
 				break;
 			case ACCUMULATOR:
 				logger.info("Persisting result {} from operation {} to A", HexUtils.toHex(result_), op_);
@@ -217,7 +234,7 @@ public class CPU implements ICPU {
 		
 		sbBytes.append("(");
 		for (int j = 0; j < instructionLength; j++) {
-			byte b = memory.read(address);
+			byte b = _memory.read(address);
 			sbBytes.append(HexUtils.toHex(b));
 			bytes[j] = b;
 			if (j != instructionLength - 1)
@@ -251,7 +268,7 @@ public class CPU implements ICPU {
 	 * @return Number of bytes until next instruction
 	 */
 	public int instructionLength(short address) {
-		return Opcode.getOpcodeByBytes(memory.read(address)).getLength();
+		return Opcode.getOpcodeByBytes(_memory.read(address)).getLength();
 	}
 
 	private byte getOperand(AddressingMode mode_, short address_) {
@@ -271,7 +288,7 @@ public class CPU implements ICPU {
 		case INDIRECT:
 		case INDIRECT_X:
 		case INDIRECT_Y:
-			return memory.read(address_);
+			return _memory.read(address_);
 		default:
 			logger.error("No matching addressing mode for {}", mode_);
 			throw new UnsupportedOperationException();
@@ -298,14 +315,14 @@ public class CPU implements ICPU {
 				addr = (short) (PC + 1);
 				break;
 			case ZERO_PAGE:
-				addr = memory.read((short)(PC + 1));
+				addr = _memory.read((short)(PC + 1));
 				break;
 			case ZERO_PAGE_X:
-				byte zpAddrX = memory.read((short)(PC + 1));
+				byte zpAddrX = _memory.read((short)(PC + 1));
 				addr = (short)(zpAddrX + X);
 				break;
 			case ZERO_PAGE_Y:
-				byte zpAddrY = memory.read((short)(PC + 1));
+				byte zpAddrY = _memory.read((short)(PC + 1));
 				addr = (short)(zpAddrY + Y);
 				break;
 			case ABSOLUTE:
@@ -342,8 +359,8 @@ public class CPU implements ICPU {
 	 * that into an address */
 	private short readShort(short address) {
 		return Shorts.fromBytes(
-			memory.read((short)(address + 1)),
-			memory.read((address)
+			_memory.read((short)(address + 1)),
+			_memory.read((address)
 		));
 	}
 	
@@ -356,9 +373,10 @@ public class CPU implements ICPU {
 	 * @return opCode
 	 */
 	private Opcode getOpcode() {
-		byte b = memory.read(PC);		
+		byte b = _memory.read(PC);		
 		Opcode o = Opcode.getOpcodeByBytes(b);
-		logger.info("Reading opcode at PC addr {}. Got byte {} and opcode {}", new Object[] {HexUtils.toHex(PC), HexUtils.toHex(b), o});
+		logger.info("Reading opcode at PC addr {}. Got byte {} and opcode {}", 
+				new Object[] {HexUtils.toHex(PC), HexUtils.toHex(b), o});
 		return o;
 	}
 	
@@ -605,30 +623,22 @@ public class CPU implements ICPU {
 	 * Stack
 	 ******************* */
 	
-	public void PHA() {
-		push(A);
-	}
+	public void PHA() { push(A); }
 	
-	public void PHP() {
-		push(P.asByte());
-	}
+	public void PHP() { push(P.asByte()); }
 	
-	public void PLA() {
-		A = pop();
-	}
+	public void PLA() { A = pop(); }
 	
-	public void PLP() {		
-		P.fromByte(pop());
-	}
+	public void PLP() { P.fromByte(pop()); }
 		
 	private void push(byte val_) {
-		memory.push(_stackPointer, val_);
+		_memory.push(_stackPointer, val_);
 		_stackPointer--;	
 	}
 	
 	private byte pop() {
 		_stackPointer++;
-		return memory.pop(_stackPointer);		
+		return _memory.pop(_stackPointer);		
 	}
 	
 	private void pushPC() {
@@ -636,7 +646,6 @@ public class CPU implements ICPU {
 		push(bytesPC[0]); // Upper
 		push(bytesPC[1]); // Lower
 	}
-	
 	
 	/* ******************* 
 	 * Other
@@ -720,7 +729,7 @@ public class CPU implements ICPU {
 	}
 	
 	private void setPCFromVector(short vectorLow_, short vectorHigh_) {
-		short address = Shorts.fromBytes(memory.read(vectorHigh_), memory.read(vectorLow_));
+		short address = Shorts.fromBytes(_memory.read(vectorHigh_), _memory.read(vectorLow_));
 		logger.info( "Jumping to {} from vector {} {}", new Object[] {
 			HexUtils.toHex(address),
 			HexUtils.toHex(vectorHigh_),

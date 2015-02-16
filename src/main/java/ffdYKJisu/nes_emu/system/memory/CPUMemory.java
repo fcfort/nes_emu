@@ -30,7 +30,6 @@ public class CPUMemory implements IMemory {
 	private static final int PRGROM_LEN = BANK_LEN * 2;
 	private static final int PRGROM_OFFSET = 0x8000;	
 	private byte[] PRGROM;
-	private byte[] STACK;	
 	private static final short STACK_OFFSET = 0x100;
 	private byte[] SRAM;
 	private byte[] EROM;

@@ -252,18 +252,14 @@ public enum Opcode {
 		return readsMemory;
 	}
 	
-
-	public int getCycles(boolean isBranch, boolean isJump) {
-		int cyclesTaken = cycles;
-		if (isBranch && extraCycleOnBranch) {
-			cyclesTaken++;
-		}
-		if (isJump && extraCycleOnPageJump) {
-			cyclesTaken++;
-		}
-		return cyclesTaken;
+	public boolean extraCycleOnBranch() {
+		return extraCycleOnBranch;
 	}
-
+	
+	public boolean extraCycleOnPageJump() {
+		return extraCycleOnPageJump;
+	}
+	
 	// Opcode[opcodeBytes=A9,codeName=LDA,cycles=2,length=2,extraCycleOnBranch=false,
 	// extraCycleOnPageJump=false,addressingMode=Immediate,name=LDAi,ordinal=97]
 	@Override public String toString() {
