@@ -13,6 +13,9 @@ import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.HexUtils;
+import ffdYKJisu.nes_emu.system.NES;
+import ffdYKJisu.nes_emu.system.cpu.CPU;
+import ffdYKJisu.nes_emu.system.ppu.PPU;
 
 /**
  * New version of memory based on shorts and bytes instead of encapsulated
@@ -29,14 +32,18 @@ public class CPUMemory implements IMemory {
 	private static final int BANK_LEN = 0x4000; // 16kB
 	private static final int PRGROM_LEN = BANK_LEN * 2;
 	private static final int PRGROM_OFFSET = 0x8000;	
-	private byte[] PRGROM;
+	private final byte[] PRGROM;
 	private static final short STACK_OFFSET = 0x100;
-	private byte[] SRAM;
-	private byte[] EROM;
-	private byte[] PPUio;
-	private byte[] RAM;
+	private final byte[] SRAM;
+	private final byte[] EROM;
+	private final byte[] PPUio;
+	private final byte[] RAM;
 
-	public CPUMemory() {
+	private final CPU _cpu;
+
+	public CPUMemory(CPU cpu_) {
+		_cpu = cpu_;
+		EROM = null;
 		RAM = new byte[RAM_LEN];
 		PRGROM = new byte[PRGROM_LEN];
 		SRAM = new byte[SRAM_LEN];
@@ -94,7 +101,7 @@ public class CPUMemory implements IMemory {
 		switch(getAddressLocation(address)) {
 		case PPUio:		
 			int ppuOffset = ppuioAddress(address);
-			val = PPUio[ppuOffset];
+			val = _cpu.getNES().getPPU().read(address);
 			logger.info("PPU/VRAM I/O read value {} at address {}", toHex(val), toHex(address));
 			return val;
 		case PRGROM:

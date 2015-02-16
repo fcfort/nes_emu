@@ -5,7 +5,9 @@
 
 package ffdYKJisu.nes_emu.system.ppu;
 
-import ffdYKJisu.nes_emu.system.Cartridge;
+import java.util.BitSet;
+
+import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.PPUMemory;
 
 /**
@@ -14,11 +16,27 @@ import ffdYKJisu.nes_emu.system.memory.PPUMemory;
  * @author fe01106
  */
 public class PPU {
-    Cartridge cart;
-    PPUMemory memory;
+    private static final int REGISTER_SIZE = 8;
     
-    void setCart(Cartridge c) {
-        this.cart = c;
+	private final PPUMemory _memory;    
+    private final BitSet _controlRegister1; 
+    private final BitSet _controlRegister2;
+    private final BitSet _statusRegister;
+    private final NES _nes;
+    
+    public PPU(NES nes_) {
+    	_nes = nes_;
+    	_memory = new PPUMemory(this);
+    	_controlRegister1 = new BitSet(REGISTER_SIZE);
+        _controlRegister2 = new BitSet(REGISTER_SIZE);      
+        _statusRegister = new BitSet(REGISTER_SIZE);
     }
 
+	public PPUMemory getPPUMemory() { return _memory; }
+
+	public byte read(short address) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+    
 }

@@ -15,6 +15,8 @@ import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.cpu.CPU;
 import ffdYKJisu.nes_emu.system.cpu.ICPU;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
+import ffdYKJisu.nes_emu.system.memory.PPUMemory;
+import ffdYKJisu.nes_emu.system.ppu.PPU;
 
 /**
  * Controls interaction between cpu/nes and command line input.
@@ -26,7 +28,7 @@ public class ConsoleDebugger {
 	private static final Logger logger = LoggerFactory.getLogger(ConsoleDebugger.class);
 	
 	private final CPUMemory _memory;
-	private final ICPU _cpu;
+	private final CPU _cpu;
 	private final NES _nes;
 	
 	public void usage() {
@@ -37,10 +39,11 @@ public class ConsoleDebugger {
 	
 	public ConsoleDebugger() throws IOException, UnableToLoadRomException {
 		Cartridge c = new Cartridge(ClassLoader.getSystemResourceAsStream("Pac-Man (U) [!].nes"));
-		_memory = new CPUMemory();
-		_memory.writeCartToMemory(c);
-		_cpu = new CPU(_memory);		
-		_nes = new NES(_cpu, _memory);		
+		_nes = new NES();
+		_nes.setCart(c);
+		_cpu = _nes.getCPU();
+		_memory = _cpu.getCPUMemory();
+		_memory.writeCartToMemory(c);		
 	}
 	
 	@Command

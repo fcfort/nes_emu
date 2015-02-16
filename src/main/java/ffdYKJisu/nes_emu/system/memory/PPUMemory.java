@@ -7,11 +7,8 @@ package ffdYKJisu.nes_emu.system.memory;
 import com.google.common.primitives.Shorts;
 
 import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
+import ffdYKJisu.nes_emu.system.ppu.PPU;
 
-/**
- *
- * @author fe01106
- */
 public class PPUMemory implements IMemory {
 
 	// PPU memory
@@ -40,7 +37,14 @@ public class PPUMemory implements IMemory {
 	static final int PALETTE_SIZE = 0x10;
 	static final int SPRITE_RAM_SIZE = 0x100;
 
+	private final PPU _ppu;
+	
+	public PPUMemory(PPU ppu_) {
+		_ppu = ppu_;
+	}
+
 	public byte read(short address) {
+		
 		char addr = (char) address;
 		// Mirror of all PPU memory
 		if (addr > 0x4000) {

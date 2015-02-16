@@ -25,8 +25,9 @@ public class TestBCC {
 	@Before
 	public void initialize() throws UnableToLoadRomException {
 		Cartridge c = new Cartridge(ClassLoader.getSystemResourceAsStream("Pac-Man (U) [!].nes"));
-		_mem = new CPUMemory();
-		_c = new CPU(_mem);
+		NES _nes = new NES();
+		_c = _nes.getCPU();
+		_mem = _c.getCPUMemory();
 		_mem.writeCartToMemory(c);
 		_c.reset();
 	}

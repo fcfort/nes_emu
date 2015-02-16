@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import ffdYKJisu.nes_emu.system.cpu.CPU;
 import ffdYKJisu.nes_emu.system.cpu.ICPU;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
+import ffdYKJisu.nes_emu.system.memory.PPUMemory;
 import ffdYKJisu.nes_emu.system.ppu.PPU;
 
 /**
@@ -21,9 +22,9 @@ public class NES {
 	private final Logger logger = LoggerFactory.getLogger(NES.class);
 
 	private Cartridge cart;
-	private final CPUMemory cpuMemory;
-	private final ICPU cpu;
-	private final PPU ppu;
+	
+	private final CPU _cpu;
+	private final PPU _ppu;
 	/** How many cycles the ppu runs for every cpu cycles */
 	
 	private static final double PPU_CPU_CYCLE_RATIO = 3;
@@ -34,11 +35,10 @@ public class NES {
 		PAL, NTSC
 	}
 
-	public NES(ICPU cpu_, CPUMemory cpuMemory_) {
+	public NES() {		
 		timing = Timing.NTSC;
-		cpuMemory = cpuMemory_; 
-		cpu = cpu_;
-		ppu = new PPU();
+		_cpu = new CPU(this);
+		_ppu = new PPU(this);
 	}
 
 	/**
@@ -53,7 +53,7 @@ public class NES {
 		// Pass data the cpu needs to the ppu and run the cpu
 		// cpu.emulateFor(numCycles, ppu.getCpuData();
 		for(long i = 0; i < numCycles; i++) {
-			cpu.runStep();
+			_cpu.runStep();
 		}
 
 		// Pass data the ppu needs to the ppu and run the ppu
@@ -67,18 +67,26 @@ public class NES {
 	
 	public void setCart(Cartridge cart) {
 		this.cart = cart;
-		cpuMemory.writeCartToMemory(cart);
+		_cpu.getCPUMemory().writeCartToMemory(cart);
 	}
 
-	public ICPU getCpu() {
-		return this.cpu;
+	public CPU getCPU() {
+		return _cpu;
+	}
+	
+	public CPUMemory getCPUMemory() {
+		return _cpu.getCPUMemory();
 	}
 
 	public void reset() {
-		cpu.reset();
+		_cpu.reset();
 	}
 
 	public void step() {
-		cpu.runStep();
+		_cpu.runStep();
+	}
+
+	public PPU getPPU() {
+		return _ppu;
 	}
 }

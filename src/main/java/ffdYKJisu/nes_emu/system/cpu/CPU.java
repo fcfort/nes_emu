@@ -15,6 +15,7 @@ import ffdYKJisu.nes_emu.domain.Opcode;
 import ffdYKJisu.nes_emu.domain.StatusBit;
 import ffdYKJisu.nes_emu.exceptions.AddressingModeException;
 import ffdYKJisu.nes_emu.system.HexUtils;
+import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 
 /**
@@ -49,9 +50,12 @@ public class CPU implements ICPU {
 	private static short INTERRUPT_VECTOR_LOW = (short) 0xFFFE;
 	private static short INTERRUPT_VECTOR_HIGH = (short) 0xFFFF;
 	
-	public CPU(CPUMemory memory_) {		
-		logger.info("CPU has been initiated");	
-		_memory = memory_;
+	private final NES _nes;
+	
+	public CPU(NES nes_) {
+		_nes = nes_;
+		logger.info("CPU has been initiated");
+		_memory = new CPUMemory(this);
 		_cyclesRun = 0;
 		// Set up State registers
 		initStateRegisters();
@@ -71,7 +75,7 @@ public class CPU implements ICPU {
 		// Stack pointer
 		_stackPointer = (byte) 0xFF;
 	}
-
+	
 	/**
 	 * Runs the CPU for one operation regardless of how long it will take
 	 * @return returns how many cycles the step took
@@ -135,40 +139,12 @@ public class CPU implements ICPU {
 				AddressingMode.INDIRECT_Y).contains(op_.getAddressingMode())
 				&& op_.extraCycleOnPageJump()
 		) {
-			return op_.getCycles() + 1;
+			if(isIndexedPageJump(op_)) {
+				return op_.getCycles() + 1;
+			}
 		}
 		
 		return cyclesTaken;
-	}
-
-	private void persistResult(Opcode op_, Byte result_) {
-		// void functions return null. Don't have to do anything.
-		if(result_ == null) { return; }
-		
-		switch(op_.getAddressingMode()) {
-			case ABSOLUTE:
-			case ABSOLUTE_X:
-			case ABSOLUTE_Y:
-			case INDIRECT:
-			case INDIRECT_X:
-			case INDIRECT_Y:
-			case ZERO_PAGE:
-			case ZERO_PAGE_X:
-			case ZERO_PAGE_Y:			
-				short address = getAddress(op_.getAddressingMode());
-				logger.info("Persisting result {} from operation {} to {}", new Object[] {HexUtils.toHex(result_), op_, HexUtils.toHex(address)});
-				_memory.write(address, result_);
-				break;
-			case ACCUMULATOR:
-				logger.info("Persisting result {} from operation {} to A", HexUtils.toHex(result_), op_);
-				A = result_;		
-				break;
-			case IMMEDIATE: // Some ops read immediate results but these shouldn't return results
-			case IMPLICIT:
-			case RELATIVE: // all branching functions don't have results			
-			default:
-				throw new UnsupportedOperationException();
-		}		
 	}
 
 	// TODO: generalize doOperation with one or zero operands
@@ -218,59 +194,10 @@ public class CPU implements ICPU {
 			throw new UnsupportedOperationException();
 		}
 	}
-
-	/**
-	 * Reads the instruction at that address. Creates a string that will readable
-	 * and will look like "$FF00: ($D3 $F0)    ADD $F0".
-	 * @param address Location where you want to read an instruction from
-	 * @return A string formatted for debugger display.
-	 */
-	public String instructionToString(short address) {
-		StringBuffer sb = new StringBuffer(HexUtils.toHex(address) + ": ");
-		int instructionLength = this.instructionLength(address);
-
-		byte[] bytes = new byte[instructionLength];
-
-		StringBuffer sbBytes = new StringBuffer();		
-		
-		sbBytes.append("(");
-		for (int j = 0; j < instructionLength; j++) {
-			byte b = _memory.read(address);
-			sbBytes.append(HexUtils.toHex(b));
-			bytes[j] = b;
-			if (j != instructionLength - 1)
-				sbBytes.append(" ");
-			address++;
-		}
-		sbBytes.append(")");
-		// Pad string to maximum length of bytes possible for one instruction
-		// That is 3 bytes which is ten characters: "(.. .. ..)"
-		int maxLength = 13;
-		while (sbBytes.length() < maxLength) {
-			sbBytes.append(" ");
-		}
-		sb.append(sbBytes);
-		String opcodeName = Opcode.getOpcodeByBytes(bytes[0]).getCodeName();
-		sb.append(" " + opcodeName + " ");
-
-		for (int j = 1; j < instructionLength; j++) {
-			sb.append(bytes[j]);
-			if (j != instructionLength - 1)
-				sb.append(" ");
-		}
-		return sb.toString();
-	}
-
-	/**
-	 * Returns the number of bytes that the current instruction occupies. This
-	 * includes the actual instruction opcode itself. I.e. CLD returns 1 even 
-	 * though it has no parameters
-	 * @param address Address at which the instruction is at
-	 * @return Number of bytes until next instruction
-	 */
-	public int instructionLength(short address) {
-		return Opcode.getOpcodeByBytes(_memory.read(address)).getLength();
-	}
+	
+	/* ******************* 
+	 * Addressing
+	 ******************* */
 
 	private byte getOperand(AddressingMode mode_, short address_) {
 		switch (mode_) {
@@ -352,8 +279,34 @@ public class CPU implements ICPU {
 				throw new AddressingModeException(mode_.toString());
 		}
 		
-		logger.info("At PC {} with mode {}. Got final address {}", new Object[]{HexUtils.toHex(PC), mode_, HexUtils.toHex(addr)});
+		logger.info("At PC {} with mode {}. Got final address {}", 
+				new Object[]{HexUtils.toHex(PC), mode_, HexUtils.toHex(addr)});
 		return addr;
+	}
+	
+	/**
+	 * Checks to see if the addressing mode will result in an additional
+	 * cycle due to a page jump 
+	 * @return true if the indexed operation crosses a page boundary
+	 */
+	private boolean isIndexedPageJump(Opcode op_) {
+		switch (op_.getAddressingMode()) {
+			case ABSOLUTE_X:
+				return isIndexAbsolutePageJump((short) (PC + 1), X);				
+			case ABSOLUTE_Y:
+				return isIndexAbsolutePageJump((short) (PC + 1), Y);
+			case INDIRECT_Y:
+				short addr = (short) (readShort((short) (PC + 1)));
+				return isIndexAbsolutePageJump(addr, Y);
+			default:
+				return false;
+		}
+	}
+	
+	private boolean isIndexAbsolutePageJump(short address_, byte val_) {
+		byte lowerAddress = _memory.read(address_);
+		int result = Byte.toUnsignedInt(lowerAddress) + Byte.toUnsignedInt(val_);
+		return result > 0XFF;
 	}
 	
 	/** Reads an address for two consecutive bytes and forms
@@ -367,6 +320,47 @@ public class CPU implements ICPU {
 	
 	private short readShortIndirect(short address, byte offset) {
 		return (short) (readShort(address) + offset);
+	}
+	
+	private void persistResult(Opcode op_, Byte result_) {
+		// void functions return null. Don't have to do anything.
+		if(result_ == null) { return; }
+		
+		switch(op_.getAddressingMode()) {
+			case ABSOLUTE:
+			case ABSOLUTE_X:
+			case ABSOLUTE_Y:
+			case INDIRECT:
+			case INDIRECT_X:
+			case INDIRECT_Y:
+			case ZERO_PAGE:
+			case ZERO_PAGE_X:
+			case ZERO_PAGE_Y:			
+				short address = getAddress(op_.getAddressingMode());
+				logger.info("Persisting result {} from operation {} to {}", new Object[] {HexUtils.toHex(result_), op_, HexUtils.toHex(address)});
+				_memory.write(address, result_);
+				break;
+			case ACCUMULATOR:
+				logger.info("Persisting result {} from operation {} to A", HexUtils.toHex(result_), op_);
+				A = result_;		
+				break;
+			case IMMEDIATE: // Some ops read immediate results but these shouldn't return results
+			case IMPLICIT:
+			case RELATIVE: // all branching functions don't have results			
+			default:
+				throw new UnsupportedOperationException();
+		}		
+	}
+
+	/**
+	 * Returns the number of bytes that the current instruction occupies. This
+	 * includes the actual instruction opcode itself. I.e. CLD returns 1 even 
+	 * though it has no parameters
+	 * @param address Address at which the instruction is at
+	 * @return Number of bytes until next instruction
+	 */
+	private int instructionLength(short address) {
+		return Opcode.getOpcodeByBytes(_memory.read(address)).getLength();
 	}
 
 	/**
@@ -752,4 +746,49 @@ public class CPU implements ICPU {
 	public boolean getBreakCommand() { return P.isSetBreak(); }
 	public boolean getOverflowFlag() { return P.isSetOverflow(); }
 	public boolean getNegativeFlag() { return P.isSetNegative(); }
+	public NES getNES() { return _nes; }
+	public CPUMemory getCPUMemory() { return _memory; }
+	
+	/**
+	 * Reads the instruction at that address. Creates a string that will readable
+	 * and will look like "$FF00: ($D3 $F0)    ADD $F0".
+	 * @param address Location where you want to read an instruction from
+	 * @return A string formatted for debugger display.
+	 */
+	public String instructionToString(short address) {
+		StringBuffer sb = new StringBuffer(HexUtils.toHex(address) + ": ");
+		int instructionLength = this.instructionLength(address);
+
+		byte[] bytes = new byte[instructionLength];
+
+		StringBuffer sbBytes = new StringBuffer();		
+		
+		sbBytes.append("(");
+		for (int j = 0; j < instructionLength; j++) {
+			byte b = _memory.read(address);
+			sbBytes.append(HexUtils.toHex(b));
+			bytes[j] = b;
+			if (j != instructionLength - 1)
+				sbBytes.append(" ");
+			address++;
+		}
+		sbBytes.append(")");
+		// Pad string to maximum length of bytes possible for one instruction
+		// That is 3 bytes which is ten characters: "(.. .. ..)"
+		int maxLength = 13;
+		while (sbBytes.length() < maxLength) {
+			sbBytes.append(" ");
+		}
+		sb.append(sbBytes);
+		String opcodeName = Opcode.getOpcodeByBytes(bytes[0]).getCodeName();
+		sb.append(" " + opcodeName + " ");
+
+		for (int j = 1; j < instructionLength; j++) {
+			sb.append(bytes[j]);
+			if (j != instructionLength - 1)
+				sb.append(" ");
+		}
+		return sb.toString();
+	}
+
 }
