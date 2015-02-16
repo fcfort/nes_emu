@@ -4,9 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ffdYKJisu.nes_emu.system.cpu.CPU;
-import ffdYKJisu.nes_emu.system.cpu.ICPU;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
-import ffdYKJisu.nes_emu.system.memory.PPUMemory;
 import ffdYKJisu.nes_emu.system.ppu.PPU;
 
 /**

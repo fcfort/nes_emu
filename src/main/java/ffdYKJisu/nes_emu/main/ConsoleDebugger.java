@@ -10,13 +10,13 @@ import asg.cliche.Command;
 import asg.cliche.ShellFactory;
 import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
 import ffdYKJisu.nes_emu.system.Cartridge;
-import ffdYKJisu.nes_emu.system.HexUtils;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.cpu.CPU;
 import ffdYKJisu.nes_emu.system.cpu.ICPU;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 import ffdYKJisu.nes_emu.system.memory.PPUMemory;
 import ffdYKJisu.nes_emu.system.ppu.PPU;
+import ffdYKJisu.nes_emu.util.HexUtils;
 
 /**
  * Controls interaction between cpu/nes and command line input.

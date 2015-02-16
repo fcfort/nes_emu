@@ -8,9 +8,9 @@ import org.junit.Test;
 
 import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
 import ffdYKJisu.nes_emu.system.Cartridge;
-import ffdYKJisu.nes_emu.system.HexUtils;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
+import ffdYKJisu.nes_emu.util.HexUtils;
 
 public class TestROL {
 

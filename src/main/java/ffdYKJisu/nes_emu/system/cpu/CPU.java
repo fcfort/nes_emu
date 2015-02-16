@@ -14,9 +14,9 @@ import ffdYKJisu.nes_emu.domain.AddressingMode;
 import ffdYKJisu.nes_emu.domain.Opcode;
 import ffdYKJisu.nes_emu.domain.StatusBit;
 import ffdYKJisu.nes_emu.exceptions.AddressingModeException;
-import ffdYKJisu.nes_emu.system.HexUtils;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
+import ffdYKJisu.nes_emu.util.HexUtils;
 
 /**
  * Controls all functions of the main CPU of the NES.
@@ -42,6 +42,7 @@ public class CPU implements ICPU {
 	private StatusBit P;
 	private final CPUMemory _memory;
 	private int _cyclesRun;
+	private int _cyclesRunSinceReset;
 	private byte _stackPointer;
 
 	private static short RESET_VECTOR_LOW = (short) 0xFFFC;
@@ -57,6 +58,7 @@ public class CPU implements ICPU {
 		logger.info("CPU has been initiated");
 		_memory = new CPUMemory(this);
 		_cyclesRun = 0;
+		_cyclesRunSinceReset = 0;
 		// Set up State registers
 		initStateRegisters();
 	}
@@ -720,6 +722,7 @@ public class CPU implements ICPU {
 	}
 
 	public void reset() {
+		_cyclesRunSinceReset = 0;
 		setPCFromVector(RESET_VECTOR_LOW, RESET_VECTOR_HIGH);
 	}
 	

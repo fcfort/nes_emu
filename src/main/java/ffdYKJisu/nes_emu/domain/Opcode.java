@@ -9,7 +9,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.UnsignedBytes;
 
-import ffdYKJisu.nes_emu.system.HexUtils;
+import ffdYKJisu.nes_emu.util.HexUtils;
 
 /**
  * Stores static information about opcodes

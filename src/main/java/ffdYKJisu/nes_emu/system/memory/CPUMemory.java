@@ -4,7 +4,7 @@
  */
 package ffdYKJisu.nes_emu.system.memory;
 
-import static ffdYKJisu.nes_emu.system.HexUtils.toHex;
+import static ffdYKJisu.nes_emu.util.HexUtils.toHex;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,10 +12,10 @@ import org.slf4j.LoggerFactory;
 import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 import ffdYKJisu.nes_emu.system.Cartridge;
-import ffdYKJisu.nes_emu.system.HexUtils;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.cpu.CPU;
 import ffdYKJisu.nes_emu.system.ppu.PPU;
+import ffdYKJisu.nes_emu.util.HexUtils;
 
 /**
  * New version of memory based on shorts and bytes instead of encapsulated
