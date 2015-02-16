@@ -85,7 +85,8 @@ public class CPU implements ICPU {
 		short initialPC = PC;
 		
 		// Print instruction to logger
-		logger.info("Got instruction {} opcode {} with bytes {} at PC {}", new Object[]{instructionToString(PC), op, HexUtils.toHex(opcodeBytes), HexUtils.toHex(PC)});
+		logger.info("Got instruction {} opcode {} with bytes {} at PC {}", 
+				new Object[]{instructionToString(PC), op, HexUtils.toHex(opcodeBytes), HexUtils.toHex(PC)});
 		
 		Byte result;
 		
@@ -162,7 +163,7 @@ public class CPU implements ICPU {
 				logger.info("Persisting result {} from operation {} to A", HexUtils.toHex(result_), op_);
 				A = result_;		
 				break;
-			case IMMEDIATE: // Some ops read immediate results but these should return results
+			case IMMEDIATE: // Some ops read immediate results but these shouldn't return results
 			case IMPLICIT:
 			case RELATIVE: // all branching functions don't have results			
 			default:
@@ -318,12 +319,12 @@ public class CPU implements ICPU {
 				addr = _memory.read((short)(PC + 1));
 				break;
 			case ZERO_PAGE_X:
-				byte zpAddrX = _memory.read((short)(PC + 1));
-				addr = (short)(zpAddrX + X);
+				byte zpAddrX = (byte) (_memory.read((short)(PC + 1)) + X);
+				addr = (short)(zpAddrX);
 				break;
 			case ZERO_PAGE_Y:
-				byte zpAddrY = _memory.read((short)(PC + 1));
-				addr = (short)(zpAddrY + Y);
+				byte zpAddrY = (byte) (_memory.read((short)(PC + 1)) + Y);
+				addr = (short)(zpAddrY);
 				break;
 			case ABSOLUTE:
 				addr = (short) (readShort((short) (PC + 1)));
