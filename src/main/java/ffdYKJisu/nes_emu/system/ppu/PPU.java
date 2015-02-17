@@ -8,6 +8,7 @@ package ffdYKJisu.nes_emu.system.ppu;
 import java.util.BitSet;
 
 import ffdYKJisu.nes_emu.domain.Register;
+import ffdYKJisu.nes_emu.screen.Image;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.PPUMemory;
 
@@ -21,6 +22,7 @@ public class PPU {
     
     private final NES _nes;
 	private final PPUMemory _memory;
+	private final Image _image;
 	
     private final Register _controlRegister;
     private final Register _maskRegister;
@@ -29,22 +31,32 @@ public class PPU {
     private final Register _addressRegister;
     private final Register _dataRegister;
     
+    private int _frame;
+    private int _scanline;
+    
     private int _cyclesRun;
-    private int _cyclesRunSinceReset;
+    private int _cyclesRunSinceReset;  
     
     public PPU(NES nes_) {
     	_nes = nes_;
+    	_image = _nes.getImage();
     	_memory = new PPUMemory(this);
     	
-    	_controlRegister = new Register();
-    	_maskRegister = new Register();      
-        _statusRegister = new Register();
-        _scrollRegister = new Register();
-        _addressRegister = new Register();
-        _dataRegister = new Register();
+    	_controlRegister = new Register(); // 0x2000
+    	_maskRegister = new Register(); // 0x2001    
+        _statusRegister = new Register(); // 0x2002
+        _scrollRegister = new Register(); // 0x2005
+        _addressRegister = new Register(); // 0x2006
+        _dataRegister = new Register(); // 0x2007
         
+        _frame = 0;
+        _scanline = 0;
         _cyclesRun = 0;
         _cyclesRunSinceReset = 0;
+    }
+    
+    public void runStep() {
+    	
     }
 
 	public PPUMemory getPPUMemory() { return _memory; }
@@ -63,9 +75,9 @@ public class PPU {
 	
 	public byte read(short address_) {
 		switch(address_) {
-		case 0x2000:
-			break;
-		default:
+			case 0x2002:
+				return _statusRegister.getByte();
+			default:
 				throw new UnsupportedOperationException();
 		}
 	}
@@ -73,13 +85,13 @@ public class PPU {
 	
 	public void write(short address_, byte val_) {
 		switch(address_) {
-		case 0x2000:
-			_controlRegister.setByte(val_);
-			break;
-		case 0x2001:
-			_maskRegister.setByte(val_);
-		default:
-			throw new UnsupportedOperationException();
+			case 0x2000:
+				_controlRegister.setByte(val_);
+				break;
+			case 0x2001:
+				_maskRegister.setByte(val_);
+			default:
+				throw new UnsupportedOperationException();
 		}
 	}
     

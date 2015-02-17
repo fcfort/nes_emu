@@ -3,6 +3,7 @@ package ffdYKJisu.nes_emu.system;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ffdYKJisu.nes_emu.screen.Image;
 import ffdYKJisu.nes_emu.system.cpu.CPU;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 import ffdYKJisu.nes_emu.system.ppu.PPU;
@@ -23,9 +24,13 @@ public class NES {
 	
 	private final CPU _cpu;
 	private final PPU _ppu;
+	private final Image _image;
 	/** How many cycles the ppu runs for every cpu cycles */
 	
 	private static final double PPU_CPU_CYCLE_RATIO = 3;
+	
+	private static final int IMAGE_WIDTH = 256;
+	private static final int IMAGE_HEIGHT = 240;
 	
 	private Timing timing;
 
@@ -35,6 +40,7 @@ public class NES {
 
 	public NES() {		
 		timing = Timing.NTSC;
+		_image = new Image(IMAGE_WIDTH, IMAGE_HEIGHT);
 		_cpu = new CPU(this);
 		_ppu = new PPU(this);
 	}
@@ -68,9 +74,9 @@ public class NES {
 		_cpu.getCPUMemory().writeCartToMemory(cart);
 	}
 
-	public CPU getCPU() {
-		return _cpu;
-	}
+	public CPU getCPU() { return _cpu; }
+	public PPU getPPU() { return _ppu; }
+	public Image getImage() { return _image; }
 	
 	public CPUMemory getCPUMemory() {
 		return _cpu.getCPUMemory();
@@ -84,7 +90,5 @@ public class NES {
 		_cpu.runStep();
 	}
 
-	public PPU getPPU() {
-		return _ppu;
-	}
+	
 }
