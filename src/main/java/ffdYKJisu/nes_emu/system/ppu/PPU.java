@@ -22,14 +22,12 @@ public class PPU {
     private final NES _nes;
 	private final PPUMemory _memory;
 	
-    private final BitSet _controlRegister;
-    private final boolean[] _control;
-    private final Register _controlRegister2;
-    private final BitSet _maskRegister;
-    private final BitSet _statusRegister;
-    private final BitSet _scrollRegister;
-    private final BitSet _addressRegister;
-    private final BitSet _dataRegister;
+    private final Register _controlRegister;
+    private final Register _maskRegister;
+    private final Register _statusRegister;
+    private final Register _scrollRegister;
+    private final Register _addressRegister;
+    private final Register _dataRegister;
     
     private int _cyclesRun;
     private int _cyclesRunSinceReset;
@@ -38,14 +36,12 @@ public class PPU {
     	_nes = nes_;
     	_memory = new PPUMemory(this);
     	
-    	_controlRegister = new BitSet(REGISTER_SIZE);
-    	_control = new boolean[REGISTER_SIZE];
-    	_controlRegister2 = new Register();
-    	_maskRegister = new BitSet(REGISTER_SIZE);      
-        _statusRegister = new BitSet(REGISTER_SIZE);
-        _scrollRegister = new BitSet(REGISTER_SIZE);
-        _addressRegister = new BitSet(REGISTER_SIZE);
-        _dataRegister = new BitSet(REGISTER_SIZE);
+    	_controlRegister = new Register();
+    	_maskRegister = new Register();      
+        _statusRegister = new Register();
+        _scrollRegister = new Register();
+        _addressRegister = new Register();
+        _dataRegister = new Register();
         
         _cyclesRun = 0;
         _cyclesRunSinceReset = 0;
@@ -55,12 +51,12 @@ public class PPU {
 
 	// http://wiki.nesdev.com/w/index.php/PPU_power_up_state
 	public void reset() {
-    	_controlRegister.clear();
-    	_maskRegister.clear();      
-        _statusRegister.clear();
-        _scrollRegister.clear();
-        _addressRegister.clear();
-        _dataRegister.clear();	
+    	_controlRegister.setByte((byte) 0);
+    	_maskRegister.setByte((byte) 0);      
+        _statusRegister.setByte((byte) 0);
+        _scrollRegister.setByte((byte) 0);
+        _addressRegister.setByte((byte) 0);
+        _dataRegister.setByte((byte) 0);	
         
         _cyclesRunSinceReset = 0;
 	}
@@ -75,10 +71,15 @@ public class PPU {
 	}
     
 	
-	public byte write(short address_, byte val_) {
+	public void write(short address_, byte val_) {
 		switch(address_) {
 		case 0x2000:
-			_controlRegister2.setByte(val_);
+			_controlRegister.setByte(val_);
+			break;
+		case 0x2001:
+			_maskRegister.setByte(val_);
+		default:
+			throw new UnsupportedOperationException();
 		}
 	}
     
