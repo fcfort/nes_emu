@@ -12,10 +12,8 @@ import org.slf4j.LoggerFactory;
 import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 import ffdYKJisu.nes_emu.system.Cartridge;
-import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.cpu.CPU;
-import ffdYKJisu.nes_emu.system.ppu.PPU;
-import ffdYKJisu.nes_emu.util.HexUtils;
+import ffdYKJisu.nes_emu.util.UnsignedShorts;
 
 /**
  * New version of memory based on shorts and bytes instead of encapsulated
@@ -85,11 +83,11 @@ public class CPUMemory implements IMemory {
 	}
 	
 	private static AddressLocation getAddressLocation(short address) {
-		if(compareAddress(address,(short)0x2000) < 0) {
+		if(UnsignedShorts.compare(address,(short)0x2000) < 0) {
 			return AddressLocation.RAM; 
-		} else if (compareAddress(address,(short)0x2000) >= 0 && compareAddress(address,(short)0x4000) < 0) {
+		} else if (UnsignedShorts.compare(address,(short)0x2000) >= 0 && UnsignedShorts.compare(address,(short)0x4000) < 0) {
 			return AddressLocation.PPUio;
-		} else if (compareAddress(address,(short)0x8000) >= 0) {
+		} else if (UnsignedShorts.compare(address,(short)0x8000) >= 0) {
 			return AddressLocation.PRGROM;
 		} else {
 			throw new UnsupportedOperationException();
@@ -174,15 +172,4 @@ public class CPUMemory implements IMemory {
 		RAM[ramOffset + 0x1800] = val;
 	}
 
-	private static int compareAddress(short address1_, short address2_) {
-		int unsignedAddr1 = Short.toUnsignedInt(address1_);
-		int unsignedAddr2 = Short.toUnsignedInt(address2_);				
-		int result = Integer.compare(unsignedAddr1, unsignedAddr2);
-		logger.debug("Comparing address {} to {}, got result {}", new Object[] {
-				HexUtils.toHex(address1_),
-				HexUtils.toHex(address2_),
-				result
-		});
-		return result;
-	}
 }

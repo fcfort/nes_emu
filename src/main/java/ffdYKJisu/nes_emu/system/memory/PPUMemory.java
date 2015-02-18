@@ -8,9 +8,28 @@ import com.google.common.primitives.Shorts;
 
 import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 import ffdYKJisu.nes_emu.system.ppu.PPU;
+import ffdYKJisu.nes_emu.util.UnsignedShorts;
 
 public class PPUMemory implements IMemory {
 
+	
+	// Some useful constants
+	private static final int PATTERN_TABLE_SIZE = 0x1000;
+	private static final int NAME_TABLE_SIZE = 0x3C0;
+	private static final int ATTRIBUTE_TABLE_SIZE = 0x40;
+	private static final int PALETTE_SIZE = 0x10;
+	private static final int SPRITE_RAM_SIZE = 0x100;
+
+	private static final int PATTERN_TABLE_0_LOC = 0x0000;
+	private static final int PATTERN_TABLE_1_LOC = 0x1000;
+	
+	private static final int NAME_TABLE_0_LOC = 0x2000;
+	private static final int NAME_TABLE_1_LOC = 0x2400;
+	private static final int NAME_TABLE_2_LOC = 0x2800;
+	private static final int NAME_TABLE_3_LOC = 0x2C00;
+	
+	private static final int PALETTE_LOC = 0x3F00;
+	
 	// Pattern Tables
 	byte[] PatternTable0 = new byte[PATTERN_TABLE_SIZE];
 	byte[] PatternTable1 = new byte[PATTERN_TABLE_SIZE];
@@ -31,21 +50,60 @@ public class PPUMemory implements IMemory {
 	byte[] PaletteTable = new byte[PALETTE_SIZE];
 	
 	byte[] SpriteMemory = new byte[SPRITE_RAM_SIZE];
-	
-	// Some useful constants
-	static final int PATTERN_TABLE_SIZE = 0x1000;
-	static final int NAME_TABLE_SIZE = 0x3C0;
-	static final int ATTRIBUTE_TABLE_SIZE = 0x40;
-	static final int PALETTE_SIZE = 0x10;
-	static final int SPRITE_RAM_SIZE = 0x100;
 
+	private static final AddressLocation[] MEMORY_ORDER = {
+		AddressLocation.PATTERN_TABLE_0,
+		AddressLocation.PATTERN_TABLE_1,
+		AddressLocation.NAME_TABLE_0,
+		AddressLocation.NAME_TABLE_1,
+		AddressLocation.NAME_TABLE_2,
+		AddressLocation.NAME_TABLE_3,
+		AddressLocation.PALETTE
+	};
+	
 	private final PPU _ppu;
 	
 	public PPUMemory(PPU ppu_) {
 		_ppu = ppu_;
 	}
+	
+	private static enum AddressLocation {
+		PATTERN_TABLE_0(PATTERN_TABLE_0_LOC, PATTERN_TABLE_SIZE),
+		PATTERN_TABLE_1(PATTERN_TABLE_1_LOC, PATTERN_TABLE_SIZE),
+		NAME_TABLE_0(NAME_TABLE_0_LOC, NAME_TABLE_SIZE),
+		NAME_TABLE_1(NAME_TABLE_1_LOC, NAME_TABLE_SIZE),
+		NAME_TABLE_2(NAME_TABLE_2_LOC, NAME_TABLE_SIZE),
+		NAME_TABLE_3(NAME_TABLE_3_LOC, NAME_TABLE_SIZE),
+		PALETTE(PALETTE_LOC, PALETTE_SIZE);
+		
+		private final int _startingAddress;
+		private final int _size;
+		
+		AddressLocation(int startingAddress_, int size_) {
+			_startingAddress = startingAddress_;
+			_size = size_;
+		}		
+	}
 
+	/** Changing mirroring locations to read unmirrored locations */
+	private static short unmirrorAddress(short address_) {
+		// Pattern/name table mirroring 
+		if(UnsignedShorts.compare(address_, (short) 0x3000) >= 0 &&
+			UnsignedShorts.compare(address_, (short) 0x3EFF) < 0) 
+		{
+			return (short) (address_ - 0x1000);
+		} else if(UnsignedShorts.compare(address_, (short) 0x3F20) >= 0 &&
+				UnsignedShorts.compare(address_, (short) 0x3F1F) < 0) 
+		{
+			int offset = (Short.toUnsignedInt(address_) - 0x3F00) % PALETTE_SIZE;
+			return (short) (PALETTE_LOC + offset);
+		} else {
+			return address_;
+		}
+	}
+	
 	public byte read(short address) {
+		short unmirroredAddress = unmirrorAddress(address);
 		
 		char addr = (char) address;
 		// Mirror of all PPU memory
