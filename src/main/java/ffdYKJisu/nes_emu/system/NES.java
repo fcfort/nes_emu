@@ -43,6 +43,7 @@ public class NES {
 		_image = new Image(IMAGE_WIDTH, IMAGE_HEIGHT);
 		_cpu = new CPU(this);
 		_ppu = new PPU(this);
+		_image.render();
 	}
 
 	/**

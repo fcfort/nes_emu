@@ -11,15 +11,17 @@ import ffdYKJisu.nes_emu.system.ppu.PPU;
 
 public class PPUMemory implements IMemory {
 
-	// PPU memory
+	// Pattern Tables
 	byte[] PatternTable0 = new byte[PATTERN_TABLE_SIZE];
 	byte[] PatternTable1 = new byte[PATTERN_TABLE_SIZE];
 	
+	// Name Tables
 	byte[] NameTable0 = new byte[NAME_TABLE_SIZE];
 	byte[] NameTable1 = new byte[NAME_TABLE_SIZE];
 	byte[] NameTable2 = new byte[NAME_TABLE_SIZE];
 	byte[] NameTable3 = new byte[NAME_TABLE_SIZE];
 	
+	// OAM - Object Attribute Memory
 	byte[] AttributeTable0 = new byte[ATTRIBUTE_TABLE_SIZE];
 	byte[] AttributeTable1 = new byte[ATTRIBUTE_TABLE_SIZE];
 	byte[] AttributeTable2 = new byte[ATTRIBUTE_TABLE_SIZE];

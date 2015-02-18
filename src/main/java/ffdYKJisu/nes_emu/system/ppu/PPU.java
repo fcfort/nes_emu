@@ -7,6 +7,8 @@ package ffdYKJisu.nes_emu.system.ppu;
 
 import java.util.BitSet;
 
+import org.apache.commons.lang.BitField;
+
 import ffdYKJisu.nes_emu.domain.Register;
 import ffdYKJisu.nes_emu.screen.Image;
 import ffdYKJisu.nes_emu.system.NES;
@@ -19,6 +21,10 @@ import ffdYKJisu.nes_emu.system.memory.PPUMemory;
  */
 public class PPU {
     private static final int REGISTER_SIZE = 8;
+    private static final int TILE_SIZE = 8;
+    private static final int TILES_PER_SCANLINE = 32;
+    private static final int MAX_SCANLINE = 261;
+    private static final int CYCLES_PER_SCANLINE = 341;
     
     private final NES _nes;
 	private final PPUMemory _memory;
@@ -32,10 +38,12 @@ public class PPU {
     private final Register _dataRegister;
     
     private int _frame;
-    private int _scanline;
+    private int _horizontalScroll;
+    private int _verticalScroll;
     
     private int _cyclesRun;
     private int _cyclesRunSinceReset;  
+    
     
     public PPU(NES nes_) {
     	_nes = nes_;
@@ -50,13 +58,51 @@ public class PPU {
         _dataRegister = new Register(); // 0x2007
         
         _frame = 0;
-        _scanline = 0;
         _cyclesRun = 0;
         _cyclesRunSinceReset = 0;
+        _horizontalScroll = 0;
+        _verticalScroll = 0;
     }
     
     public void runStep() {
     	
+    	// Idle cycle at the start of every scanline
+    	if(_horizontalScroll == 0) {
+    		return;
+    	}       
+    	
+    	if(_verticalScroll == MAX_SCANLINE) {
+
+    	} else if(_verticalScroll >= 0 && _verticalScroll <= 239) {
+    		
+    	}
+    	
+    	// Increment counters
+    	_horizontalScroll++;
+    	
+    	if(_horizontalScroll > CYCLES_PER_SCANLINE) {
+    		_verticalScroll++;
+    		_horizontalScroll = 0;
+    	}
+    	
+    	if(_verticalScroll > MAX_SCANLINE) {
+    		_verticalScroll = 0;
+    		_frame++;
+    	}
+    	_cyclesRun++;
+    	_cyclesRunSinceReset++;
+    }
+    
+    private byte fetchNameTableByte() {
+    	return 0;
+    }
+    
+    private byte fetchAttributeTableByte() {
+    	return 0;
+    }
+    
+    private byte fetchPatternTableBitmap() {
+    	return 0;
     }
 
 	public PPUMemory getPPUMemory() { return _memory; }
@@ -69,6 +115,7 @@ public class PPU {
         _scrollRegister.setByte((byte) 0);
         _addressRegister.setByte((byte) 0);
         _dataRegister.setByte((byte) 0);	
+        
         
         _cyclesRunSinceReset = 0;
 	}

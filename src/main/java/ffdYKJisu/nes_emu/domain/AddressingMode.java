@@ -32,6 +32,12 @@ public enum AddressingMode {
 			lookup.put( m.getAddressingModeString(), m );
 		}
 	}
+	
+	private final String xmlName;
+	
+	AddressingMode( String name ) {
+		xmlName = name;
+	}
 
 	private String getAddressingModeString() {
 		return xmlName;
@@ -39,11 +45,6 @@ public enum AddressingMode {
 
 	public static AddressingMode get( String mode ) {
 		return lookup.get( mode );
-	}
-	private String xmlName;
-
-	AddressingMode( String name ) {
-		xmlName = name;
 	}
 	
 	@Override public String toString() {
