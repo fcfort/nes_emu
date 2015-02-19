@@ -5,6 +5,9 @@
 
 package ffdYKJisu.nes_emu.system.ppu;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ffdYKJisu.nes_emu.domain.Register;
 import ffdYKJisu.nes_emu.screen.Image;
 import ffdYKJisu.nes_emu.system.NES;
@@ -18,6 +21,9 @@ import ffdYKJisu.nes_emu.util.UnsignedShorts;
  * Based on http://wiki.nesdev.com/w/index.php/The_skinny_on_NES_scrolling
  */
 public class PPU {
+	
+	private static Logger logger = LoggerFactory.getLogger(PPU.class);
+	
     private static final int REGISTER_SIZE = 8;
     private static final int TILE_SIZE = 8;
     private static final int TILES_PER_SCANLINE = 32;
@@ -48,12 +54,13 @@ public class PPU {
     
     private byte[] _objectAttributeMemory;
     
-    private short _currentVRAMAddress;
+    private short _v;
     private short _t;
-    private byte fineXScroll;
+    private byte _fineXScroll;
     private boolean _isFirstWrite;
     
     public PPU(NES nes_) {
+    	logger.info("Initializing PPU");
     	_nes = nes_;
     	_image = _nes.getImage();
     	_memory = new PPUMemory(this);
@@ -73,6 +80,7 @@ public class PPU {
         _horizontalScroll = 0;
         _verticalScroll = 0;
         
+        _isFirstWrite = true;
         
     }
     
@@ -116,7 +124,11 @@ public class PPU {
     private byte fetchPatternTableBitmap() {
     	return 0;
     }
-
+    
+    public short getTemporaryVRAMAddress() { return _t; }
+	public short getCurrentVRAMAddress() { return _v; }    
+    public boolean isFirstWrite() { return _isFirstWrite; }    
+    public byte getFineXScroll() { return _fineXScroll; }
 	public PPUMemory getPPUMemory() { return _memory; }
 
 	// http://wiki.nesdev.com/w/index.php/PPU_power_up_state
@@ -136,8 +148,7 @@ public class PPU {
 		switch(address_) {
 			case 0x2002:
 				_isFirstWrite = true;
-				return _statusRegister.getByte();
-				
+				return _statusRegister.getByte();				
 			default:
 				throw new UnsupportedOperationException();
 		}
@@ -147,8 +158,10 @@ public class PPU {
 	public void write(short address_, byte val_) {
 		switch(address_) {
 			case 0x2000:
-				// _tempVRAMAddress = UnsignedShorts.setBitRange(val_,_tempVRAMAddress,1,0);
-				_t = (short) ((_t & ~0b11) | (val_ & (byte) 0b11));
+				/* t: ...BA.. ........ = d: ......BA */
+				short destBitMask = ~(0b11 << 10);
+				byte srcBitMask = 0b11;
+				_t = (short) ((_t & destBitMask) | ((val_ & srcBitMask) << 10)); 
 				_controlRegister.setByte(val_);
 				break;
 			case 0x2001:
@@ -156,27 +169,37 @@ public class PPU {
 				break;
 			case 0x2005:
 				if(_isFirstWrite) {
-					/* t: ....... ...HGFED = d: HGFED...
-					 * x:              CBA = d: .....CBA
-					 * w:                  = 1 
-					 * */
-					_t = UnsignedShorts.setBitRange(val_, _t, 4, 0);
-					fineXScroll = UnsignedShorts.setBitRange(val_, fineXScroll, 2, 0);
-					
+					/* t: ....... ...HGFED = d: HGFED... */
+					_t = (short) ((_t & ~0b1_1111) | ((val_ & 0b1111_1000) >>> 3));
+					 /* x:              CBA = d: .....CBA */
+					_fineXScroll = (byte) (val_ & 0b111);
 				} else {
-					
+					/* t: CBA..HG FED..... = d: HGFEDCBA */
+					// upper write to t
+					_t = (short) (_t & ~(0b111 << 12) | ((val_ & 0b111) << 12)); 
+					// lower write to t					
+					_t = (short) ((_t & ~(0b1_1111 << 5)) | ((val_ & 0b1111_1000) << 2));
 				}
+				_isFirstWrite ^= true; // toggle
 				break;
 			case 0x2006:
 				if(_isFirstWrite) {
-					
+					/* t: .FEDCBA ........ = d: ..FEDCBA */
+					_t = (short) ((_t & ~(0b11_1111 << 8)) | ((val_ & 0b11_1111) << 8));
+					/* t: X...... ........ = 0 */
+					_t &= ~(1 << 14);
 				} else {
-					
+					/* t: ....... HGFEDCBA = d: HGFEDCBA */
+					_t = (short) ((_t & ~0b1111_1111) | val_ & 0b1111_1111);
+				    /* v                   = t */
+					_v = _t;
 				}
+				_isFirstWrite ^= true; // toggle
 				break;
 			default:
 				throw new UnsupportedOperationException();
 		}
 	}
+
     
 }
