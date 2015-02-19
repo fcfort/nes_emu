@@ -9,6 +9,7 @@ import ffdYKJisu.nes_emu.domain.Register;
 import ffdYKJisu.nes_emu.screen.Image;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.PPUMemory;
+import ffdYKJisu.nes_emu.util.UnsignedShorts;
 
 /**
  *  Controls all PPU actions and holds object PPUMemory. Largely a passive
@@ -48,7 +49,7 @@ public class PPU {
     private byte[] _objectAttributeMemory;
     
     private short _currentVRAMAddress;
-    private short _tempVRAMAddress;
+    private short _t;
     private byte fineXScroll;
     private boolean _isFirstWrite;
     
@@ -146,7 +147,8 @@ public class PPU {
 	public void write(short address_, byte val_) {
 		switch(address_) {
 			case 0x2000:
-				_tempVRAMAddress & 0b11 val_ & (byte) 0b0000_0011;
+				// _tempVRAMAddress = UnsignedShorts.setBitRange(val_,_tempVRAMAddress,1,0);
+				_t = (short) ((_t & ~0b11) | (val_ & (byte) 0b11));
 				_controlRegister.setByte(val_);
 				break;
 			case 0x2001:
@@ -154,6 +156,12 @@ public class PPU {
 				break;
 			case 0x2005:
 				if(_isFirstWrite) {
+					/* t: ....... ...HGFED = d: HGFED...
+					 * x:              CBA = d: .....CBA
+					 * w:                  = 1 
+					 * */
+					_t = UnsignedShorts.setBitRange(val_, _t, 4, 0);
+					fineXScroll = UnsignedShorts.setBitRange(val_, fineXScroll, 2, 0);
 					
 				} else {
 					

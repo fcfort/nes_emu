@@ -23,4 +23,23 @@ public final class UnsignedShorts {
 		});
 		return result;
 	}
+	
+	public static short setBitRange(short src_, short dest_, int startIndex_, int endIndex_) {
+		// 0b0000_0000
+		// 0b7654_3210
+		// 0b0011_1100, start of 5 end of 2
+		
+		int len = startIndex_ - endIndex_ + 1;
+		
+		// create mask
+		short mask =(short) ((2 << len - 1) - 1) ;
+		
+		// shift mask over
+		short shiftedMask = (short) (mask << endIndex_);
+		
+		logger.info("Got len {}, mask {}, shifted mask {}", 
+				new Object[] {len, HexUtils.toHex(mask), HexUtils.toHex(shiftedMask)});
+		// apply mask
+		return (short) ((dest_ & ~shiftedMask) | (src_ & shiftedMask));
+	}
 }
