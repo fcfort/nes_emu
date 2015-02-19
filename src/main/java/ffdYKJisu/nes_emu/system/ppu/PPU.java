@@ -5,10 +5,6 @@
 
 package ffdYKJisu.nes_emu.system.ppu;
 
-import java.util.BitSet;
-
-import org.apache.commons.lang.BitField;
-
 import ffdYKJisu.nes_emu.domain.Register;
 import ffdYKJisu.nes_emu.screen.Image;
 import ffdYKJisu.nes_emu.system.NES;
@@ -17,7 +13,8 @@ import ffdYKJisu.nes_emu.system.memory.PPUMemory;
 /**
  *  Controls all PPU actions and holds object PPUMemory. Largely a passive
  * class. State information is passed to the class when the CPU is done working.
- * @author fe01106
+ * 
+ * Based on http://wiki.nesdev.com/w/index.php/The_skinny_on_NES_scrolling
  */
 public class PPU {
     private static final int REGISTER_SIZE = 8;
@@ -25,6 +22,7 @@ public class PPU {
     private static final int TILES_PER_SCANLINE = 32;
     private static final int MAX_SCANLINE = 261;
     private static final int CYCLES_PER_SCANLINE = 341;
+    private static final int OAM_SIZE = 256;
     
     private final NES _nes;
 	private final PPUMemory _memory;
@@ -42,8 +40,17 @@ public class PPU {
     private int _verticalScroll;
     
     private int _cyclesRun;
-    private int _cyclesRunSinceReset;  
+    private int _cyclesRunSinceReset;
     
+    private int _patternTableIndex;
+    private int _nameTableIndex;
+    
+    private byte[] _objectAttributeMemory;
+    
+    private short _currentVRAMAddress;
+    private short _tempVRAMAddress;
+    private byte fineXScroll;
+    private boolean _isFirstWrite;
     
     public PPU(NES nes_) {
     	_nes = nes_;
@@ -57,11 +64,15 @@ public class PPU {
         _addressRegister = new Register(); // 0x2006
         _dataRegister = new Register(); // 0x2007
         
+        _objectAttributeMemory = new byte[OAM_SIZE];
+        
         _frame = 0;
         _cyclesRun = 0;
         _cyclesRunSinceReset = 0;
         _horizontalScroll = 0;
         _verticalScroll = 0;
+        
+        
     }
     
     public void runStep() {
@@ -123,7 +134,9 @@ public class PPU {
 	public byte read(short address_) {
 		switch(address_) {
 			case 0x2002:
+				_isFirstWrite = true;
 				return _statusRegister.getByte();
+				
 			default:
 				throw new UnsupportedOperationException();
 		}
@@ -133,10 +146,26 @@ public class PPU {
 	public void write(short address_, byte val_) {
 		switch(address_) {
 			case 0x2000:
+				_tempVRAMAddress & 0b11 val_ & (byte) 0b0000_0011;
 				_controlRegister.setByte(val_);
 				break;
 			case 0x2001:
 				_maskRegister.setByte(val_);
+				break;
+			case 0x2005:
+				if(_isFirstWrite) {
+					
+				} else {
+					
+				}
+				break;
+			case 0x2006:
+				if(_isFirstWrite) {
+					
+				} else {
+					
+				}
+				break;
 			default:
 				throw new UnsupportedOperationException();
 		}

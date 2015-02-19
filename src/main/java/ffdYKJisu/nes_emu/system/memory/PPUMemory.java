@@ -12,7 +12,6 @@ import ffdYKJisu.nes_emu.util.UnsignedShorts;
 
 public class PPUMemory implements IMemory {
 
-	
 	// Some useful constants
 	private static final int PATTERN_TABLE_SIZE = 0x1000;
 	private static final int NAME_TABLE_SIZE = 0x3C0;
@@ -20,15 +19,15 @@ public class PPUMemory implements IMemory {
 	private static final int PALETTE_SIZE = 0x10;
 	private static final int SPRITE_RAM_SIZE = 0x100;
 
-	private static final int PATTERN_TABLE_0_LOC = 0x0000;
-	private static final int PATTERN_TABLE_1_LOC = 0x1000;
+	private static final short PATTERN_TABLE_0_LOC = 0x0000;
+	private static final short PATTERN_TABLE_1_LOC = 0x1000;
 	
-	private static final int NAME_TABLE_0_LOC = 0x2000;
-	private static final int NAME_TABLE_1_LOC = 0x2400;
-	private static final int NAME_TABLE_2_LOC = 0x2800;
-	private static final int NAME_TABLE_3_LOC = 0x2C00;
+	private static final short NAME_TABLE_0_LOC = 0x2000;
+	private static final short NAME_TABLE_1_LOC = 0x2400;
+	private static final short NAME_TABLE_2_LOC = 0x2800;
+	private static final short NAME_TABLE_3_LOC = 0x2C00;
 	
-	private static final int PALETTE_LOC = 0x3F00;
+	private static final short PALETTE_LOC = 0x3F00;
 	
 	// Pattern Tables
 	byte[] PatternTable0 = new byte[PATTERN_TABLE_SIZE];
@@ -76,13 +75,16 @@ public class PPUMemory implements IMemory {
 		NAME_TABLE_3(NAME_TABLE_3_LOC, NAME_TABLE_SIZE),
 		PALETTE(PALETTE_LOC, PALETTE_SIZE);
 		
-		private final int _startingAddress;
+		private final short _startingAddress;
 		private final int _size;
 		
-		AddressLocation(int startingAddress_, int size_) {
+		AddressLocation(short startingAddress_, int size_) {
 			_startingAddress = startingAddress_;
 			_size = size_;
-		}		
+		}
+		
+		public short getStartingAddress() { return _startingAddress; }
+		public short getEndingAddress() { return (short) (_startingAddress + _size); }
 	}
 
 	/** Changing mirroring locations to read unmirrored locations */
@@ -102,79 +104,41 @@ public class PPUMemory implements IMemory {
 		}
 	}
 	
-	public byte read(short address) {
-		short unmirroredAddress = unmirrorAddress(address);
+	private static AddressLocation getAddressLocation(short address_) {
+		for(AddressLocation al : MEMORY_ORDER) {
+			if(UnsignedShorts.compare(al.getStartingAddress(), address_) >= 0 && 
+					UnsignedShorts.compare(al.getEndingAddress(), address_) < 0)
+			{
+				return al;
+			}
+		}
 		
-		char addr = (char) address;
-		// Mirror of all PPU memory
-		if (addr > 0x4000) {
-			addr %= 0x4000;
+		throw new UnsupportedOperationException();
+	}
+	
+	public byte read(short address_) {
+		short unmirroredAddress = unmirrorAddress(address_);
+		AddressLocation al = getAddressLocation(unmirroredAddress);
+		int index = address_ - al.getStartingAddress();
+		
+		switch(al) {
+			case PATTERN_TABLE_0:
+				return PatternTable0[index];
+			case PATTERN_TABLE_1:
+				return PatternTable1[index];
+			case NAME_TABLE_0:
+				return NameTable0[index];
+			case NAME_TABLE_1:
+				return NameTable1[index];
+			case NAME_TABLE_2:
+				return NameTable2[index];
+			case NAME_TABLE_3:
+				return NameTable3[index];
+			case PALETTE:
+				return PaletteTable[index];
+			default:
+				throw new UnsupportedOperationException();
 		}
-		// Sprite and Image palette
-		if (addr < 0x4000 && addr >= 0x3F00) {
-			addr = (char) ((addr % 0x20) + 0x3F00);
-			// Image Palette
-			if (addr >= 0x3F00 && addr < 0x3F10) {
-				return this.ImagePalette[addr % PALETTE_SIZE];
-			}
-			// Sprite Palette
-			if (addr >= 0x3F10 && addr < 0x3F20) {
-				return this.ImagePalette[addr % PALETTE_SIZE];
-			}
-		}
-		// Weird mirror
-		if (addr < 0x3F00 && addr >= 0x3000) {
-			addr -= 0x1000;
-		}
-
-		// Attribute and Name tables
-
-		// Attribute 3
-		if (addr < 0x3000 && addr >= 0x2FC0) {
-			return 
-				this.AttributeTable3[addr % ATTRIBUTE_TABLE_SIZE];
-		}
-		// Name 3
-		if (addr < 0x2FC0 && addr >= 0x2C00) {
-			return 
-				this.NameTable3[addr % NAME_TABLE_SIZE];
-		}
-		// Attribute 2
-		if (addr < 0x2C00 && addr >= 0x2BC0) {
-			return this.AttributeTable2[addr % ATTRIBUTE_TABLE_SIZE];
-		}
-		// Name 2
-		if (addr < 0x2BC0 && addr >= 0x2800) {
-			return this.NameTable2[addr % NAME_TABLE_SIZE];
-		}
-		// Attribute 1
-		if (addr < 0x2800 && addr >= 0x27C0) {
-			return this.AttributeTable1[addr % ATTRIBUTE_TABLE_SIZE];
-		}
-		// Name 1
-		if (addr < 0x27C0 && addr >= 0x2400) {
-			return this.NameTable1[addr % NAME_TABLE_SIZE];
-		}
-		// Attribute 0
-		if (addr < 0x2400 && addr >= 0x23C0) {
-			return this.AttributeTable0[addr % ATTRIBUTE_TABLE_SIZE];
-		}
-		// Name 0
-		if (addr < 0x23C0 && addr >= 0x2000) {
-			return 
-				this.NameTable0[addr % NAME_TABLE_SIZE];
-		}
-		// Pattern table 1
-		if (addr < 0x2000 && addr >= 0x1000) {
-			return this.PatternTable1[addr & PATTERN_TABLE_SIZE];
-		}
-		// Pattern table 0
-		if (addr < 0x1000) {
-			return this.PatternTable1[addr];
-		}
-		System.out.println("Unrecognized address " + address);
-		return 0;
-
 	}
 
 	public byte read(byte addrH, byte addrL) {
