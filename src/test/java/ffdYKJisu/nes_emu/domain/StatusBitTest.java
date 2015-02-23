@@ -16,14 +16,13 @@ public class StatusBitTest {
 	@Test
 	public void testAsByteAllTrue() {
 		StatusBit s = new StatusBit();
-		s.setBreak();
 		s.setCarry();
 		s.setDecimal();
 		s.setInterruptDisable();
 		s.setNegative();
 		s.setOverflow();
 		s.setZero();
-		assertEquals((byte)0xFF, s.asByte());
+		assertEquals((byte)0xEF, s.asByte());
 	}
 
 	@Test
@@ -32,7 +31,6 @@ public class StatusBitTest {
 		s.clearNegative(); // 0
 		s.setOverflow(); // 1
 		// 1
-		s.setBreak(); // 1
 		s.setDecimal(); // 1
 		s.setInterruptDisable(); // 1
 		s.setZero(); // 1
@@ -40,7 +38,7 @@ public class StatusBitTest {
 		
 		// 0b0111_1110 = 0x7E
 		
-		assertEquals((byte)0b0111_1110, s.asByte());
+		assertEquals((byte)0b0110_1110, s.asByte());
 	}
 	
 }

@@ -176,7 +176,7 @@ public enum Opcode {
 	 */
 	private static class OpcodeBehavior {
 		private static final ImmutableSet<String> MEMORY_READING_OPCODES = ImmutableSet.of(
-			"ADC", "AND", "ASL", "BCC", "BEQ", "BIT", "BMI", "BNE", "BPL", "BVC", "BVC",
+			"ADC", "AND", "ASL", "BCC", "BCS", "BEQ", "BIT", "BMI", "BNE", "BPL", "BVC", "BVS",
 			"CMP", "CPX", "CPY", "DEC", "EOR", "INC", "JMP", "JSR", "LDA", "LDX", "LDY",
 			"LSR", "ORA", "ROL", "ROR", "SBC"
 		);	

@@ -14,6 +14,7 @@ import ffdYKJisu.nes_emu.domain.AddressingMode;
 import ffdYKJisu.nes_emu.domain.Opcode;
 import ffdYKJisu.nes_emu.domain.StatusBit;
 import ffdYKJisu.nes_emu.exceptions.AddressingModeException;
+import ffdYKJisu.nes_emu.exceptions.OpcodeExecutionException;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
 import ffdYKJisu.nes_emu.util.HexUtils;
@@ -60,22 +61,8 @@ public class CPU implements ICPU {
 		_cyclesRun = 0;
 		_cyclesRunSinceReset = 0;
 		// Set up State registers
-		initStateRegisters();
-	}
-
-	private void initStateRegisters() {
 		P = new StatusBit();
-		
-		// Clear all
-		P.fromByte((byte) 0);
-		
-		// A,X,Y
-		A = 0;
-		X = 0;
-		Y = 0;
-
-		// Stack pointer
-		_stackPointer = (byte) 0xFF;
+		reset();
 	}
 	
 	/**
@@ -91,25 +78,22 @@ public class CPU implements ICPU {
 		short initialPC = PC;
 		
 		// Print instruction to logger
-		logger.info("Got instruction {} opcode {} with bytes {} at PC {}", 
-				new Object[]{instructionToString(PC), op, HexUtils.toHex(opcodeBytes), HexUtils.toHex(PC)});
-		
-		Byte result;
-		
-		if(op.readsMemory()) {
-			byte operand = getOperand(op.getAddressingMode(), getAddress(op.getAddressingMode()));
-			result = doOperation(op, operand);
-		} else {
-			result = doOperation(op);
-		}
-
-		persistResult(op, result);
-
-		_cyclesRun += calculateCyclesTaken(op, initialPC, PC);
+		logger.info("Got instruction {} opcode {} ({}) at PC {}", 
+				new Object[]{instructionToString(PC), op, HexUtils.toHex(opcodeBytes), HexUtils.toHex(PC)});		
 
 		// Increment PC
 		PC += op.getLength();
+		
+		Byte result = doOperation(op, initialPC);	
+				
+		persistResult(op, result, initialPC);
+		
+		short finalPC = PC;
+
+		_cyclesRun += calculateCyclesTaken(op, initialPC, finalPC);
 	}
+	
+	
 
 	/** 
 	 * Two mutually exclusive options, one, for indexed reads, add one cycle if 
@@ -149,51 +133,53 @@ public class CPU implements ICPU {
 		return cyclesTaken;
 	}
 
-	// TODO: generalize doOperation with one or zero operands
-	private Byte doOperation(Opcode op_) {		
-		try {
-			Method opCodeImplementation = getClass().getDeclaredMethod(op_.getCodeName());
-			return (Byte) opCodeImplementation.invoke(this);
-		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	private Byte doOperation(Opcode op_, short PC_) {
+		if(op_.readsMemory()) {
+			short address = getAddress(op_.getAddressingMode(), PC_);
+			// JMP/JSR take in the address directly
+			if(ImmutableSet.of("JMP","JSR").contains(op_.getCodeName())) {				
+				return (Byte) invokeMethod(op_.getCodeName(), address);
+			} else {
+				byte operand = getOperand(op_.getAddressingMode(), address);
+				/*
+				logger.info("Looking for method with name {} for operation {} with operands {}", 
+						new Object[] {op_.getCodeName(), op_, operand});
+				Method opCodeImplementation = getClass().getDeclaredMethod(op_.getCodeName(), byte.class);
+				logger.info("Found method {} for op {}, calling with {} operands of length {}", 
+						new Object[] {opCodeImplementation, op_, operand, 1});
+				*/		
+				return (Byte) invokeMethod(op_.getCodeName(), operand);
+				
+			}
+		} else {
+			return (Byte) invokeMethod(op_.getCodeName());
 		}
-		
-		return null;
 	}
 	
-	private Byte doOperation(Opcode op_, byte operand_) {		
-		try {	
-			logger.info("Looking for method with name {} for operation {} with operands {}", 
-					new Object[] {op_.getCodeName(), op_, operand_});
-			Method opCodeImplementation = getClass().getDeclaredMethod(op_.getCodeName(), byte.class);
-			logger.info("Found method {} for op {}, calling with {} operands of length {}", 
-					new Object[] {opCodeImplementation, op_, operand_, 1});							
-			return (Byte) opCodeImplementation.invoke(this, operand_);
-		} catch (NoSuchMethodException e) {
-			logger.error("{}", e);
-			throw new UnsupportedOperationException();
-		} catch (SecurityException e) {
-			throw new UnsupportedOperationException();
-		} catch (IllegalAccessException e) {
-			throw new UnsupportedOperationException();
-		} catch (IllegalArgumentException e) {
-			logger.error("{}", e);
-			throw new UnsupportedOperationException();
-		} catch (InvocationTargetException e) {
-			throw new UnsupportedOperationException();
+	private Byte invokeMethod(String methodName_) {
+		try {
+			return (Byte) getClass().getMethod(methodName_).invoke(this);
+		} catch (IllegalAccessException | IllegalArgumentException
+				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			throw new OpcodeExecutionException(e, "Unable to execute %s", methodName_);
+		}
+	}
+	
+	private Byte invokeMethod(String methodName_, byte operand_) {
+		try {
+			return (Byte) getClass().getMethod(methodName_, byte.class).invoke(this, operand_);
+		} catch (IllegalAccessException | IllegalArgumentException
+				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			throw new OpcodeExecutionException(e, "Unable to execute %s with operand %s", methodName_, operand_);
+		}
+	}
+	
+	private Byte invokeMethod(String methodName_, short address_) {
+		try {
+			return (Byte) getClass().getMethod(methodName_, short.class).invoke(this, address_);
+		} catch (IllegalAccessException | IllegalArgumentException
+				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			throw new OpcodeExecutionException(e, "Unable to execute %s with address %s", methodName_, address_);
 		}
 	}
 	
@@ -202,6 +188,8 @@ public class CPU implements ICPU {
 	 ******************* */
 
 	private byte getOperand(AddressingMode mode_, short address_) {
+		logger.info("Finding operand for mode {} at address {}", mode_, HexUtils.toHex(address_));
+		
 		switch (mode_) {
 		case IMPLICIT:
 			throw new UnsupportedOperationException();
@@ -232,7 +220,7 @@ public class CPU implements ICPU {
 	 * for the instruction
 	 * @return Address of where to perform operation
 	 */	
-	private short getAddress(AddressingMode mode_) {
+	private short getAddress(AddressingMode mode_, short PC_) {
 		short addr = 0;
 				
 		switch (mode_) {
@@ -242,38 +230,38 @@ public class CPU implements ICPU {
 				break;
 			case RELATIVE:
 			case IMMEDIATE:
-				addr = (short) (PC + 1);
+				addr = (short) (PC_ + 1);
 				break;
 			case ZERO_PAGE:
-				addr = _memory.read((short)(PC + 1));
+				addr = _memory.read((short)(PC_ + 1));
 				break;
 			case ZERO_PAGE_X:
-				byte zpAddrX = (byte) (_memory.read((short)(PC + 1)) + X);
+				byte zpAddrX = (byte) (_memory.read((short)(PC_ + 1)) + X);
 				addr = (short)(zpAddrX);
 				break;
 			case ZERO_PAGE_Y:
-				byte zpAddrY = (byte) (_memory.read((short)(PC + 1)) + Y);
+				byte zpAddrY = (byte) (_memory.read((short)(PC_ + 1)) + Y);
 				addr = (short)(zpAddrY);
 				break;
 			case ABSOLUTE:
-				addr = (short) (readShort((short) (PC + 1)));
+				addr = (short) (readShort((short) (PC_ + 1)));
 				break;
 			case ABSOLUTE_X:
-				addr = (short) (readShortIndirect((short) (PC + 1), X));
+				addr = (short) (readShortIndirect((short) (PC_ + 1), X));
 				break;
 			case ABSOLUTE_Y:
-				addr = (short) (readShortIndirect((short) (PC + 1), Y));
+				addr = (short) (readShortIndirect((short) (PC_ + 1), Y));
 				break;
 			case INDIRECT:
-				addr = readShort((short) (PC + 1));
+				addr = readShort((short) (PC_ + 1));
 				addr = readShort(addr);
 				break;
 			case INDIRECT_X:
-				addr = (short) (readShortIndirect((short) (PC + 1), X));
+				addr = (short) (readShortIndirect((short) (PC_ + 1), X));
 				addr = readShort(addr);
 				break;
 			case INDIRECT_Y:
-				addr = (short) (readShort((short) (PC + 1)));
+				addr = (short) (readShort((short) (PC_ + 1)));
 				addr = readShortIndirect(addr, Y);
 				break;
 			default:
@@ -281,8 +269,8 @@ public class CPU implements ICPU {
 				throw new AddressingModeException(mode_.toString());
 		}
 		
-		logger.info("At PC {} with mode {}. Got final address {}", 
-				new Object[]{HexUtils.toHex(PC), mode_, HexUtils.toHex(addr)});
+		logger.info("Got address {} from mode {} at PC {}", 
+				new Object[]{HexUtils.toHex(addr), mode_, HexUtils.toHex(PC_)});
 		return addr;
 	}
 	
@@ -324,7 +312,8 @@ public class CPU implements ICPU {
 		return (short) (readShort(address) + offset);
 	}
 	
-	private void persistResult(Opcode op_, Byte result_) {
+	private void persistResult(Opcode op_, Byte result_, short PC_) {
+		
 		// void functions return null. Don't have to do anything.
 		if(result_ == null) { return; }
 		
@@ -338,7 +327,7 @@ public class CPU implements ICPU {
 			case ZERO_PAGE:
 			case ZERO_PAGE_X:
 			case ZERO_PAGE_Y:			
-				short address = getAddress(op_.getAddressingMode());
+				short address = getAddress(op_.getAddressingMode(), PC_);
 				logger.info("Persisting result {} from operation {} to {}", new Object[] {HexUtils.toHex(result_), op_, HexUtils.toHex(address)});
 				_memory.write(address, result_);
 				break;
@@ -369,7 +358,7 @@ public class CPU implements ICPU {
 	 * Retrieves the next opcode from memory and returns it 
 	 * @return opCode
 	 */
-	private Opcode getOpcode() {
+	protected Opcode getOpcode() {
 		byte b = _memory.read(PC);		
 		Opcode o = Opcode.getOpcodeByBytes(b);
 		logger.info("Reading opcode at PC addr {}. Got byte {} and opcode {}", 
@@ -545,10 +534,12 @@ public class CPU implements ICPU {
 		PC = (short) (Shorts.fromBytes(pop(), lowAddr) + 1);
 	}
 	
-	public void BRK() {		
+	/** http://wiki.nesdev.com/w/index.php/CPU_status_flag_behavior */
+	public void BRK() {
 		pushPC();
-		P.setBreak();
-		push(P.asByte());
+		byte status = P.asByte();
+		status |= 1 << 4; // "B" flag only exists on the stack, never set in status register
+		push(status);
 		P.setInterruptDisable();
 		setPCFromVector(INTERRUPT_VECTOR_LOW, INTERRUPT_VECTOR_HIGH);		
 	}
@@ -622,9 +613,17 @@ public class CPU implements ICPU {
 	
 	public void PHA() { push(A); }
 	
-	public void PHP() { push(P.asByte()); }
+	public void PHP() {		
+		byte status = P.asByte();
+		status |= 1 << 4; // "B" flag only exists on the stack, never set in status register, see BRK instruction
+		push(status);
+	}
 	
-	public void PLA() { A = pop(); }
+	public void PLA() { 
+		A = pop();
+		setZero(A);
+		setNegative(A);
+	}
 	
 	public void PLP() { P.fromByte(pop()); }
 		
@@ -721,7 +720,17 @@ public class CPU implements ICPU {
 		return false;
 	}
 
+	/** 
+	 * http://forums.nesdev.com/viewtopic.php?f=3&t=9252
+	 * http://stackoverflow.com/questions/16913423/why-is-the-initial-state-of-the-interrupt-flag-of-the-6502-a-1
+	 */
 	public void reset() {
+		A = 0;
+		X = 0;
+		Y = 0;
+		P.fromByte((byte) 0);
+		P.setInterruptDisable();
+		_stackPointer = (byte) 0xFD;
 		_cyclesRunSinceReset = 0;
 		setPCFromVector(RESET_VECTOR_LOW, RESET_VECTOR_HIGH);
 	}
@@ -736,9 +745,10 @@ public class CPU implements ICPU {
 		PC = address;
 	}
 	
-	public short getPC() { return PC; }		
-	public byte getSP() { return _stackPointer; }
-	public byte getSR() { return P.asByte(); }
+	public short getPC() { return PC; }
+	public void setPC(short address_) { PC = address_; }
+	/** Stack pointer */ public byte getSP() { return _stackPointer; }
+	/** Status register */ public byte getSR() { return P.asByte(); }
 	public byte getA() { return A; }
 	public byte getX() { return X; }
 	public byte getY() { return Y; }
@@ -746,7 +756,6 @@ public class CPU implements ICPU {
 	public boolean getZeroFlag() { return P.isSetZero(); }
 	public boolean getInterruptDisable() { return P.isSetInterruptDisable(); }
 	public boolean getDecimalMode() { return P.isSetDecimal(); }
-	public boolean getBreakCommand() { return P.isSetBreak(); }
 	public boolean getOverflowFlag() { return P.isSetOverflow(); }
 	public boolean getNegativeFlag() { return P.isSetNegative(); }
 	public NES getNES() { return _nes; }

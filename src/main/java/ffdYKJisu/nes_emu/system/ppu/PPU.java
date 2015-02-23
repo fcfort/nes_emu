@@ -31,6 +31,17 @@ public class PPU {
     private static final int CYCLES_PER_SCANLINE = 341;
     private static final int OAM_SIZE = 256;
     
+    /* http://wiki.nesdev.com/w/index.php/PPU_registers */
+    private static final short PPUCTRL_ADDRESS = 0x2000;
+    private static final short PPUMASK_ADDRESS = 0x2001;
+    private static final short PPUSTATUS_ADDRESS = 0x2002;
+    private static final short OAMADDR_ADDRESS = 0x2003;
+    private static final short OAMDATA_ADDRESS = 0x2004;
+    private static final short PPUSCROLL_ADDRESS = 0x2005;
+    private static final short PPUADDR_ADDRESS = 0x2006;
+    private static final short PPUDATA_ADDRESS = 0x2007;
+    private static final short OAMDMA_ADDRESS = 4014;
+    
     private final NES _nes;
 	private final PPUMemory _memory;
 	private final Image _image;
@@ -84,8 +95,7 @@ public class PPU {
         
     }
     
-    public void runStep() {
-    	
+    public void runStep() {    	
     	// Idle cycle at the start of every scanline
     	if(_horizontalScroll == 0) {
     		return;
@@ -118,7 +128,11 @@ public class PPU {
     }
     
     private byte fetchAttributeTableByte() {
-    	return 0;
+    	return _memory.read(calculateAttributeAddress());
+    }
+    
+    private short calculateAttributeAddress() {
+    	 return (short) (0x23C0 | (_v & 0x0C00) | ((_v >> 4) & 0x38) | ((_v >> 2) & 0x07));
     }
     
     private byte fetchPatternTableBitmap() {
@@ -146,28 +160,28 @@ public class PPU {
 	
 	public byte read(short address_) {
 		switch(address_) {
-			case 0x2002:
+			case PPUSTATUS_ADDRESS:
 				_isFirstWrite = true;
 				return _statusRegister.getByte();				
 			default:
 				throw new UnsupportedOperationException();
 		}
-	}
-    
+	}    
 	
 	public void write(short address_, byte val_) {
 		switch(address_) {
-			case 0x2000:
+			case PPUCTRL_ADDRESS:
+				_controlRegister.setByte(val_);
 				/* t: ...BA.. ........ = d: ......BA */
 				short destBitMask = ~(0b11 << 10);
 				byte srcBitMask = 0b11;
-				_t = (short) ((_t & destBitMask) | ((val_ & srcBitMask) << 10)); 
-				_controlRegister.setByte(val_);
+				_t = (short) ((_t & destBitMask) | ((val_ & srcBitMask) << 10)); 				
 				break;
-			case 0x2001:
+			case PPUMASK_ADDRESS:
 				_maskRegister.setByte(val_);
 				break;
-			case 0x2005:
+			case PPUSCROLL_ADDRESS:
+				_scrollRegister.setByte(val_);
 				if(_isFirstWrite) {
 					/* t: ....... ...HGFED = d: HGFED... */
 					_t = (short) ((_t & ~0b1_1111) | ((val_ & 0b1111_1000) >>> 3));
@@ -182,7 +196,8 @@ public class PPU {
 				}
 				_isFirstWrite ^= true; // toggle
 				break;
-			case 0x2006:
+			case PPUADDR_ADDRESS:
+				_addressRegister.setByte(val_);
 				if(_isFirstWrite) {
 					/* t: .FEDCBA ........ = d: ..FEDCBA */
 					_t = (short) ((_t & ~(0b11_1111 << 8)) | ((val_ & 0b11_1111) << 8));
@@ -201,5 +216,4 @@ public class PPU {
 		}
 	}
 
-    
 }

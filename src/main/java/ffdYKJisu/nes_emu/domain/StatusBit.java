@@ -16,8 +16,6 @@ public class StatusBit {
 	private boolean I;
 	/** Decimal		*/
 	private boolean D;
-	/** Break		*/
-	private boolean B;
 	/** Overflow	*/
 	private boolean V;
 	/** Negative	*/
@@ -28,7 +26,7 @@ public class StatusBit {
 		b = setBit(b, 7, N);
 		b = setBit(b, 6, V);
 		b = setBit(b, 5, true);
-		b = setBit(b, 4, B);
+		b = setBit(b, 4, false);
 		b = setBit(b, 3, D);
 		b = setBit(b, 2, I);
 		b = setBit(b, 1, Z);
@@ -40,7 +38,6 @@ public class StatusBit {
 		BitSet b = BitSet.valueOf(new byte[] {pop_});
 		N = b.get(7);
 		V = b.get(6);
-		B = b.get(4);
 		D = b.get(3);
 		I = b.get(2);
 		Z = b.get(1);
@@ -97,16 +94,6 @@ public class StatusBit {
 	// cpuLogger.log(Level.FINER,"Decimal flag cleared");
 	}
 
-	public void setBreak() {
-		this.B = true;
-	// cpuLogger.log(Level.FINER,"Break flag set");
-	}
-
-	public void clearBreak() {
-		this.B = false;
-	// cpuLogger.log(Level.FINER,"Break flag cleared");
-	}
-
 	public void setOverflow() {
 		this.V = true;
 	// cpuLogger.log(Level.FINER,"Overflow flag set");
@@ -145,10 +132,6 @@ public class StatusBit {
 		this.D = b;
 	}
 
-	public void setBreak(boolean b) {
-		this.B = b;
-	}
-
 	public void setOverflow(boolean b) {
 		this.V = b;
 	}
@@ -173,10 +156,6 @@ public class StatusBit {
 
 	public boolean isSetDecimal() {
 		return D;
-	}
-
-	public boolean isSetBreak() {
-		return B;
 	}
 
 	public boolean isSetOverflow() {

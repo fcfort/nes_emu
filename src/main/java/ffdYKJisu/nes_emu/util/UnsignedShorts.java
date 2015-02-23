@@ -1,7 +1,11 @@
 package ffdYKJisu.nes_emu.util;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.annotations.Beta;
 
 /**
  * https://code.google.com/p/guava-libraries/issues/attachmentText?id=670&aid=6700003000&name=UnsignedShorts.java&token=d0e15f7447d60d53f0301dd87d3bbc44
@@ -24,6 +28,16 @@ public final class UnsignedShorts {
 		return result;
 	}
 	
+	public static short parseUnsignedShort(String string, int radix) {
+		int parse = Integer.parseInt(checkNotNull(string), radix);
+		// We need to throw a NumberFormatException, so we have to duplicate checkedCast. =(
+		if (parse >> Short.SIZE == 0) {
+			return (short) parse;
+		} else {
+			throw new NumberFormatException("out of range: " + parse);
+		}
+	}
+
 	public static short setBitRange(short src_, short dest_, int startIndex_, int endIndex_) {
 		// 0b0000_0000
 		// 0b7654_3210

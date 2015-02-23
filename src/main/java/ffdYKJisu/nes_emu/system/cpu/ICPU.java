@@ -36,8 +36,6 @@ public interface ICPU {
 	
 	boolean getDecimalMode();
 	
-	boolean getBreakCommand();
-	
 	boolean getOverflowFlag();
 	
 	boolean getNegativeFlag();

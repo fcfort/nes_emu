@@ -48,7 +48,7 @@ public class ConsoleDebugger {
 	
 	@Command
 	public String status() {
-		return String.format("PC: %s SP: %s A: %s X: %s Y: %s Status: S %s V %s B %s D %s I %s Z %s C %s",
+		return String.format("PC: %s SP: %s A: %s X: %s Y: %s Status: S %s V %s D %s I %s Z %s C %s",
 				HexUtils.toHex(_cpu.getPC()),
 				HexUtils.toHex(_cpu.getSP()),
 				HexUtils.toHex(_cpu.getA()),
@@ -56,7 +56,6 @@ public class ConsoleDebugger {
 				HexUtils.toHex(_cpu.getY()),
 				_cpu.getNegativeFlag() ? 1 : 0,
 				_cpu.getOverflowFlag() ? 1 : 0,
-				_cpu.getBreakCommand() ? 1 : 0,
 				_cpu.getDecimalMode() ? 1 : 0,
 			    _cpu.getInterruptDisable() ? 1 : 0,
 				_cpu.getZeroFlag() ? 1 : 0,
