@@ -86,7 +86,7 @@ public class TestADC {
 	}
 	
 	@Test
-	public void testADCSetCarryOverflowUnsetNegative() {		
+	public void testADCSetCarryOverflowUnsetNegative() {
 		_c.ADC((byte) 253);
 		_c.CLV();
 		assertTrue(_c.getNegativeFlag());
@@ -111,4 +111,17 @@ public class TestADC {
 		assertTrue(_c.getOverflowFlag());
 	}
 
+	
+	@Test
+	public void testADCOverflow() {
+		_c.LDA((byte) 0xE4);
+		_c.PHA();
+		_c.PLP();
+		_c.LDA((byte) 0x7F);
+		_c.ADC((byte) 0x80);
+		assertEquals((byte)0xFF, _c.getA());
+		assertFalse(_c.getOverflowFlag());
+		assertEquals((byte)0xA4, _c.getSR());
+	}
+	
 }

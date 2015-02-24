@@ -2,7 +2,6 @@ package ffdYKJisu.nes_emu.system.cpu;
 
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -194,7 +193,8 @@ public class CPU implements ICPU {
 		case IMPLICIT:
 			throw new UnsupportedOperationException();
 		case ACCUMULATOR:
-			return A;
+			logger.info("Got operand A = {}", A);
+			return A;			
 		case IMMEDIATE:
 		case ZERO_PAGE:			
 		case ZERO_PAGE_X:
@@ -206,7 +206,9 @@ public class CPU implements ICPU {
 		case INDIRECT:
 		case INDIRECT_X:
 		case INDIRECT_Y:
-			return _memory.read(address_);
+			byte val = _memory.read(address_);
+			logger.info("Got operand of value {} at address {}", HexUtils.toHex(val), HexUtils.toHex(address_));
+			return val;
 		default:
 			logger.error("No matching addressing mode for {}", mode_);
 			throw new UnsupportedOperationException();
@@ -436,23 +438,62 @@ public class CPU implements ICPU {
 	 * Arithmetic
 	 ******************* */
 	
-	public void ADC(byte val_) { add(true, val_); }
+	public void ADC(byte val_) { 
+		int temp = Byte.toUnsignedInt(val_) + Byte.toUnsignedInt(A) + (P.isSetCarry() ? 1 : 0);
+		P.setCarry(temp > 0xFF);
+		// ADC: SET_OVERFLOW(!((AC ^ src) & 0x80) && ((AC ^ temp) & 0x80));
+		P.setOverflow(
+			((A ^ val_) & 0x80) == 0 
+			&&
+			((A ^ temp) & 0x80) != 0
+		);
+		A = (byte) temp;
+		setZero(A);
+		setNegative(A);
+	}
 	
-	public void SBC(byte val_) { add(false, val_); }
+	/*
+	public void SBC(byte val_) {
+		int temp = Byte.toUnsignedInt(A) - Byte.toUnsignedInt(val_) - (P.isSetCarry() ? 0 : 1);
+		P.setCarry(temp < 0x100);
+		// SBC: SET_OVERFLOW(((AC ^ temp) & 0x80) && ((AC ^ src) & 0x80));
+		
+		byte tempA = (byte) temp;
+		P.setOverflow(
+			((A ^ tempA) & 0x80) != 0 
+			&&
+			((A ^ val_) & 0x80) != 0
+		);
+		A = (byte) (temp & 0xFF);
+		setZero(A);
+		setNegative(A);
+	}
+	*/
+	
+	/** http://forums.nesdev.com/viewtopic.php?p=19080#19080 */
+	public void SBC(byte val_) {
+		ADC((byte) (val_ ^ 0xFF));
+	}
+	
+	/*
+	 public void ADC(byte val_) { add(true, val_); }
+	 public void SBC(byte val_) { add(false, val_); }
+	 */
 	
 	public void add(boolean isAdding_, byte val_) {
 		int temp = Byte.toUnsignedInt(A);
 		if(isAdding_) {
-			temp = temp + Byte.toUnsignedInt(val_) + (P.isSetCarry() ? 1 : 0);			
+			temp = Byte.toUnsignedInt(val_) + Byte.toUnsignedInt(A) + (P.isSetCarry() ? 1 : 0);			
 		} else {
-			temp = temp - Byte.toUnsignedInt(val_) - (P.isSetCarry() ? 1 : 0);			
+			temp = Byte.toUnsignedInt(A) - Byte.toUnsignedInt(val_) - (P.isSetCarry() ? 0 : 1);			
 		}
 		P.setCarry(temp > 0xFF);
 		byte initialA = A;
 		A = (byte) temp;
 		setZero(A);
 		setNegative(A);
-		setOverflow(initialA, A);
+		//setOverflow(initialA, A);
+		setOverflow(isAdding_, initialA, val_, A);
 		logger.info("{} {} and {}, got {} with status {}", new Object[] {
 				isAdding_ ? "Added" : "Subtracted", 
 				HexUtils.toHex(val_),
@@ -460,6 +501,26 @@ public class CPU implements ICPU {
 				HexUtils.toHex(A),
 				P
 		});
+		
+		/*
+		// ADC
+	    unsigned int temp = src + AC + (IF_CARRY() ? 1 : 0);
+	    SET_ZERO(temp & 0xff);	// This is not valid in decimal mode 		
+		SET_SIGN(temp);
+		SET_OVERFLOW(!((AC ^ src) & 0x80) && ((AC ^ temp) & 0x80));
+		SET_CARRY(temp > 0xff);
+	    AC = ((BYTE) temp);
+	    */
+		
+		/*
+		// SBC
+	    unsigned int temp = AC - src - (IF_CARRY() ? 0 : 1);
+	    SET_ZERO(temp & 0xff);	// Sign and Zero are invalid in decimal mode
+	    SET_SIGN(temp);
+	    SET_OVERFLOW(((AC ^ temp) & 0x80) && ((AC ^ src) & 0x80));
+	    SET_CARRY(temp < 0x100);
+	    AC = (temp & 0xff);
+	    */
 	}
 
 	public void INX() { X = increment(X, 1); }
@@ -481,8 +542,25 @@ public class CPU implements ICPU {
 		return result;
 	}
 
-	private void setOverflow(byte initial_, byte final_) {
-		P.setOverflow((final_ & (byte)0x80) != (initial_ & 0x80));
+	/**
+	 * http://forums.nesdev.com/viewtopic.php?t=6331
+	 */
+	private void setOverflow(boolean isAdding_, byte initialA_, byte val_, byte sum_) {
+		// ADC: SET_OVERFLOW(!((AC ^ src) & 0x80) && ((AC ^ temp) & 0x80));
+		if(isAdding_) {
+			P.setOverflow(
+				((initialA_ ^ val_) & 0x80) == 0 
+				&&
+				((initialA_ ^ sum_) & 0x80) != 0
+			);
+		} else {
+			// SBC: SET_OVERFLOW(((AC ^ temp) & 0x80) && ((AC ^ src) & 0x80));
+			P.setOverflow(
+				((initialA_ ^ sum_) & 0x80) != 0 
+				&&
+				((initialA_ ^ val_) & 0x80) != 0
+			);
+		}
 	}
 	
 	private void setZero(byte val_) {
@@ -601,10 +679,18 @@ public class CPU implements ICPU {
 	 * @param B subtrahend (usually from memory)
 	 */		
 	private void compare(byte a_, byte b_) {
-		int result = Byte.toUnsignedInt(a_) - Byte.toUnsignedInt(b_);
+		int a = Byte.toUnsignedInt(a_);
+		int b = Byte.toUnsignedInt(b_);
+		int result = a - b; 
+		logger.info("byte a {} - byte b {} = {}", new Object[] {
+				HexUtils.toHex(a_),
+				HexUtils.toHex(b_),
+				result
+		});
+		byte resultByte = (byte) (result & 0xFF);
 		P.setCarry(result >= 0);
-		P.setZero(result == 0);
-		P.setNegative(result < 0);
+		P.setZero(resultByte == 0);
+		P.setNegative((resultByte & 0x80) != 0);
 	}
 	
 	/* ******************* 
@@ -689,6 +775,12 @@ public class CPU implements ICPU {
 		X = _stackPointer;
 		setNegative(X);
 		setZero(X);
+	}
+	
+	public void TXA() {
+		A = X;
+		setNegative(A);
+		setZero(A);
 	}
 	
 	public void TXS() {

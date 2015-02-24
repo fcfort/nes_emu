@@ -140,8 +140,8 @@ public class NesTest {
 		
 		int i = 0;
 		for(CPUState s : _nesTestLog) {
-			assertEquals(s, getState());
 			LOGGER.info("({}): Asserting {} against {}", new Object[] {i++, s, getState()});
+			assertEquals(s, getState());			
 			_c.runStep();
 		}
 		

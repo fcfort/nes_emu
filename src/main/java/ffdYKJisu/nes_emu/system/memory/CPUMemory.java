@@ -105,7 +105,7 @@ public class CPUMemory implements IMemory {
 		case PRGROM:
 			int romAddress = address - (short)PRGROM_OFFSET;			
 			val = PRGROM[romAddress];
-			logger.info("PGR-ROM read value {} at address {} with array index {}", new Object[] { toHex(val), toHex(address), toHex((short)romAddress)});
+			logger.debug("PGR-ROM read value {} at address {} with array index {}", new Object[] { toHex(val), toHex(address), toHex((short)romAddress)});
 			return val;
 		case RAM:
 			val = RAM[address]; // PPU/VRAM I/O Registers
