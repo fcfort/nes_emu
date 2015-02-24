@@ -82,7 +82,7 @@ public class TestADC {
 		_c.ADC((byte) 253);
 		assertEquals((byte)0xFF, _c.getA());
 		assertTrue(_c.getNegativeFlag());
-		assertTrue(_c.getOverflowFlag());
+		assertTrue(!_c.getOverflowFlag());
 	}
 	
 	@Test
@@ -95,7 +95,7 @@ public class TestADC {
 		assertEquals((byte) 3, _c.getA());
 		assertTrue(!_c.getNegativeFlag());
 		assertTrue(_c.getCarryFlag());
-		assertTrue(_c.getOverflowFlag());
+		assertTrue(!_c.getOverflowFlag());
 	}
 	
 	@Test

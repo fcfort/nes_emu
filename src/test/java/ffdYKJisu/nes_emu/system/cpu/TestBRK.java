@@ -48,8 +48,8 @@ public class TestBRK {
 		short interruptVector = Shorts.fromBytes(_mem.read((short) 0xFFFF), _mem.read((short) 0xFFFE));
 		assertEquals(interruptVector, _c.getPC());
 		assertTrue(_c.getInterruptDisable());
-		assertEquals((byte) (0xFF - 3),_c.getSP());
-		assertEquals(bytesPC[0], _mem.read((short) (0x100 + 0xFF)));
+		assertEquals((byte) (0xFD - 3),_c.getSP());
+		assertEquals(bytesPC[0], _mem.read((short) (0x100 + 0xFD)));
 		assertEquals(bytesPC[1], _mem.read((short) (0x100 + 0xFE)));
 	}
 	

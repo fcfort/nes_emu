@@ -54,18 +54,18 @@ public class TestROL {
 		System.out.println(HexUtils.toHex((byte)0b1010_0101));
 		
 		// after	
-		assertEquals((byte)0b1010_1001, result); 
+		assertEquals((byte)0b1010_1000, result); 
 		assertTrue(_c.getNegativeFlag());
 		assertTrue(_c.getCarryFlag());
 		assertTrue(!_c.getZeroFlag());
 	}
 	
 	@Test
-	public void testRotateEightTimes() {
+	public void testRotateNineTimes() {
 		// before
 		_c.LDA((byte) 0b1101_0100);
 		
-		byte result = rotate(8);
+		byte result = rotate(9);
 		
 		// after	
 		assertEquals((byte)0b1101_0100, result);

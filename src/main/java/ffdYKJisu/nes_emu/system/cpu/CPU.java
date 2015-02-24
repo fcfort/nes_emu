@@ -72,8 +72,6 @@ public class CPU implements ICPU {
 		// Read Opcode from PC
 		Opcode op = getOpcode();
 		
-		byte opcodeBytes = op.getOpcodeBytes();
-		
 		short initialPC = PC;
 		
 		// Print instruction to logger
@@ -246,18 +244,11 @@ public class CPU implements ICPU {
 				break;
 			case ABSOLUTE_X:
 				// val = PEEK(arg + X)
-				// TODO: abstract absolute x and y
-				byte argAbsXLow = _memory.read((short) (PC_ + 1));
-				byte argAbsXHigh = _memory.read((short) (PC_ + 2));
-				addr = (short) (Shorts.fromBytes(argAbsXHigh, argAbsXLow) + (X & 0xFF));
+				addr = (short) (readShort((short) (PC_ + 1)) + (X & 0xFF));
 				break;
 			case ABSOLUTE_Y:
 				// val = PEEK(arg + Y)
-				byte argAbsYLow = _memory.read((short) (PC_ + 1));
-				byte argAbsYHigh = _memory.read((short) (PC_ + 2));
-				addr = (short) (Shorts.fromBytes(argAbsYHigh, argAbsYLow) + (Y & 0xFF));	
-				
-				// addr = (short) (readShortIndirect((short) (PC_ + 1), Y));
+				addr = (short) (readShort((short) (PC_ + 1)) + (Y & 0xFF));
 				break;
 			case INDIRECT:
 				addr = readShort((short) (PC_ + 1));
@@ -274,6 +265,7 @@ public class CPU implements ICPU {
 				 * 			PEEK((arg + X) % 256) + 
 				 * 			PEEK((arg + X + 1) % 256) * 256) 
 				 */	
+				// TODO: Unify indirect addressing modes
 				byte argX = _memory.read((short) (PC_ + 1));
 				byte lowerAddr = (byte) ((Byte.toUnsignedInt(argX) + Byte.toUnsignedInt(X)) % 256);
 				byte upperAddr = (byte) ((Byte.toUnsignedInt(argX) + Byte.toUnsignedInt(X) + 1) % 256);
@@ -288,8 +280,6 @@ public class CPU implements ICPU {
 					HexUtils.toHex(upperAddr),
 					HexUtils.toHex(lowerAddr),
 				});
-				//addr = (short) (readShortIndirect((short) (PC_ + 1), X));
-				//addr = readShort(addr);
 				break;
 			case INDIRECT_Y:
 				/* val = PEEK(PEEK(arg) + PEEK((arg + 1) % 256) + y) */
@@ -315,10 +305,6 @@ public class CPU implements ICPU {
 			_memory.read((short)(address + 1)),
 			_memory.read((address)
 		));
-	}
-	
-	private short readShortIndirect(short address, byte offset) {
-		return (short) (readShort(address) + offset);
 	}
 		
 	/**
@@ -348,8 +334,7 @@ public class CPU implements ICPU {
 		return result > 0XFF;
 	}
 	
-	private void persistResult(Opcode op_, Byte result_, short PC_) {
-		
+	private void persistResult(Opcode op_, Byte result_, short PC_) {		
 		// void functions return null. Don't have to do anything.
 		if(result_ == null) { return; }
 		
@@ -491,75 +476,9 @@ public class CPU implements ICPU {
 		setNegative(A);
 	}
 	
-	/*
-	public void SBC(byte val_) {
-		int temp = Byte.toUnsignedInt(A) - Byte.toUnsignedInt(val_) - (P.isSetCarry() ? 0 : 1);
-		P.setCarry(temp < 0x100);
-		// SBC: SET_OVERFLOW(((AC ^ temp) & 0x80) && ((AC ^ src) & 0x80));
-		
-		byte tempA = (byte) temp;
-		P.setOverflow(
-			((A ^ tempA) & 0x80) != 0 
-			&&
-			((A ^ val_) & 0x80) != 0
-		);
-		A = (byte) (temp & 0xFF);
-		setZero(A);
-		setNegative(A);
-	}
-	*/
-	
 	/** http://forums.nesdev.com/viewtopic.php?p=19080#19080 */
 	public void SBC(byte val_) {
 		ADC((byte) (val_ ^ 0xFF));
-	}
-	
-	/*
-	 public void ADC(byte val_) { add(true, val_); }
-	 public void SBC(byte val_) { add(false, val_); }
-	 */
-	
-	public void add(boolean isAdding_, byte val_) {
-		int temp = Byte.toUnsignedInt(A);
-		if(isAdding_) {
-			temp = Byte.toUnsignedInt(val_) + Byte.toUnsignedInt(A) + (P.isSetCarry() ? 1 : 0);			
-		} else {
-			temp = Byte.toUnsignedInt(A) - Byte.toUnsignedInt(val_) - (P.isSetCarry() ? 0 : 1);			
-		}
-		P.setCarry(temp > 0xFF);
-		byte initialA = A;
-		A = (byte) temp;
-		setZero(A);
-		setNegative(A);
-		//setOverflow(initialA, A);
-		setOverflow(isAdding_, initialA, val_, A);
-		logger.info("{} {} and {}, got {} with status {}", new Object[] {
-				isAdding_ ? "Added" : "Subtracted", 
-				HexUtils.toHex(val_),
-				HexUtils.toHex(initialA),
-				HexUtils.toHex(A),
-				P
-		});
-		
-		/*
-		// ADC
-	    unsigned int temp = src + AC + (IF_CARRY() ? 1 : 0);
-	    SET_ZERO(temp & 0xff);	// This is not valid in decimal mode 		
-		SET_SIGN(temp);
-		SET_OVERFLOW(!((AC ^ src) & 0x80) && ((AC ^ temp) & 0x80));
-		SET_CARRY(temp > 0xff);
-	    AC = ((BYTE) temp);
-	    */
-		
-		/*
-		// SBC
-	    unsigned int temp = AC - src - (IF_CARRY() ? 0 : 1);
-	    SET_ZERO(temp & 0xff);	// Sign and Zero are invalid in decimal mode
-	    SET_SIGN(temp);
-	    SET_OVERFLOW(((AC ^ temp) & 0x80) && ((AC ^ src) & 0x80));
-	    SET_CARRY(temp < 0x100);
-	    AC = (temp & 0xff);
-	    */
 	}
 
 	public void INX() { X = increment(X, 1); }
