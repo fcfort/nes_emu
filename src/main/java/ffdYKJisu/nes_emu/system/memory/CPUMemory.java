@@ -21,7 +21,7 @@ import ffdYKJisu.nes_emu.util.UnsignedShorts;
  * New version of memory based on shorts and bytes instead of encapsulated
  * data types uShort and uByte;
  */
-public class CPUMemory implements IMemory {
+public class CPUMemory {
 
 	private static Logger logger = LoggerFactory.getLogger(CPUMemory.class);
 	

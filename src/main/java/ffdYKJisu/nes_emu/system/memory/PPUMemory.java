@@ -10,12 +10,12 @@ import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 import ffdYKJisu.nes_emu.system.ppu.PPU;
 import ffdYKJisu.nes_emu.util.UnsignedShorts;
 
-public class PPUMemory implements IMemory {
+public class PPUMemory {
 
 	// Some useful constants
 	private static final int PATTERN_TABLE_SIZE = 0x1000;
 	private static final int NAME_TABLE_SIZE = 0x3C0;
-	private static final int ATTRIBUTE_TABLE_SIZE = 0x40;
+	private static final int OAM_TABLE_SIZE = 0x40;
 	private static final int PALETTE_SIZE = 0x10;
 	private static final int SPRITE_RAM_SIZE = 0x100;
 
@@ -40,10 +40,10 @@ public class PPUMemory implements IMemory {
 	byte[] NameTable3 = new byte[NAME_TABLE_SIZE];
 	
 	// OAM - Object Attribute Memory
-	byte[] AttributeTable0 = new byte[ATTRIBUTE_TABLE_SIZE];
-	byte[] AttributeTable1 = new byte[ATTRIBUTE_TABLE_SIZE];
-	byte[] AttributeTable2 = new byte[ATTRIBUTE_TABLE_SIZE];
-	byte[] AttributeTable3 = new byte[ATTRIBUTE_TABLE_SIZE];
+	byte[] oamTable0 = new byte[OAM_TABLE_SIZE];
+	byte[] oamTable1 = new byte[OAM_TABLE_SIZE];
+	byte[] oamTable2 = new byte[OAM_TABLE_SIZE];
+	byte[] oamTable3 = new byte[OAM_TABLE_SIZE];
 	
 	byte[] ImagePalette = new byte[PALETTE_SIZE];
 	byte[] PaletteTable = new byte[PALETTE_SIZE];

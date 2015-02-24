@@ -97,9 +97,12 @@ public class PPU {
     }
     
     public void runStep() {    	
-    	// Idle cycle at the start of every scanline
-    	if(_horizontalScroll == 0) {
-    		return;
+    	// Idle cycle at the start of every scanline    	
+    	
+    	if(_verticalScroll >= 0 && _verticalScroll < 240 ) {
+    		if(_horizontalScroll != 0 && _horizontalScroll % 8 == 0) {
+    			
+    		}
     	}       
     	
     	if(_verticalScroll == MAX_SCANLINE) {
@@ -124,12 +127,55 @@ public class PPU {
     	_cyclesRunSinceReset++;
     }
     
+	private void incrementY() {
+		if ((_v & 0x7000) != 0x7000) {  // if fine Y < 7
+			_v += 0x1000;               // increment fine Y
+		} else {
+			_v &= ~0x7000;              // fine Y = 0
+			int y = (_v & 0x03E0) >> 5; // let y = coarse Y
+			if (y == 29) {
+				y = 0;                  // coarse Y = 0
+				_v ^= 0x0800;           // switch vertical nametable
+			} else if (y == 31) {
+				y = 0;                  // coarse Y = 0, nametable not switched
+			} else {
+				y += 1;                 // increment coarse Y
+			}
+			_v = (short) ((_v & ~0x03E0) | (y << 5)); // put coarse Y back into v
+		}
+	}
+	
+	private void incrementCoarseX() {
+		if ((_v & 0x001F) == 31) { // if coarse X == 31
+			_v &= ~0x001F;         // coarse X = 0
+			_v ^= 0x0400;          // switch horizontal nametable
+		} else {
+			_v += 1;               // increment coarse X
+		}
+	}
+    
+    private boolean isRenderingEnabled() {
+    	return isBackgroundRenderingEnabled() || isSpriteRenderingEnabled();
+    }
+    
+    private boolean isBackgroundRenderingEnabled() {
+    	return _maskRegister.getValue(3);
+    }
+    
+    private boolean isSpriteRenderingEnabled() {
+    	return _maskRegister.getValue(2);
+    }
+    
     private byte fetchNameTableByte() {
     	return 0;
     }
     
     private byte fetchAttributeTableByte() {
     	return _memory.read(calculateAttributeAddress());
+    }
+    
+    private short calculateTileAddress() {
+    	return (short) (0x2000 | ( _v & 0x0FFF));
     }
     
     private short calculateAttributeAddress() {
