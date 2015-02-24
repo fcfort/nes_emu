@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.UnsignedBytes;
 
+import ffdYKJisu.nes_emu.exceptions.OpcodeExecutionException;
 import ffdYKJisu.nes_emu.util.HexUtils;
 
 /**
@@ -226,8 +227,12 @@ public enum Opcode {
 		return UnsignedBytes.parseUnsignedByte(opcodeBytes, OPCODE_NUMBER_BASE);
 	}
 
-	public static Opcode getOpcodeByBytes(byte b) {		
-		return opcodeMap.get(b);
+	public static Opcode getOpcodeByBytes(byte b) {
+		if(!opcodeMap.containsKey(b)) {
+			throw new OpcodeExecutionException("Unimplemented Opcode %s", HexUtils.toHex(b));
+		} else {
+			return opcodeMap.get(b);
+		}		
 	}
 
 	public int getCycles() {

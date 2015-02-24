@@ -7,4 +7,8 @@ public class OpcodeExecutionException extends RuntimeException {
 	public OpcodeExecutionException(Throwable e_, String template_, Object ... args_) {		
           super(String.format(template_, args_), e_);
 	}
+	
+	public OpcodeExecutionException(String template_, Object ... args_) {		
+        super(String.format(template_, args_));
+	}
 }

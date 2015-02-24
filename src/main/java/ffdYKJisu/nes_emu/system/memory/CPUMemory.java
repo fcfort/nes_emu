@@ -9,6 +9,8 @@ import static ffdYKJisu.nes_emu.util.HexUtils.toHex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.primitives.Shorts;
+
 import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 import ffdYKJisu.nes_emu.system.Cartridge;
@@ -82,15 +84,15 @@ public class CPUMemory implements IMemory {
 		return read((short) (Byte.toUnsignedInt(address_) + STACK_OFFSET));
 	}
 	
-	private static AddressLocation getAddressLocation(short address) {
-		if(UnsignedShorts.compare(address,(short)0x2000) < 0) {
+	private static AddressLocation getAddressLocation(short address_) {
+		if(UnsignedShorts.compare(address_,(short)0x2000) < 0) {
 			return AddressLocation.RAM; 
-		} else if (UnsignedShorts.compare(address,(short)0x2000) >= 0 && UnsignedShorts.compare(address,(short)0x4000) < 0) {
+		} else if (UnsignedShorts.compare(address_,(short)0x2000) >= 0 && UnsignedShorts.compare(address_,(short)0x4000) < 0) {
 			return AddressLocation.PPUio;
-		} else if (UnsignedShorts.compare(address,(short)0x8000) >= 0) {
+		} else if (UnsignedShorts.compare(address_,(short)0x8000) >= 0) {
 			return AddressLocation.PRGROM;
 		} else {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Uncategorized address " + toHex(address_));
 		}
 	}
 
@@ -129,7 +131,7 @@ public class CPUMemory implements IMemory {
 	 * @return byte from that address on the zero page.
 	 */
 	public byte read(byte zeroPageAddress) {
-		return read((short)zeroPageAddress);
+		return read(Shorts.fromBytes((byte) 0x00, zeroPageAddress));
 	}
 
  	public void write(short address, byte val) throws InvalidAddressException {

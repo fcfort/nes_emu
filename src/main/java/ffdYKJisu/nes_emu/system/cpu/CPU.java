@@ -77,8 +77,8 @@ public class CPU implements ICPU {
 		short initialPC = PC;
 		
 		// Print instruction to logger
-		logger.info("Got instruction {} opcode {} ({}) at PC {}", 
-				new Object[]{instructionToString(PC), op, HexUtils.toHex(opcodeBytes), HexUtils.toHex(PC)});		
+		logger.info("Got instruction {} opcode {} at PC {}", 
+				new Object[]{instructionToString(PC), op, HexUtils.toHex(PC)});		
 
 		// Increment PC
 		PC += op.getLength();
@@ -124,7 +124,7 @@ public class CPU implements ICPU {
 				AddressingMode.INDIRECT_Y).contains(op_.getAddressingMode())
 				&& op_.extraCycleOnPageJump()
 		) {
-			if(isIndexedPageJump(op_)) {
+			if(isIndexedPageJump(op_, initialPC_)) {
 				return op_.getCycles() + 1;
 			}
 		}
@@ -140,15 +140,7 @@ public class CPU implements ICPU {
 				return (Byte) invokeMethod(op_.getCodeName(), address);
 			} else {
 				byte operand = getOperand(op_.getAddressingMode(), address);
-				/*
-				logger.info("Looking for method with name {} for operation {} with operands {}", 
-						new Object[] {op_.getCodeName(), op_, operand});
-				Method opCodeImplementation = getClass().getDeclaredMethod(op_.getCodeName(), byte.class);
-				logger.info("Found method {} for op {}, calling with {} operands of length {}", 
-						new Object[] {opCodeImplementation, op_, operand, 1});
-				*/		
-				return (Byte) invokeMethod(op_.getCodeName(), operand);
-				
+				return (Byte) invokeMethod(op_.getCodeName(), operand);				
 			}
 		} else {
 			return (Byte) invokeMethod(op_.getCodeName());
@@ -220,6 +212,9 @@ public class CPU implements ICPU {
 	 * and returns an address by determining what bytes to read from the parameters
 	 * of the instruction. The address returned is either the read/write address
 	 * for the instruction
+	 * 
+	 * http://wiki.nesdev.com/w/index.php/CPU_addressing_modes
+	 * 
 	 * @return Address of where to perform operation
 	 */	
 	private short getAddress(AddressingMode mode_, short PC_) {
@@ -250,41 +245,58 @@ public class CPU implements ICPU {
 				addr = (short) (readShort((short) (PC_ + 1)));
 				break;
 			case ABSOLUTE_X:
-				addr = (short) (readShortIndirect((short) (PC_ + 1), X));
+				// val = PEEK(arg + X)
+				// TODO: abstract absolute x and y
+				byte argAbsXLow = _memory.read((short) (PC_ + 1));
+				byte argAbsXHigh = _memory.read((short) (PC_ + 2));
+				addr = (short) (Shorts.fromBytes(argAbsXHigh, argAbsXLow) + (X & 0xFF));
 				break;
 			case ABSOLUTE_Y:
-				addr = (short) (readShortIndirect((short) (PC_ + 1), Y));
+				// val = PEEK(arg + Y)
+				byte argAbsYLow = _memory.read((short) (PC_ + 1));
+				byte argAbsYHigh = _memory.read((short) (PC_ + 2));
+				addr = (short) (Shorts.fromBytes(argAbsYHigh, argAbsYLow) + (Y & 0xFF));	
+				
+				// addr = (short) (readShortIndirect((short) (PC_ + 1), Y));
 				break;
 			case INDIRECT:
 				addr = readShort((short) (PC_ + 1));
-				addr = readShort(addr);
+				
+				byte lowAddr = Shorts.toByteArray(addr)[1];				
+				byte highAddr = Shorts.toByteArray(addr)[0];
+				addr = Shorts.fromBytes(
+						_memory.read(Shorts.fromBytes(highAddr, (byte) (lowAddr + 1))),
+						_memory.read((addr)
+					));
 				break;
 			case INDIRECT_X:
 				/* val = PEEK(
 				 * 			PEEK((arg + X) % 256) + 
 				 * 			PEEK((arg + X + 1) % 256) * 256) 
 				 */	
-				byte arg = _memory.read((short) (PC_ + 1));
-				byte lowerAddr = (byte) ((Byte.toUnsignedInt(arg) + Byte.toUnsignedInt(X)) % 256);
-				byte upperAddr = (byte) ((Byte.toUnsignedInt(arg) + Byte.toUnsignedInt(X) + 1) % 256);
-				addr = Shorts.fromBytes(upperAddr, lowerAddr);
-				short finalAddr = Shorts.fromBytes(_memory.read(upperAddr), _memory.read(lowerAddr));
+				byte argX = _memory.read((short) (PC_ + 1));
+				byte lowerAddr = (byte) ((Byte.toUnsignedInt(argX) + Byte.toUnsignedInt(X)) % 256);
+				byte upperAddr = (byte) ((Byte.toUnsignedInt(argX) + Byte.toUnsignedInt(X) + 1) % 256);
+				// addr = Shorts.fromBytes(upperAddr, lowerAddr);
+				addr = Shorts.fromBytes(_memory.read(upperAddr), _memory.read(lowerAddr));
 				logger.info("For mode {} got arg {} @ PC {}, read addr {} from upper {} and lower {}, final addr {}",
 					new Object[] {
 					mode_,
-					HexUtils.toHex(arg),
+					HexUtils.toHex(argX),
 					HexUtils.toHex(PC),
 					HexUtils.toHex(addr),
 					HexUtils.toHex(upperAddr),
 					HexUtils.toHex(lowerAddr),
-					HexUtils.toHex(finalAddr)								
 				});
 				//addr = (short) (readShortIndirect((short) (PC_ + 1), X));
 				//addr = readShort(addr);
 				break;
 			case INDIRECT_Y:
-				addr = (short) (readShort((short) (PC_ + 1)));
-				addr = readShortIndirect(addr, Y);
+				/* val = PEEK(PEEK(arg) + PEEK((arg + 1) % 256) + y) */
+				byte argY = _memory.read((short) (PC_ + 1));
+				byte lowerAddrY = _memory.read(argY);
+				byte upperAddrY = _memory.read((byte)((argY + 1) & 0xFF));
+				addr = (short) (Shorts.fromBytes(upperAddrY, lowerAddrY) + (Y & 0xFF));
 				break;
 			default:
 				logger.error("No matching addressing mode for {}", mode_);
@@ -312,17 +324,19 @@ public class CPU implements ICPU {
 	/**
 	 * Checks to see if the addressing mode will result in an additional
 	 * cycle due to a page jump 
+	 * @param initialPC_ 
 	 * @return true if the indexed operation crosses a page boundary
 	 */
-	private boolean isIndexedPageJump(Opcode op_) {
+	private boolean isIndexedPageJump(Opcode op_, short initialPC_) {
 		switch (op_.getAddressingMode()) {
 			case ABSOLUTE_X:
-				return isIndexAbsolutePageJump((short) (PC + 1), X);				
+				return isIndexAbsolutePageJump((short) (initialPC_ + 1), X);				
 			case ABSOLUTE_Y:
-				return isIndexAbsolutePageJump((short) (PC + 1), Y);
+				return isIndexAbsolutePageJump((short) (initialPC_ + 1), Y);
 			case INDIRECT_Y:
-				short addr = (short) (readShort((short) (PC + 1)));
-				return isIndexAbsolutePageJump(addr, Y);
+				byte argY = _memory.read((short) (initialPC_ + 1));
+				byte lowerAddrY = _memory.read(argY);
+				return Byte.toUnsignedInt(lowerAddrY) + Byte.toUnsignedInt(Y) > 0xFF;
 			default:
 				return false;
 		}
@@ -383,7 +397,7 @@ public class CPU implements ICPU {
 	protected Opcode getOpcode() {
 		byte b = _memory.read(PC);		
 		Opcode o = Opcode.getOpcodeByBytes(b);
-		logger.info("Reading opcode at PC addr {}. Got byte {} and opcode {}", 
+		logger.debug("Reading opcode at PC addr {}. Got byte {} and opcode {}", 
 				new Object[] {HexUtils.toHex(PC), HexUtils.toHex(b), o});
 		return o;
 	}
@@ -913,7 +927,7 @@ public class CPU implements ICPU {
 		sb.append(" " + opcodeName + " ");
 
 		for (int j = 1; j < instructionLength; j++) {
-			sb.append(bytes[j]);
+			sb.append(HexUtils.toHex(bytes[j]));
 			if (j != instructionLength - 1)
 				sb.append(" ");
 		}

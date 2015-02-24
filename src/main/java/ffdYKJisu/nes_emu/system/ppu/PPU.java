@@ -12,6 +12,7 @@ import ffdYKJisu.nes_emu.domain.Register;
 import ffdYKJisu.nes_emu.screen.Image;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.PPUMemory;
+import ffdYKJisu.nes_emu.util.HexUtils;
 import ffdYKJisu.nes_emu.util.UnsignedShorts;
 
 /**
@@ -164,7 +165,7 @@ public class PPU {
 				_isFirstWrite = true;
 				return _statusRegister.getByte();				
 			default:
-				throw new UnsupportedOperationException();
+				throw new UnsupportedOperationException("Tried to read PPU address " + HexUtils.toHex(address_));
 		}
 	}    
 	

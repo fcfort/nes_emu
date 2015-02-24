@@ -1,6 +1,6 @@
 package ffdYKJisu.nes_emu.system.cpu;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -13,9 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 import com.google.common.io.LineProcessor;
 import com.google.common.io.Resources;
 import com.google.common.primitives.UnsignedBytes;
@@ -25,7 +23,6 @@ import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
 import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
-import ffdYKJisu.nes_emu.util.HexUtils;
 import ffdYKJisu.nes_emu.util.UnsignedShorts;
 
 /** 
@@ -39,6 +36,8 @@ import ffdYKJisu.nes_emu.util.UnsignedShorts;
 public class NesTest {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(NesTest.class);
+	
+	private static final int INVALID_OPCODE_START_INDEX = 5003;
 	
 	NES _n;
 	CPU _c;
@@ -136,13 +135,14 @@ public class NesTest {
 		}
 	}
 	
+	/** Not supporting undocumented opcodes */
 	@Test
 	public void runNesTestAndCompare() {
 		_c.setPC((short) 0xC000);		
 		
-		int i = 0;
-		for(CPUState s : _nesTestLog) {
-			LOGGER.info("({}): Asserting {} against {}", new Object[] {i++, s, getState()});
+		for(int i = 0; i < INVALID_OPCODE_START_INDEX; i++) {
+			CPUState s = _nesTestLog.get(i);
+			LOGGER.info("({}): Asserting {} against {}", new Object[] {i+1, s, getState()});
 			assertEquals(s, getState());			
 			_c.runStep();
 		}
