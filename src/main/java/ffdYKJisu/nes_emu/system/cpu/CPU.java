@@ -234,16 +234,17 @@ public class CPU implements ICPU {
 			case IMMEDIATE:
 				addr = (short) (PC_ + 1);
 				break;
-			case ZERO_PAGE:
-				addr = _memory.read((short)(PC_ + 1));
+			case ZERO_PAGE:				
+				byte zpAddr = (byte) _memory.read((short)(PC_ + 1));
+				addr = (short) (zpAddr & 0xFF);
 				break;
 			case ZERO_PAGE_X:
 				byte zpAddrX = (byte) (_memory.read((short)(PC_ + 1)) + X);
-				addr = (short)(zpAddrX);
+				addr = (short) (zpAddrX & 0xFF);
 				break;
 			case ZERO_PAGE_Y:
 				byte zpAddrY = (byte) (_memory.read((short)(PC_ + 1)) + Y);
-				addr = (short)(zpAddrY);
+				addr = (short) (zpAddrY & 0xFF);
 				break;
 			case ABSOLUTE:
 				addr = (short) (readShort((short) (PC_ + 1)));
@@ -259,8 +260,27 @@ public class CPU implements ICPU {
 				addr = readShort(addr);
 				break;
 			case INDIRECT_X:
-				addr = (short) (readShortIndirect((short) (PC_ + 1), X));
-				addr = readShort(addr);
+				/* val = PEEK(
+				 * 			PEEK((arg + X) % 256) + 
+				 * 			PEEK((arg + X + 1) % 256) * 256) 
+				 */	
+				byte arg = _memory.read((short) (PC_ + 1));
+				byte lowerAddr = (byte) ((Byte.toUnsignedInt(arg) + Byte.toUnsignedInt(X)) % 256);
+				byte upperAddr = (byte) ((Byte.toUnsignedInt(arg) + Byte.toUnsignedInt(X) + 1) % 256);
+				addr = Shorts.fromBytes(upperAddr, lowerAddr);
+				short finalAddr = Shorts.fromBytes(_memory.read(upperAddr), _memory.read(lowerAddr));
+				logger.info("For mode {} got arg {} @ PC {}, read addr {} from upper {} and lower {}, final addr {}",
+					new Object[] {
+					mode_,
+					HexUtils.toHex(arg),
+					HexUtils.toHex(PC),
+					HexUtils.toHex(addr),
+					HexUtils.toHex(upperAddr),
+					HexUtils.toHex(lowerAddr),
+					HexUtils.toHex(finalAddr)								
+				});
+				//addr = (short) (readShortIndirect((short) (PC_ + 1), X));
+				//addr = readShort(addr);
 				break;
 			case INDIRECT_Y:
 				addr = (short) (readShort((short) (PC_ + 1)));
@@ -275,7 +295,20 @@ public class CPU implements ICPU {
 				new Object[]{HexUtils.toHex(addr), mode_, HexUtils.toHex(PC_)});
 		return addr;
 	}
+
+	/** Reads an address for two consecutive bytes and forms
+	 * that into an address */
+	private short readShort(short address) {
+		return Shorts.fromBytes(
+			_memory.read((short)(address + 1)),
+			_memory.read((address)
+		));
+	}
 	
+	private short readShortIndirect(short address, byte offset) {
+		return (short) (readShort(address) + offset);
+	}
+		
 	/**
 	 * Checks to see if the addressing mode will result in an additional
 	 * cycle due to a page jump 
@@ -299,19 +332,6 @@ public class CPU implements ICPU {
 		byte lowerAddress = _memory.read(address_);
 		int result = Byte.toUnsignedInt(lowerAddress) + Byte.toUnsignedInt(val_);
 		return result > 0XFF;
-	}
-	
-	/** Reads an address for two consecutive bytes and forms
-	 * that into an address */
-	private short readShort(short address) {
-		return Shorts.fromBytes(
-			_memory.read((short)(address + 1)),
-			_memory.read((address)
-		));
-	}
-	
-	private short readShortIndirect(short address, byte offset) {
-		return (short) (readShort(address) + offset);
 	}
 	
 	private void persistResult(Opcode op_, Byte result_, short PC_) {
@@ -403,31 +423,36 @@ public class CPU implements ICPU {
 	
 	public byte LSR(byte val_) {
 		P.setCarry((val_ & 0x01) != 0);
-		return shift(val_, -1, false);
+		val_ = (byte) ((val_ & 0xFF) >>> 1);
+		setZero(val_);
+		setNegative(val_);
+		return val_;
 	}
 	
 	public byte ROL(byte val_) {
-		boolean carry = (val_ & 0x80) != 0;
+		boolean carry = (val_ & 0x80) != 0;		
+		byte result = shift(val_, 1, P.isSetCarry());
 		P.setCarry(carry);
-		return shift(val_, 1, carry);
+		return result;
 	}
 	
 	public byte ROR(byte val_) {
-		boolean carry = (val_ & 0x01) != 0;
+		boolean carry = (val_ & 0x01) != 0;		
+		byte result = shift(val_, -1, P.isSetCarry());
 		P.setCarry(carry);
-		return shift(val_, -1, carry);
+		return result;
 	}
 	
-	/** positive shiftAmount <<, 
-	 *  negative shiftAmount >>
-	 */ 	
+	/** positive shiftAmount <<, negative shiftAmount >> */ 	
 	private byte shift(byte val_, int direction_, boolean carry_) {
 		if(direction_ > 0) {
 			val_ <<= 1; // do shift
 			val_ = (byte) (carry_ ? val_ | 1 : val_ & ~1); // account for carry
 		} else {
-			val_ >>= 1; 
-			val_ = (byte) (carry_ ? val_ | (1 << 8): val_ & ~(1 << 8)); 
+			val_ = (byte) ((val_ & 0xFF) >>> 1); 
+			logger.info("Val after shift {}", HexUtils.toHex(val_));
+			val_ = (byte) (carry_ ? val_ | (1 << 7): val_ & ~(1 << 7));
+			logger.info("Val after carry {}, carry = {}", HexUtils.toHex(val_), carry_);
 		}
 		setZero(val_);
 		setNegative(val_);

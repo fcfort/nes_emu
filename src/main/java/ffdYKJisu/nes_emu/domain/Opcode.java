@@ -13,8 +13,6 @@ import ffdYKJisu.nes_emu.util.HexUtils;
 
 /**
  * Stores static information about opcodes
- * @author fcf
- *
  */
 public enum Opcode { 	
 	BRK("00", "BRK", 7, 1, AddressingMode.IMPLICIT),
@@ -53,7 +51,7 @@ public enum Opcode {
 	ANDay("39", "AND", 4, 3, false, true, AddressingMode.ABSOLUTE_Y),
 	ANDax("3D", "AND", 4, 3, false, true, AddressingMode.ABSOLUTE_X),
 	ROLax("3E", "ROL", 7, 3, AddressingMode.ABSOLUTE_X),
-	EORa("40", "EOR", 4, 3, AddressingMode.ABSOLUTE),
+	EORa("4D", "EOR", 4, 3, AddressingMode.ABSOLUTE),
 	EORix("41", "EOR", 6, 2, AddressingMode.INDIRECT_X),
 	EORz("45", "EOR", 3, 2, AddressingMode.ZERO_PAGE),
 	LSRz("46", "LSR", 5, 2, AddressingMode.ZERO_PAGE),
@@ -61,7 +59,7 @@ public enum Opcode {
 	EORi("49", "EOR", 2, 2, AddressingMode.IMMEDIATE),
 	LSRac("4A", "LSR", 2, 1, AddressingMode.ACCUMULATOR),
 	JMPa("4C", "JMP", 3, 3, AddressingMode.ABSOLUTE),
-	RTI("4D", "RTI", 6, 1, AddressingMode.IMPLICIT),
+	RTI("40", "RTI", 6, 1, AddressingMode.IMPLICIT),
 	LSRa("4E", "LSR", 6, 3, AddressingMode.ABSOLUTE),
 	BVC("50", "BVC", 2, 2, true, true, AddressingMode.RELATIVE),
 	EORiy("51", "EOR", 5, 2, false, true, AddressingMode.INDIRECT_Y),

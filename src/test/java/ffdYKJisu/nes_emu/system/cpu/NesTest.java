@@ -3,6 +3,7 @@ package ffdYKJisu.nes_emu.system.cpu;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
@@ -123,13 +124,14 @@ public class NesTest {
 		@Override public boolean equals(Object o_) { return EqualsBuilder.reflectionEquals(this, o_); }	
 		
 		@Override public String toString() {
-			return String.format("PC: %04X A: %02X X: %02X Y: %02X P: %02X SP: %02X",
+			return String.format("PC: %04X A: %02X X: %02X Y: %02X P: %02X SP: %02X OPS: %s",
 					_PC,
 					_A,
 					_X,
 					_Y,
 					_SR,
-					_SP
+					_SP,
+					Arrays.toString(_operands)
 			);
 		}
 	}
