@@ -27,7 +27,8 @@ public class Cartridge {
     private int num16PRGBanks = 0;
     private int num8CHRBanks = 0;
     private int num8RAMBanks = 1;
-    private final int iNESOffset = 16;
+    private static final int iNESOffset = 16;
+    private int mapperNumber;
     /** Stores the mirroring (horizontal/vertical) of the cartridge */
     private Mirroring mirroring;
     
@@ -135,7 +136,7 @@ public class Cartridge {
         output.append("\nThere are " + this.num8CHRBanks + " CHR8 Bank(s)\n");
         for (int i = 0; i < this.num8CHRBanks; i++) {
             output.append("CHR8 Bank " + i + "\n");
-            Byte[] temp = null;
+            byte[] temp = null;
             try {
                 temp = this.get8CHRBank(i);
             } catch (BankNotFoundException ex) {
@@ -162,6 +163,7 @@ public class Cartridge {
      * Read cartridge and read iNes header and store to cartridge
      */
     void setValuesFromHeader() {
+    	
         num16PRGBanks = (int) romData[4];
         num8CHRBanks = (int) romData[5];
         if ((romData[6] & 0x1) == 0) {
@@ -169,6 +171,13 @@ public class Cartridge {
         } else {
             mirroring = Mirroring.VERTICAL;
         }
+        
+        byte mapperLowerNybble = (byte) ((romData[6] & 0xF0) >>> 4);
+        byte mapperUpperNybble = (byte) ((romData[7] & 0xF0));
+        byte mapperNumber = (byte) (mapperUpperNybble | mapperLowerNybble);
+        
+        logger.info("Mapper number: {} from lower {} and upper {}", new Object[] {mapperLowerNybble, mapperUpperNybble, mapperNumber});
+        
         if (romData[8] == 0) {
             num8RAMBanks = 1;
         } else {
@@ -229,13 +238,13 @@ public class Cartridge {
      * @return Byte array of the specific bank requested
      * @throws BankNotFoundException.bankNotFoundException
      */
-    Byte[] get8CHRBank(int bankNum) throws BankNotFoundException {
+    public byte[] get8CHRBank(int bankNum) throws BankNotFoundException {
         if (bankNum > this.num8CHRBanks) {
             throw new BankNotFoundException("Bank " + bankNum
                     + " doesn't exist");
         }
         int bankLength = Bank.CHR8.length;
-        Byte[] bank = new Byte[bankLength];
+        byte[] bank = new byte[bankLength];
         for (int i = 0; i < bankLength; i++) {
             bank[i] = romData[this.getBankOffset(Bank.CHR8, bankNum) + i];
         }

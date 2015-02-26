@@ -809,7 +809,7 @@ public class CPU implements ICPU {
 	public boolean getOverflowFlag() { return P.isSetOverflow(); }
 	public boolean getNegativeFlag() { return P.isSetNegative(); }
 	public NES getNES() { return _nes; }
-	public CPUMemory getCPUMemory() { return _memory; }
+	public CPUMemory getMemory() { return _memory; }
 	
 	/**
 	 * Reads the instruction at that address. Creates a string that will readable

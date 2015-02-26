@@ -20,9 +20,9 @@ public class TestCPURunning {
 	public void initialize() throws UnableToLoadRomException {
 		Cartridge c = new Cartridge(ClassLoader.getSystemResourceAsStream("Pac-Man (U) [!].nes"));
 		NES _nes = new NES();
-		_c = _nes.getCPU();
-		_mem = _c.getCPUMemory();
-		_mem.writeCartToMemory(c);
+		_nes.setCart(c);
+		_c = _nes.getCPU();		
+		_mem = _c.getMemory();
 		_c.reset();
 	}
 	

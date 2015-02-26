@@ -17,8 +17,7 @@ public class CartridgeTest {
 	
 	@Test
 	public void testLoad() throws BankNotFoundException {
-		_c.get16PRGBank(0);
-		
+		_c.get16PRGBank(0);	
 	}
 
 }

@@ -4,9 +4,13 @@
  */
 package ffdYKJisu.nes_emu.system.memory;
 
+import java.util.Arrays;
+
 import com.google.common.primitives.Shorts;
 
+import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
+import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.ppu.PPU;
 import ffdYKJisu.nes_emu.util.UnsignedShorts;
 
@@ -157,5 +161,12 @@ public class PPUMemory {
 
 	public void write(byte addrH, byte addrL, byte val) throws InvalidAddressException {
 		throw new UnsupportedOperationException("Not supported yet.");
+	}
+
+	public void writeCartToMemory(Cartridge cart_) throws BankNotFoundException {
+		// TODO: support custom mappers
+		byte[] chrrom = cart_.get8CHRBank(0);
+		Arrays.copyOfRange(chrrom, PATTERN_TABLE_0_LOC, PATTERN_TABLE_SIZE);
+		Arrays.copyOfRange(chrrom, PATTERN_TABLE_1_LOC, PATTERN_TABLE_SIZE);		
 	}
 }

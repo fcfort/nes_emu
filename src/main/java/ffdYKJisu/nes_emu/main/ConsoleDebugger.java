@@ -12,10 +12,7 @@ import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
 import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.cpu.CPU;
-import ffdYKJisu.nes_emu.system.cpu.ICPU;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
-import ffdYKJisu.nes_emu.system.memory.PPUMemory;
-import ffdYKJisu.nes_emu.system.ppu.PPU;
 import ffdYKJisu.nes_emu.util.HexUtils;
 
 /**
@@ -42,8 +39,7 @@ public class ConsoleDebugger {
 		_nes = new NES();
 		_nes.setCart(c);
 		_cpu = _nes.getCPU();
-		_memory = _cpu.getCPUMemory();
-		_memory.writeCartToMemory(c);		
+		_memory = _cpu.getMemory();		
 	}
 	
 	@Command

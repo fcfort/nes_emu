@@ -3,6 +3,7 @@ package ffdYKJisu.nes_emu.system;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 import ffdYKJisu.nes_emu.screen.Image;
 import ffdYKJisu.nes_emu.system.cpu.CPU;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
@@ -72,7 +73,13 @@ public class NES {
 	
 	public void setCart(Cartridge cart) {
 		this.cart = cart;
-		_cpu.getCPUMemory().writeCartToMemory(cart);
+		// TODO: fix exception handling
+		try {
+			_cpu.getMemory().writeCartToMemory(cart);
+			_ppu.getMemory().writeCartToMemory(cart);
+		} catch (BankNotFoundException e) {
+			throw new RuntimeException(e);
+		}		
 	}
 
 	public CPU getCPU() { return _cpu; }
@@ -80,7 +87,7 @@ public class NES {
 	public Image getImage() { return _image; }
 	
 	public CPUMemory getCPUMemory() {
-		return _cpu.getCPUMemory();
+		return _cpu.getMemory();
 	}
 
 	public void reset() {

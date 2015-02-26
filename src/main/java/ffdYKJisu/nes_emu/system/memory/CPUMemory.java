@@ -50,23 +50,20 @@ public class CPUMemory {
 		PPUio = new byte[PPU_IO_LEN];
 	}
 	
-	public void writeCartToMemory(Cartridge cart) {	
+	public void writeCartToMemory(Cartridge cart) throws BankNotFoundException {	
 		logger.info("Loading cart into memory");
-		try {
-			byte[] bank = cart.get16PRGBank(0);
-			// Copy to lower bank
-			for (int i = 0; i < BANK_LEN; i++) {
-				PRGROM[i] = bank[i];
-				//System.out.print(PRGROM[i] + " ");
-			}
-			// Copy to upper bank
-			for (int i = 0; i < BANK_LEN; i++) {
-				PRGROM[i + BANK_LEN] = bank[i];
-			}
-
-		} catch (BankNotFoundException ex) {
-			logger.warn("Bank not found");
+		
+		byte[] bank = cart.get16PRGBank(0);
+		// Copy to lower bank
+		for (int i = 0; i < BANK_LEN; i++) {
+			PRGROM[i] = bank[i];
+			//System.out.print(PRGROM[i] + " ");
 		}
+		// Copy to upper bank
+		for (int i = 0; i < BANK_LEN; i++) {
+			PRGROM[i + BANK_LEN] = bank[i];
+		}
+		
 	}
 	
 	private enum AddressLocation {

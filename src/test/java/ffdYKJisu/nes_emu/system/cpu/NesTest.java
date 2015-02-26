@@ -48,9 +48,9 @@ public class NesTest {
 	public void initialize() throws UnableToLoadRomException, IOException {
 		Cartridge c = new Cartridge(ClassLoader.getSystemResourceAsStream("nestest.nes"));
 		NES _nes = new NES();
-		_c = _nes.getCPU();
-		_mem = _c.getCPUMemory();
-		_mem.writeCartToMemory(c);
+		_nes.setCart(c);
+		_c = _nes.getCPU();		
+		_mem = _c.getMemory();
 		_c.reset();
 		_nesTestLog = readLogFile();
 	}

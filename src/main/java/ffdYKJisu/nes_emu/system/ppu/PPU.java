@@ -13,7 +13,6 @@ import ffdYKJisu.nes_emu.screen.Image;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.PPUMemory;
 import ffdYKJisu.nes_emu.util.HexUtils;
-import ffdYKJisu.nes_emu.util.UnsignedShorts;
 
 /**
  *  Controls all PPU actions and holds object PPUMemory. Largely a passive
@@ -92,12 +91,19 @@ public class PPU {
         _horizontalScroll = 0;
         _verticalScroll = 0;
         
-        _isFirstWrite = true;
-        
+        _isFirstWrite = true;        
     }
+    
+    public PPUMemory getMemory() { return _memory; }
     
     public void runStep() {    	
     	// Idle cycle at the start of every scanline    	
+    	
+    	if(isRenderingEnabled()) {
+    		byte nameTableData = _memory.read(fetchNameTableByte());
+    		byte attributeData = _memory.read(fetchAttributeTableByte());
+    		
+    	}
     	
     	if(_verticalScroll >= 0 && _verticalScroll < 240 ) {
     		if(_horizontalScroll != 0 && _horizontalScroll % 8 == 0) {
@@ -111,13 +117,17 @@ public class PPU {
     		
     	}
     	
+    	if(isRenderingEnabled() && _horizontalScroll == 256) {
+    		incrementY();
+    	}
+    	
     	// Increment counters
     	_horizontalScroll++;
     	
     	if(_horizontalScroll > CYCLES_PER_SCANLINE) {
     		_verticalScroll++;
     		_horizontalScroll = 0;
-    	}
+    	}    	
     	
     	if(_verticalScroll > MAX_SCANLINE) {
     		_verticalScroll = 0;
