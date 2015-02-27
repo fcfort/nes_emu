@@ -13,6 +13,8 @@ import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.cpu.CPU;
 import ffdYKJisu.nes_emu.system.memory.CPUMemory;
+import ffdYKJisu.nes_emu.system.memory.PPUMemory;
+import ffdYKJisu.nes_emu.system.ppu.PPU;
 import ffdYKJisu.nes_emu.util.HexUtils;
 
 /**
@@ -24,9 +26,11 @@ public class ConsoleDebugger {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ConsoleDebugger.class);
 	
-	private final CPUMemory _memory;
+	private final CPUMemory _cpuMemory;
+	private final PPUMemory _ppuMemory;
 	private final CPU _cpu;
 	private final NES _nes;
+	private final PPU _ppu;
 	
 	public void usage() {
 		System.out.println("Welcome to the NES debugger." + 
@@ -39,7 +43,9 @@ public class ConsoleDebugger {
 		_nes = new NES();
 		_nes.setCart(c);
 		_cpu = _nes.getCPU();
-		_memory = _cpu.getMemory();		
+		_cpuMemory = _cpu.getMemory();
+		_ppu = _nes.getPPU();
+		_ppuMemory = _ppu.getMemory(); 
 	}
 	
 	@Command
@@ -68,7 +74,34 @@ public class ConsoleDebugger {
 	@Command
 	public void step() {
 		_cpu.runStep();
-	}	
+	}
+	
+	@Command
+	public void patterns() {
+		byte[][] left = new byte[128][128];
+		for(short i = PPUMemory.PATTERN_TABLE_0_LOC; i < PPUMemory.PATTERN_TABLE_0_LOC + PPUMemory.PATTERN_TABLE_SIZE; i++) {			
+			byte val = _ppuMemory.read(i);
+			int rowNumber = (i >>> 8) & 0xF;
+			int tileOffset = i & 0b111;
+			int x = rowNumber + tileOffset;
+			
+			/*			
+			 * For a given address in the pattern table:
+			 * 0123456789ABC
+			 * TTTPCCCCRRRRH
+			 * 
+			 * T - tile row
+			 * P - plane (1 = upper, 0 = lower)
+			 * C - column
+			 * R - row number
+			 * H - hand (0 = left, 1 = right)
+			 * 
+			 */
+ 
+			
+		}
+		
+	}
 
     public static void main(String[] args) throws IOException, UnableToLoadRomException {
         ShellFactory.createConsoleShell(">", "", new ConsoleDebugger()).commandLoop(); // and three.

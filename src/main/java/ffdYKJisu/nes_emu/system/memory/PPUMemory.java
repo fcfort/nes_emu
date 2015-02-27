@@ -17,14 +17,14 @@ import ffdYKJisu.nes_emu.util.UnsignedShorts;
 public class PPUMemory {
 
 	// Some useful constants
-	private static final int PATTERN_TABLE_SIZE = 0x1000;
+	public static final int PATTERN_TABLE_SIZE = 0x1000;
 	private static final int NAME_TABLE_SIZE = 0x3C0;
 	private static final int OAM_TABLE_SIZE = 0x40;
 	private static final int PALETTE_SIZE = 0x10;
 	private static final int SPRITE_RAM_SIZE = 0x100;
 
-	private static final short PATTERN_TABLE_0_LOC = 0x0000;
-	private static final short PATTERN_TABLE_1_LOC = 0x1000;
+	public static final short PATTERN_TABLE_0_LOC = 0x0000;
+	public static final short PATTERN_TABLE_1_LOC = 0x1000;
 	
 	private static final short NAME_TABLE_0_LOC = 0x2000;
 	private static final short NAME_TABLE_1_LOC = 0x2400;

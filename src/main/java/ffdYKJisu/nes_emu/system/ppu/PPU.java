@@ -200,7 +200,6 @@ public class PPU {
 	public short getCurrentVRAMAddress() { return _v; }    
     public boolean isFirstWrite() { return _isFirstWrite; }    
     public byte getFineXScroll() { return _fineXScroll; }
-	public PPUMemory getPPUMemory() { return _memory; }
 
 	// http://wiki.nesdev.com/w/index.php/PPU_power_up_state
 	public void reset() {
