@@ -13,4 +13,12 @@ public class InvalidAddressException extends RuntimeException {
 	public InvalidAddressException(String msg) {
           super(msg);
 	}
+	
+	public InvalidAddressException(Throwable e_, String template_, Object ... args_) {		
+        super(String.format(template_, args_), e_);
+	}
+	
+	public InvalidAddressException(String template_, Object ... args_) {		
+      super(String.format(template_, args_));
+	}
 }

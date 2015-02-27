@@ -46,6 +46,7 @@ public class ConsoleDebugger {
 		_cpuMemory = _cpu.getMemory();
 		_ppu = _nes.getPPU();
 		_ppuMemory = _ppu.getMemory(); 
+		logger.info(c.toString());
 	}
 	
 	@Command
@@ -77,30 +78,67 @@ public class ConsoleDebugger {
 	}
 	
 	@Command
-	public void patterns() {
-		byte[][] left = new byte[128][128];
-		for(short i = PPUMemory.PATTERN_TABLE_0_LOC; i < PPUMemory.PATTERN_TABLE_0_LOC + PPUMemory.PATTERN_TABLE_SIZE; i++) {			
-			byte val = _ppuMemory.read(i);
-			int rowNumber = (i >>> 8) & 0xF;
-			int tileOffset = i & 0b111;
-			int x = rowNumber + tileOffset;
+	public String patterns() {
+		byte[][][] patternTableMap = new byte[2][128][128];
+		/*			
+		 * For a given address in the pattern table:
+		 * 0123456789ABC
+		 * TTTPCCCCRRRRH
+		 * 
+		 * T - tile row
+		 * P - plane (1 = upper, 0 = lower)
+		 * C - column
+		 * R - row number
+		 * H - hand (0 = left, 1 = right)
+		 * 
+		 */		
+		for(short addr = PPUMemory.PATTERN_TABLE_0_LOC; addr < PPUMemory.PATTERN_TABLE_1_LOC + PPUMemory.PATTERN_TABLE_SIZE; addr++) {			
+			byte val = _ppuMemory.read(addr);
+			int rowNumber = (addr >>> 8) & 0xF;
+			int tileOffset = addr & 0b111;
+			int y = (rowNumber << 3) + tileOffset;
+			int handIndex = (addr & (1 << 12)) == 0 ? 0 : 1;
+			int colNumber = (addr >>> 4) & 0xF;
+			int x = colNumber << 3;			
+			boolean isLowerPlane = (addr & (1 << 2)) == 0;
 			
-			/*			
-			 * For a given address in the pattern table:
-			 * 0123456789ABC
-			 * TTTPCCCCRRRRH
-			 * 
-			 * T - tile row
-			 * P - plane (1 = upper, 0 = lower)
-			 * C - column
-			 * R - row number
-			 * H - hand (0 = left, 1 = right)
-			 * 
-			 */
- 
+			logger.debug("Got rowNumber {}, colNumber {}, handIndex {}, x {}, y {}, tile offset {} with value {} and address {}", new Object[] {
+					rowNumber,
+					colNumber,
+					handIndex,
+					x,
+					y,
+					tileOffset,
+					HexUtils.toHex(val),
+					HexUtils.toHex(addr)					
+			});
 			
+			for(int i = 0; i < 8; i++) {
+				byte bit = (byte) ( (val & (1 << 8 - i)) == 0 ? 0 : 1 );
+				
+				if(isLowerPlane) {
+					bit <<= 1;
+				}
+				
+				logger.debug("Copying bit value {} to handIndex {}, x {}, y {}", new Object[] {bit, handIndex, x + i, y});
+				
+				patternTableMap[handIndex][x + i][y] += bit; 
+			}					
 		}
 		
+		StringBuilder sb = new StringBuilder();
+		for(int handIndex = 0; handIndex < 2; handIndex++) {
+			for(int y = 0; y < 128; y++) {
+				for(int x = 0; x < 128; x++) {
+					int val = patternTableMap[handIndex][x][y];
+					sb.append(val == 0 ? "." : val);
+				}
+				sb.append("\n");
+			}
+			sb.append("\n");
+		}
+		
+		return sb.toString();
 	}
 
     public static void main(String[] args) throws IOException, UnableToLoadRomException {

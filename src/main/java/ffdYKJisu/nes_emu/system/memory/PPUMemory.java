@@ -6,15 +6,21 @@ package ffdYKJisu.nes_emu.system.memory;
 
 import java.util.Arrays;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.primitives.Shorts;
 
 import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.ppu.PPU;
+import ffdYKJisu.nes_emu.util.HexUtils;
 import ffdYKJisu.nes_emu.util.UnsignedShorts;
 
 public class PPUMemory {
+	
+	private static Logger logger = LoggerFactory.getLogger(PPUMemory.class);
 
 	// Some useful constants
 	public static final int PATTERN_TABLE_SIZE = 0x1000;
@@ -110,14 +116,14 @@ public class PPUMemory {
 	
 	private static AddressLocation getAddressLocation(short address_) {
 		for(AddressLocation al : MEMORY_ORDER) {
-			if(UnsignedShorts.compare(al.getStartingAddress(), address_) >= 0 && 
-					UnsignedShorts.compare(al.getEndingAddress(), address_) < 0)
+			if(UnsignedShorts.compare(address_, al.getStartingAddress()) >= 0 && 
+					UnsignedShorts.compare(address_, al.getEndingAddress()) < 0)
 			{
 				return al;
 			}
 		}
 		
-		throw new UnsupportedOperationException();
+		throw new InvalidAddressException("Unreachable address %s", HexUtils.toHex(address_));
 	}
 	
 	public byte read(short address_) {
@@ -166,7 +172,10 @@ public class PPUMemory {
 	public void writeCartToMemory(Cartridge cart_) throws BankNotFoundException {
 		// TODO: support custom mappers
 		byte[] chrrom = cart_.get8CHRBank(0);
-		Arrays.copyOfRange(chrrom, PATTERN_TABLE_0_LOC, PATTERN_TABLE_SIZE);
-		Arrays.copyOfRange(chrrom, PATTERN_TABLE_1_LOC, PATTERN_TABLE_SIZE);		
+		PatternTable0 = Arrays.copyOfRange(chrrom, PATTERN_TABLE_0_LOC, PATTERN_TABLE_SIZE);
+		PatternTable1 = Arrays.copyOfRange(chrrom, PATTERN_TABLE_1_LOC, PATTERN_TABLE_1_LOC + PATTERN_TABLE_SIZE);
+		logger.info("Copy CHR ROM bank 0 to PPU memory: {}", Arrays.toString(chrrom));
+		logger.info("Byte 16: {}", PatternTable0[15]);
+		logger.info("PPU nametable 0: {}", Arrays.toString(PatternTable0));
 	}
 }
