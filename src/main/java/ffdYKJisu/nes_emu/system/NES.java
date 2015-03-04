@@ -28,7 +28,7 @@ public class NES {
 	private final Image _image;
 	/** How many cycles the ppu runs for every cpu cycles */
 	
-	private static final double PPU_CPU_CYCLE_RATIO = 3;
+	private static final int PPU_CPU_CYCLE_RATIO = 3;
 	
 	private static final int IMAGE_WIDTH = 256;
 	private static final int IMAGE_HEIGHT = 240;
@@ -94,9 +94,10 @@ public class NES {
 		_cpu.reset();
 	}
 
-	public void step() {
+	public void runStep() {
 		_cpu.runStep();
-	}
-
-	
+		for(int i = 0; i < PPU_CPU_CYCLE_RATIO; i++) {
+			_ppu.runStep();
+		}
+	}	
 }

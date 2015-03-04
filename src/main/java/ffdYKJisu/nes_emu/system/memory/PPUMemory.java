@@ -24,7 +24,7 @@ public class PPUMemory {
 
 	// Some useful constants
 	public static final int PATTERN_TABLE_SIZE = 0x1000;
-	private static final int NAME_TABLE_SIZE = 0x3C0;
+	private static final int NAME_TABLE_SIZE = 0x400; // includes attribute table at end 
 	private static final int OAM_TABLE_SIZE = 0x40;
 	private static final int PALETTE_SIZE = 0x10;
 	private static final int SPRITE_RAM_SIZE = 0x100;
@@ -99,16 +99,27 @@ public class PPUMemory {
 
 	/** Changing mirroring locations to read unmirrored locations */
 	private static short unmirrorAddress(short address_) {
+		// 14 bit addressing
+		address_ &= ~(0b11 << 14);
+		
 		// Pattern/name table mirroring 
 		if(UnsignedShorts.compare(address_, (short) 0x3000) >= 0 &&
-			UnsignedShorts.compare(address_, (short) 0x3EFF) < 0) 
+			UnsignedShorts.compare(address_, (short) 0x3EFF) <= 0) 
 		{
 			return (short) (address_ - 0x1000);
 		} else if(UnsignedShorts.compare(address_, (short) 0x3F20) >= 0 &&
-				UnsignedShorts.compare(address_, (short) 0x3F1F) < 0) 
+				UnsignedShorts.compare(address_, (short) 0x3FFF) <= 0) 
 		{
-			int offset = (Short.toUnsignedInt(address_) - 0x3F00) % PALETTE_SIZE;
-			return (short) (PALETTE_LOC + offset);
+			// Whole mirrors of palette
+			short unmirroredAddress = (short) (address_ & ~(0b111 << 5));		
+			// Individual backdrop color mirrors
+			switch(unmirroredAddress) {
+				case 0x3F10: return 0x3F00;
+				case 0x3F14: return 0x3F04;
+				case 0x3F18: return 0x3F08;
+				case 0x3F1C: return 0x3F0C;
+				default: return unmirroredAddress;
+			}
 		} else {
 			return address_;
 		}
@@ -160,7 +171,7 @@ public class PPUMemory {
 		short address = zeroPageAddress;
         return read(address);
 	}
-
+ 
 	public void write(short address, byte val) throws InvalidAddressException {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}

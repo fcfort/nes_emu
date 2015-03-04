@@ -13,6 +13,7 @@ import ffdYKJisu.nes_emu.screen.Image;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.PPUMemory;
 import ffdYKJisu.nes_emu.util.HexUtils;
+import ffdYKJisu.nes_emu.util.UnsignedShorts;
 
 /**
  *  Controls all PPU actions and holds object PPUMemory. Largely a passive
@@ -63,6 +64,12 @@ public class PPU {
     private int _patternTableIndex;
     private int _nameTableIndex;
     
+    private byte lastNametableValue;
+    private byte lastAttributeTableValue;
+    private byte lastLowBackgroundTile;
+    private byte lastHighBackgroundTile;
+    
+    
     private byte[] _objectAttributeMemory;
     
     private short _v;
@@ -96,20 +103,48 @@ public class PPU {
     
     public PPUMemory getMemory() { return _memory; }
     
-    public void runStep() {    	
-    	// Idle cycle at the start of every scanline    	
+    private int getCoarseX() {
+    	return _v & 0b1_1111;
+    }
+    
+    private int getCoarseY() {
+    	return (_v >> 5) & 0b1_1111;
+    }      
+    
+    public int muxPixel(byte fineXScroll_, int attributeBits_, byte lowBackground_, byte highBackground_) {    	
+    	//byte bgBit = lowBackground_ & 1 << fineXScroll_;
+    	//attributeBits << 3
+    	int bgValue = (highBackground_ << 1) | (lowBackground_);
     	
-    	if(isRenderingEnabled()) {
-    		byte nameTableData = _memory.read(fetchNameTableByte());
-    		byte attributeData = _memory.read(fetchAttributeTableByte());
-    		
+    	logger.info("Got bg value {}", bgValue);
+    	
+    	if(bgValue == 0) {
+    		return 0x00_00_00;
+    	} else {
+    		return 0xFF_FF_FF;
     	}
-    	
+    }
+    
+    public void runStep() {
     	if(_verticalScroll >= 0 && _verticalScroll < 240 ) {
     		if(_horizontalScroll != 0 && _horizontalScroll % 8 == 0) {
-    			
+    			lastNametableValue = fetchNametableByte();
+    			lastAttributeTableValue = fetchAttributeTableByte();    			
+    			lastLowBackgroundTile = fetchLowBackgroundByte();
+    			lastHighBackgroundTile = fetchHighBackgroundByte();
+    			incrementCoarseX();
     		}
-    	}       
+    		
+    		int attributeByteOffset = ((getCoarseY() % 2) << 1)| (getCoarseX() % 2) << 1;
+    		
+    		int attributeBits = ((lastAttributeTableValue & (0b11 << attributeByteOffset)) >> attributeByteOffset) & 0b11;
+    		
+    		
+    		logger.info("Got low bg {}, high bg {}, name table {}", new Object[] {lastLowBackgroundTile, lastHighBackgroundTile, lastNametableValue});
+    		int pixel = muxPixel(_fineXScroll, lastAttributeTableValue, lastLowBackgroundTile, lastHighBackgroundTile);
+    		
+    		_image.setPixel(_horizontalScroll, _verticalScroll, pixel);
+    	}
     	
     	if(_verticalScroll == MAX_SCANLINE) {
 
@@ -132,6 +167,7 @@ public class PPU {
     	if(_verticalScroll > MAX_SCANLINE) {
     		_verticalScroll = 0;
     		_frame++;
+    		_image.render();
     	}
     	_cyclesRun++;
     	_cyclesRunSinceReset++;
@@ -155,6 +191,22 @@ public class PPU {
 		}
 	}
 	
+	private void incrementFineX() {		
+		_fineXScroll++;
+		
+		if(_fineXScroll == 8) {
+			_fineXScroll = 0;
+		}
+	}
+	
+	private void incrementX() {
+		if(_fineXScroll == 7) {
+			incrementCoarseX();
+		}
+
+		incrementFineX();
+	}
+	
 	private void incrementCoarseX() {
 		if ((_v & 0x001F) == 31) { // if coarse X == 31
 			_v &= ~0x001F;         // coarse X = 0
@@ -176,12 +228,32 @@ public class PPU {
     	return _maskRegister.getValue(2);
     }
     
-    private byte fetchNameTableByte() {
-    	return 0;
+    private byte fetchNametableByte() {
+    	return _memory.read(calculateTileAddress());
     }
     
     private byte fetchAttributeTableByte() {
     	return _memory.read(calculateAttributeAddress());
+    }
+    
+    private byte fetchLowBackgroundByte() {
+    	return _memory.read(calculatePatternTableAddress(lastNametableValue, 0));
+    }
+    
+    private byte fetchHighBackgroundByte() {
+    	return _memory.read(calculatePatternTableAddress(lastNametableValue, 1));
+    }    
+    
+    private short calculatePatternTableAddress(byte nametableByte_, int offset_) {
+    	int backgroundHandBit = _controlRegister.getValue(4) ? 1 : 0;
+    	
+    	short patternTableAddress = (short) ( 
+    			(backgroundHandBit << 12) |
+    			((nametableByte_ << 3) & 0xFF) |
+    			_fineXScroll    			
+    	);
+    	
+    	return (short) (patternTableAddress + offset_);
     }
     
     private short calculateTileAddress() {
@@ -190,10 +262,6 @@ public class PPU {
     
     private short calculateAttributeAddress() {
     	 return (short) (0x23C0 | (_v & 0x0C00) | ((_v >> 4) & 0x38) | ((_v >> 2) & 0x07));
-    }
-    
-    private byte fetchPatternTableBitmap() {
-    	return 0;
     }
     
     public short getTemporaryVRAMAddress() { return _t; }
@@ -208,8 +276,7 @@ public class PPU {
         _statusRegister.setByte((byte) 0);
         _scrollRegister.setByte((byte) 0);
         _addressRegister.setByte((byte) 0);
-        _dataRegister.setByte((byte) 0);	
-        
+        _dataRegister.setByte((byte) 0);        
         
         _cyclesRunSinceReset = 0;
 	}

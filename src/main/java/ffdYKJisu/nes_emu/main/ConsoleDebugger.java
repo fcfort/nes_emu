@@ -69,38 +69,51 @@ public class ConsoleDebugger {
 	
 	@Command
 	public void reset() {
-		_cpu.reset();
+		_nes.reset();
 	}	
 	
 	@Command
 	public void step() {
-		_cpu.runStep();
+		_nes.runStep();
 	}
+	
+	@Command
+	public void quit() {
+		System.exit(0);
+	}
+	
+	@Command
+	public void run() {
+		while(true) {
+			_nes.runStep();
+		}
+	}	
 	
 	@Command
 	public String patterns() {
 		byte[][][] patternTableMap = new byte[2][128][128];
-		/*			
-		 * For a given address in the pattern table:
-		 * 0123456789ABC
-		 * TTTPCCCCRRRRH
+		/* 
+		 * For a given address in the pattern table (high order bits first):
+		 * CBA9876543210
+		 * HRRRRCCCCPTTT
 		 * 
-		 * T - tile row
-		 * P - plane (1 = upper, 0 = lower)
-		 * C - column
-		 * R - row number
 		 * H - hand (0 = left, 1 = right)
-		 * 
+		 * R - row number		
+		 * C - column
+		 * P - plane (1 = upper, 0 = lower)
+		 * T - Fine Y offset of tile
 		 */		
 		for(short addr = PPUMemory.PATTERN_TABLE_0_LOC; addr < PPUMemory.PATTERN_TABLE_1_LOC + PPUMemory.PATTERN_TABLE_SIZE; addr++) {			
 			byte val = _ppuMemory.read(addr);
-			int rowNumber = (addr >>> 8) & 0xF;
-			int tileOffset = addr & 0b111;
-			int y = (rowNumber << 3) + tileOffset;
-			int handIndex = (addr & (1 << 12)) == 0 ? 0 : 1;
-			int colNumber = (addr >>> 4) & 0xF;
-			int x = colNumber << 3;			
-			boolean isLowerPlane = (addr & (1 << 2)) == 0;
+			int handIndex = (addr & (1 << 12)) == 0 ? 0 : 1; // bit  12
+			int rowNumber = (addr >>> 8) & 0xF;              // bits 8-11 
+			int colNumber = (addr >>> 4) & 0xF;              // bits 4-7
+			boolean isLowerPlane = (addr & (1 << 3)) == 0;	 // bit  3		
+			int tileOffset = addr & 0b111;                   // bits 0-2
+			
+			// Get x and y into pixel array from these:
+			int x = colNumber << 3;
+			int y = (rowNumber << 3) + tileOffset;						
 			
 			logger.debug("Got rowNumber {}, colNumber {}, handIndex {}, x {}, y {}, tile offset {} with value {} and address {}", new Object[] {
 					rowNumber,

@@ -1,18 +1,29 @@
 package ffdYKJisu.nes_emu.screen;
 
+import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ffdYKJisu.nes_emu.domain.Opcode;
+import ffdYKJisu.nes_emu.util.HexUtils;
+
 /** http://stackoverflow.com/a/24449867 */
 public class Image {
+	
+	private static final Logger logger = LoggerFactory.getLogger(Image.class);
 	
 	private final Screen screen;
 	private final BufferedImage image;
 	private final int[] pixels;
 	private final int _width;
 	private final int _height;
+	private final Frame _frame;
 	
 	public Image(int width_, int height_) {
 		_width = width_;
@@ -20,6 +31,12 @@ public class Image {
 		screen = new Screen(width_, height_);
 		image = new BufferedImage(_width, _height, BufferedImage.TYPE_INT_RGB);
 		pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+		
+		// Configure frame
+		_frame = new Frame("NES");
+		_frame.add("Center", new MainCanvas());
+		_frame.setSize(new Dimension(_width, _height));
+		_frame.setVisible(true);
 	}
 	
 	public void render() {
@@ -28,9 +45,6 @@ public class Image {
 			createBufferStrategy(3);
 			return;
 		}
-
-		screen.clear();
-		screen.render();
 
 		for (int i = 0; i < pixels.length; i++) {
 			pixels[i] = screen.pixels[i];
@@ -43,17 +57,16 @@ public class Image {
 	}
 	
 	public void setPixel(int x_, int y_, int value_) {
+		logger.info("Writing pixel value {} to x,y ({},{})", new Object[] {value_, x_, y_});
 		screen.setPixel(x_, y_, value_);
 	}
 
 	private void createBufferStrategy(int i) {
-		// TODO Auto-generated method stub
-
+		_frame.createBufferStrategy(3);
 	}
 
 	private BufferStrategy getBufferStrategy() {
-		// TODO Auto-generated method stub
-		return null;
+		return _frame.getBufferStrategy();
 	}
 
 }

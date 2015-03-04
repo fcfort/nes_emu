@@ -572,6 +572,7 @@ public class CPU implements ICPU {
 	
 	/** http://wiki.nesdev.com/w/index.php/CPU_status_flag_behavior */
 	public void BRK() {
+		PC++;
 		pushPC();
 		byte status = P.asByte();
 		status |= 1 << 4; // "B" flag only exists on the stack, never set in status register
