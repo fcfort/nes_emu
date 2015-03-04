@@ -5,6 +5,8 @@
 
 package ffdYKJisu.nes_emu.system.ppu;
 
+import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +18,7 @@ import ffdYKJisu.nes_emu.util.HexUtils;
 import ffdYKJisu.nes_emu.util.UnsignedShorts;
 
 /**
- *  Controls all PPU actions and holds object PPUMemory. Largely a passive
+ * Controls all PPU actions and holds object PPUMemory. Largely a passive
  * class. State information is passed to the class when the CPU is done working.
  * 
  * Based on http://wiki.nesdev.com/w/index.php/The_skinny_on_NES_scrolling
@@ -77,6 +79,9 @@ public class PPU {
     private byte _fineXScroll;
     private boolean _isFirstWrite;
     
+    private boolean _nmiOccurred;
+    private boolean _nmiOutput;
+    
     public PPU(NES nes_) {
     	logger.info("Initializing PPU");
     	_nes = nes_;
@@ -98,25 +103,13 @@ public class PPU {
         _horizontalScroll = 0;
         _verticalScroll = 0;
         
-        _isFirstWrite = true;        
+        _isFirstWrite = true;
     }
-    
-    public PPUMemory getMemory() { return _memory; }
-    
-    private int getCoarseX() {
-    	return _v & 0b1_1111;
-    }
-    
-    private int getCoarseY() {
-    	return (_v >> 5) & 0b1_1111;
-    }      
-    
+        
     public int muxPixel(byte fineXScroll_, int attributeBits_, byte lowBackground_, byte highBackground_) {    	
     	//byte bgBit = lowBackground_ & 1 << fineXScroll_;
     	//attributeBits << 3
     	int bgValue = (highBackground_ << 1) | (lowBackground_);
-    	
-    	logger.info("Got bg value {}", bgValue);
     	
     	if(bgValue == 0) {
     		return 0x00_00_00;
@@ -124,55 +117,127 @@ public class PPU {
     		return 0xFF_FF_FF;
     	}
     }
+
+    /** 
+     * At dot 257:
+     * hori(v) = hori(t) 
+     * v: ....F.. ...EDCBA = t: ....F.. ...EDCBA
+     */
+    public void copyHorizontalTtoV() {
+    	short mask = 1 << 10 | 0b1_1111;
+    	_v = (short) ((_v & ~mask) | (_t & mask));
+    }
+    
+    /**
+     * During dots 280 to 304 of the pre-render scanline (end of vblank):
+	 * If rendering is enabled, at the end of vblank, shortly after the horizontal bits 
+	 * are copied from t to v at dot 257, the PPU will repeatedly copy the vertical bits 
+	 * from t to v from dots 280 to 304, completing the full initialization of v from t:
+	 * v: IHGF.ED CBA..... = t: IHGF.ED CBA.....
+     */
+    public void copyVerticalTtoV() {
+    	// TODO: move mask copy to its own function?
+    	short mask = 0b111_1011_1110_0000;
+    	_v = (short) ((_v & ~mask) | (_t & mask)); 
+    }  
+    
+    private void sleep(int seconds) {
+    	try {
+			TimeUnit.SECONDS.sleep(5);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
     
     public void runStep() {
-    	if(_verticalScroll >= 0 && _verticalScroll < 240 ) {
-    		if(_horizontalScroll != 0 && _horizontalScroll % 8 == 0) {
-    			lastNametableValue = fetchNametableByte();
-    			lastAttributeTableValue = fetchAttributeTableByte();    			
-    			lastLowBackgroundTile = fetchLowBackgroundByte();
-    			lastHighBackgroundTile = fetchHighBackgroundByte();
-    			incrementCoarseX();
+    	if(isRenderingEnabled()) {
+    		sleep(5);
+    		
+    		if(_horizontalScroll == 256) {
+    			incrementY();
+	    	}
+    		
+    		if(_horizontalScroll == 257) {
+    			copyHorizontalTtoV();
     		}
     		
-    		int attributeByteOffset = ((getCoarseY() % 2) << 1)| (getCoarseX() % 2) << 1;
+    		if(_horizontalScroll >= 328 || _horizontalScroll <= 256) {    			
+    			incrementFineX();
+    			if(_horizontalScroll % 8 == 0 && _horizontalScroll != 0) {
+    				lastNametableValue = fetchNametableByte();
+					lastAttributeTableValue = fetchAttributeTableByte();    			
+					lastLowBackgroundTile = fetchLowBackgroundByte();
+					lastHighBackgroundTile = fetchHighBackgroundByte();
+    				incrementCoarseX();	
+    			}    			
+    		}
     		
-    		int attributeBits = ((lastAttributeTableValue & (0b11 << attributeByteOffset)) >> attributeByteOffset) & 0b11;
+    		if(_verticalScroll < 240 || _verticalScroll == MAX_SCANLINE) {
+				int attributeByteOffset = ((getCoarseY() % 2) << 1)| (getCoarseX() % 2) << 1;
+				
+				int attributeBits = ((lastAttributeTableValue & (0b11 << attributeByteOffset)) >> attributeByteOffset) & 0b11;
+				
+				
+				logger.info("Got low bg {}, high bg {}, name table {}", new Object[] {lastLowBackgroundTile, lastHighBackgroundTile, lastNametableValue});
+				int pixel = muxPixel(_fineXScroll, lastAttributeTableValue, lastLowBackgroundTile, lastHighBackgroundTile);
+				logger.info("Got loopy v {}, loopy t {}, frame {}", new Object[] {HexUtils.toHex(_v), HexUtils.toHex(_t), _frame});  
+				
+				_image.setPixel(_horizontalScroll, _verticalScroll, pixel);
+    		}
     		
-    		
-    		logger.info("Got low bg {}, high bg {}, name table {}", new Object[] {lastLowBackgroundTile, lastHighBackgroundTile, lastNametableValue});
-    		int pixel = muxPixel(_fineXScroll, lastAttributeTableValue, lastLowBackgroundTile, lastHighBackgroundTile);
-    		
-    		_image.setPixel(_horizontalScroll, _verticalScroll, pixel);
+    		if(_verticalScroll == MAX_SCANLINE) {
+    			if(_horizontalScroll >= 280 && _horizontalScroll <= 304) {
+    				copyVerticalTtoV();
+    			}
+    		}
     	}
-    	
-    	if(_verticalScroll == MAX_SCANLINE) {
-
-    	} else if(_verticalScroll >= 0 && _verticalScroll <= 239) {
     		
-    	}
-    	
-    	if(isRenderingEnabled() && _horizontalScroll == 256) {
-    		incrementY();
-    	}
-    	
     	// Increment counters
     	_horizontalScroll++;
     	
-    	if(_horizontalScroll > CYCLES_PER_SCANLINE) {
+    	if(_horizontalScroll > CYCLES_PER_SCANLINE) {    		
     		_verticalScroll++;
+    		logger.info("Now on vertical scroll {}", _verticalScroll);
     		_horizontalScroll = 0;
-    	}    	
+    	}
+    	
+    	// set vblank
+    	if(_verticalScroll == MAX_SCANLINE - 20 && _horizontalScroll == 1) {
+    		setNMIOccurred(true);
+
+    	}
+    	
+    	// clear vblank
+    	if(_verticalScroll == MAX_SCANLINE && _horizontalScroll == 1) {
+    		setNMIOccurred(false);
+
+    	}
     	
     	if(_verticalScroll > MAX_SCANLINE) {
     		_verticalScroll = 0;
     		_frame++;
     		_image.render();
     	}
+    	
     	_cyclesRun++;
     	_cyclesRunSinceReset++;
-    }
-    
+    }   
+
+	private void setNMIOccurred(boolean val_) {
+		logger.info("NMI occurred status set to {}", val_);
+		_statusRegister.setValue(7, val_);
+		
+		if(val_ && isNMIEnabled()) {
+			logger.info("Generating NMI from PPU");
+			nonMaskableInterrupt();
+		}
+	}
+	
+	private boolean isNMIEnabled() {
+		return _controlRegister.getValue(7);
+	}
+
 	private void incrementY() {
 		if ((_v & 0x7000) != 0x7000) {  // if fine Y < 7
 			_v += 0x1000;               // increment fine Y
@@ -198,15 +263,7 @@ public class PPU {
 			_fineXScroll = 0;
 		}
 	}
-	
-	private void incrementX() {
-		if(_fineXScroll == 7) {
-			incrementCoarseX();
-		}
 
-		incrementFineX();
-	}
-	
 	private void incrementCoarseX() {
 		if ((_v & 0x001F) == 31) { // if coarse X == 31
 			_v &= ~0x001F;         // coarse X = 0
@@ -216,6 +273,10 @@ public class PPU {
 		}
 	}
     
+	private void nonMaskableInterrupt() {
+		_nes.getCPU().nonMaskableInterrupt();
+	}
+	
     private boolean isRenderingEnabled() {
     	return isBackgroundRenderingEnabled() || isSpriteRenderingEnabled();
     }
@@ -265,9 +326,11 @@ public class PPU {
     }
     
     public short getTemporaryVRAMAddress() { return _t; }
-	public short getCurrentVRAMAddress() { return _v; }    
+	public short getCurrentVRAMAddress() { return _v; }  
+	public void setTemporaryVRAMAddress(short t_) { _t = t_; }
+	public void setCurrentVRAMAddress(short v_) { _v = v_; }
     public boolean isFirstWrite() { return _isFirstWrite; }    
-    public byte getFineXScroll() { return _fineXScroll; }
+    public byte getFineXScroll() { return _fineXScroll; }    
 
 	// http://wiki.nesdev.com/w/index.php/PPU_power_up_state
 	public void reset() {
@@ -283,9 +346,18 @@ public class PPU {
 	
 	public byte read(short address_) {
 		switch(address_) {
-			case PPUSTATUS_ADDRESS:
+			case PPUSTATUS_ADDRESS: // $2002
+				/*
+				 * http://wiki.nesdev.com/w/index.php/NMI
+				 * Read $2002: Return old status of NMI_occurred in bit 7, then set NMI_occurred to false.
+				 */
+				byte oldStatus = _statusRegister.asByte();
+				setNMIOccurred(false);
 				_isFirstWrite = true;
-				return _statusRegister.getByte();				
+				return oldStatus;
+			case PPUDATA_ADDRESS: // $2007
+				dataRegisterAccessIncrement();
+				return _dataRegister.asByte();
 			default:
 				throw new UnsupportedOperationException("Tried to read PPU address " + HexUtils.toHex(address_));
 		}
@@ -293,14 +365,15 @@ public class PPU {
 	
 	public void write(short address_, byte val_) {
 		switch(address_) {
-			case PPUCTRL_ADDRESS:
+			case PPUCTRL_ADDRESS: // $2000
 				_controlRegister.setByte(val_);
+				setNMIOccurred((val_ & (1 << 7)) != 0);
 				/* t: ...BA.. ........ = d: ......BA */
 				short destBitMask = ~(0b11 << 10);
 				byte srcBitMask = 0b11;
 				_t = (short) ((_t & destBitMask) | ((val_ & srcBitMask) << 10)); 				
 				break;
-			case PPUMASK_ADDRESS:
+			case PPUMASK_ADDRESS: // $2001
 				_maskRegister.setByte(val_);
 				break;
 			case PPUSCROLL_ADDRESS:
@@ -319,7 +392,7 @@ public class PPU {
 				}
 				_isFirstWrite ^= true; // toggle
 				break;
-			case PPUADDR_ADDRESS:
+			case PPUADDR_ADDRESS: // $2006
 				_addressRegister.setByte(val_);
 				if(_isFirstWrite) {
 					/* t: .FEDCBA ........ = d: ..FEDCBA */
@@ -333,10 +406,38 @@ public class PPU {
 					_v = _t;
 				}
 				_isFirstWrite ^= true; // toggle
+				break;				
+			case PPUDATA_ADDRESS: // $2007
+				_dataRegister.setByte(val_);
+				dataRegisterAccessIncrement();
 				break;
 			default:
 				throw new UnsupportedOperationException();
 		}
 	}
+
+	private void dataRegisterAccessIncrement() {
+		if(isRendering()) {		
+			_v += _controlRegister.getValue(2) ? 32 : 1;
+		} else {
+			// TODO: both x and y increments are supposed to happen simultaneously
+			incrementCoarseX();
+			incrementY();
+		}
+	}
+	
+	private boolean isRendering() { return isRenderingEnabled() && (_verticalScroll < 240 || _verticalScroll == MAX_SCANLINE); }
+
+	public int getCyclesSinceReset() { return _cyclesRunSinceReset; }
+	public int getCycles() { return _cyclesRun; }
+	public int getHorizontalScroll() { return _horizontalScroll; }
+	public int getVerticalScroll() { return _verticalScroll; }
+	public byte getControlRegister() { return _controlRegister.asByte(); }
+	public byte getMaskRegister() { return _maskRegister.asByte(); }
+	public byte getStatusRegister() { return _statusRegister.asByte(); }
+	public PPUMemory getMemory() { return _memory; }    
+    public int getCoarseX() { return _v & 0b1_1111; }   
+    public int getCoarseY() { return (_v >> 5) & 0b1_1111; }      
+    
 
 }

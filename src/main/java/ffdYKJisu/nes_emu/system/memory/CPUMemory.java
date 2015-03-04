@@ -15,6 +15,7 @@ import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.cpu.CPU;
+import ffdYKJisu.nes_emu.util.HexUtils;
 import ffdYKJisu.nes_emu.util.UnsignedShorts;
 
 /**
@@ -27,8 +28,13 @@ public class CPUMemory {
 	
 	private static final int SRAM_LEN = 0x2000;
 	private static final int RAM_LEN = 0x2000;
+	
 	private static final int PPU_IO_LEN = 8;
-	private static final int PPU_IO_OFFSET = 0x2000;	
+	private static final int PPU_IO_OFFSET = 0x2000;
+	
+	private static final int APU_IO_LEN = 0x20;
+	private static final int APU_IO_OFFSET = 0x4000;
+	
 	private static final int BANK_LEN = 0x4000; // 16kB
 	private static final int PRGROM_LEN = BANK_LEN * 2;
 	private static final int PRGROM_OFFSET = 0x8000;	
@@ -70,7 +76,8 @@ public class CPUMemory {
 		RAM,
 		PRGROM,
 		SRAM,
-		PPUio
+		PPUio,
+		APUio
 	}
 	
 	public void push(byte address_, byte val_) {
@@ -86,6 +93,8 @@ public class CPUMemory {
 			return AddressLocation.RAM; 
 		} else if (UnsignedShorts.compare(address_,(short)0x2000) >= 0 && UnsignedShorts.compare(address_,(short)0x4000) < 0) {
 			return AddressLocation.PPUio;
+		} else if (UnsignedShorts.compare(address_,(short)0x4000) >= 0 && UnsignedShorts.compare(address_,(short)0x4020) < 0) {
+			return AddressLocation.APUio;
 		} else if (UnsignedShorts.compare(address_,(short)0x8000) >= 0) {
 			return AddressLocation.PRGROM;
 		} else {
@@ -108,8 +117,11 @@ public class CPUMemory {
 			return val;
 		case RAM:
 			val = RAM[address]; // PPU/VRAM I/O Registers
-			logger.info("RAM I/O read value {} at address {}", toHex(val), toHex(address));
+			logger.debug("RAM I/O read value {} at address {}", toHex(val), toHex(address));
 			return val;
+		case APUio:
+			logger.info("Ignoring APU I/O read at address {}", HexUtils.toHex(address));
+			return 0;
 		case SRAM:
 		default:
 			throw new UnsupportedOperationException("Unrecognized address " + toHex(address));
@@ -141,6 +153,9 @@ public class CPUMemory {
 			throw new InvalidAddressException("In PRGROM");
 		case RAM:
 			RAMwrite(address, val);
+			break;
+		case APUio:
+			logger.info("Ignoring APU I/O write of {} to address {}", HexUtils.toHex(val), HexUtils.toHex(address));
 			break;
 		case SRAM:			
 		default:

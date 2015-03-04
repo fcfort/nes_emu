@@ -6,7 +6,7 @@ import com.google.common.collect.Maps;
 
 public class Register {
 	
-	private Map<String, Integer> _namedPositions;
+	private Map<String, Integer> _namedPositions; // TODO: Remove named register bits?
 	private byte _register;
 	
 	public Register() {
@@ -42,7 +42,7 @@ public class Register {
 		_register = value_;
 	}
 	
-	public byte getByte() {
+	public byte asByte() {
 		return _register;
 	}
 }

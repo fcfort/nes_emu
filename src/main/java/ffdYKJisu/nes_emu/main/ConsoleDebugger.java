@@ -51,7 +51,9 @@ public class ConsoleDebugger {
 	
 	@Command
 	public String status() {
-		return String.format("PC: %s SP: %s A: %s X: %s Y: %s Status: S %s V %s D %s I %s Z %s C %s",
+		StringBuilder sb = new StringBuilder();
+		
+		String cpuStatus = String.format("CPU - PC: %s SP: %s A: %s X: %s Y: %s Status: S %s V %s D %s I %s Z %s C %s",
 				HexUtils.toHex(_cpu.getPC()),
 				HexUtils.toHex(_cpu.getSP()),
 				HexUtils.toHex(_cpu.getA()),
@@ -65,6 +67,22 @@ public class ConsoleDebugger {
 				_cpu.getCarryFlag() ? 1 : 0
 		);
 		
+		String ppuStatus = String.format("PPU - Cycle: %d Coarse X: %d Fine X: %d Y: %d Hori: %d Vert: %d T: %s V: %s CTRL: %s MASK: %s STATUS: %s",
+				_ppu.getCyclesSinceReset(),
+				_ppu.getCoarseX(),
+				_ppu.getFineXScroll(),
+				_ppu.getCoarseY(),
+				_ppu.getHorizontalScroll(),
+				_ppu.getVerticalScroll(),
+				HexUtils.toHex(_ppu.getTemporaryVRAMAddress()),
+				HexUtils.toHex(_ppu.getCurrentVRAMAddress()),
+				HexUtils.toHex(_ppu.getControlRegister()),
+				HexUtils.toHex(_ppu.getMaskRegister()),
+				HexUtils.toHex(_ppu.getStatusRegister())				
+		);
+		
+		return cpuStatus + System.lineSeparator() + ppuStatus;
+		
 	}
 	
 	@Command
@@ -75,6 +93,13 @@ public class ConsoleDebugger {
 	@Command
 	public void step() {
 		_nes.runStep();
+	}
+	
+	@Command
+	public void step(int steps_) {
+		for(int i = 0; i < steps_; i++) {
+			_nes.runStep();
+		}
 	}
 	
 	@Command

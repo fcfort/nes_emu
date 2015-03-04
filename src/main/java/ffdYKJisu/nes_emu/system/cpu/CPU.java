@@ -45,6 +45,9 @@ public class CPU implements ICPU {
 	private int _cyclesRunSinceReset;
 	private byte _stackPointer;
 
+	private static short NMI_VECTOR_LOW = (short) 0xFFFA;
+	private static short NMI_VECTOR_HIGH = (short) 0xFFFB;
+	
 	private static short RESET_VECTOR_LOW = (short) 0xFFFC;
 	private static short RESET_VECTOR_HIGH = (short) 0xFFFD;
 	
@@ -52,6 +55,8 @@ public class CPU implements ICPU {
 	private static short INTERRUPT_VECTOR_HIGH = (short) 0xFFFF;
 	
 	private final NES _nes;
+
+	private boolean _nonMaskableInterruptFlag;
 	
 	public CPU(NES nes_) {
 		_nes = nes_;
@@ -75,8 +80,9 @@ public class CPU implements ICPU {
 		short initialPC = PC;
 		
 		// Print instruction to logger
-		logger.info("Got instruction {} opcode {} at PC {}", 
-				new Object[]{instructionToString(PC), op, HexUtils.toHex(PC)});		
+		logger.info("CPU - Cycle: {}, Got instruction {} opcode {} at PC {}", 
+				new Object[]{_cyclesRunSinceReset,
+				instructionToString(PC), op, HexUtils.toHex(PC)});		
 
 		// Increment PC
 		PC += op.getLength();
@@ -86,11 +92,24 @@ public class CPU implements ICPU {
 		persistResult(op, result, initialPC);
 		
 		short finalPC = PC;
+		
+		incrementCycles(calculateCyclesTaken(op, initialPC, finalPC));
+		
+		processInterrupts();
+	}
 
-		_cyclesRun += calculateCyclesTaken(op, initialPC, finalPC);
+	private void processInterrupts() {
+		if(_nonMaskableInterruptFlag) {
+			logger.info("Processing NMI");
+			NMI();
+			incrementCycles(7);
+		}
 	}
 	
-	
+	void incrementCycles(int cyclesTaken_) {
+		_cyclesRun += cyclesTaken_;
+		_cyclesRunSinceReset += cyclesTaken_;
+	}
 
 	/** 
 	 * Two mutually exclusive options, one, for indexed reads, add one cycle if 
@@ -177,13 +196,13 @@ public class CPU implements ICPU {
 	 ******************* */
 
 	private byte getOperand(AddressingMode mode_, short address_) {
-		logger.info("Finding operand for mode {} at address {}", mode_, HexUtils.toHex(address_));
+		logger.debug("Finding operand for mode {} at address {}", mode_, HexUtils.toHex(address_));
 		
 		switch (mode_) {
 		case IMPLICIT:
 			throw new UnsupportedOperationException();
 		case ACCUMULATOR:
-			logger.info("Got operand A = {}", A);
+			logger.debug("Got operand A = {}", A);
 			return A;			
 		case IMMEDIATE:
 		case ZERO_PAGE:			
@@ -197,7 +216,7 @@ public class CPU implements ICPU {
 		case INDIRECT_X:
 		case INDIRECT_Y:
 			byte val = _memory.read(address_);
-			logger.info("Got operand of value {} at address {}", HexUtils.toHex(val), HexUtils.toHex(address_));
+			logger.debug("Got operand of value {} at address {}", HexUtils.toHex(val), HexUtils.toHex(address_));
 			return val;
 		default:
 			logger.error("No matching addressing mode for {}", mode_);
@@ -293,7 +312,7 @@ public class CPU implements ICPU {
 				throw new AddressingModeException(mode_.toString());
 		}
 		
-		logger.info("Got address {} from mode {} at PC {}", 
+		logger.debug("Got address {} from mode {} at PC {}", 
 				new Object[]{HexUtils.toHex(addr), mode_, HexUtils.toHex(PC_)});
 		return addr;
 	}
@@ -581,6 +600,14 @@ public class CPU implements ICPU {
 		setPCFromVector(INTERRUPT_VECTOR_LOW, INTERRUPT_VECTOR_HIGH);		
 	}
 	
+	/** Not a true opcode but similar to BRK */
+	public void NMI() {
+		pushPC();
+		push(P.asByte());
+		P.setInterruptDisable();
+		setPCFromVector(NMI_VECTOR_LOW, NMI_VECTOR_HIGH);		
+	}
+	
 	public void RTI() {
 		P.fromByte(pop());
 		byte lowAddr = pop();
@@ -811,6 +838,8 @@ public class CPU implements ICPU {
 	public boolean getNegativeFlag() { return P.isSetNegative(); }
 	public NES getNES() { return _nes; }
 	public CPUMemory getMemory() { return _memory; }
+	public int getCyclesSinceReset() { return _cyclesRunSinceReset; }
+	public int getCycles() { return _cyclesRun; }
 	
 	/**
 	 * Reads the instruction at that address. Creates a string that will readable
@@ -852,6 +881,10 @@ public class CPU implements ICPU {
 				sb.append(" ");
 		}
 		return sb.toString();
+	}
+
+	public void nonMaskableInterrupt() {
+		_nonMaskableInterruptFlag = true;
 	}
 
 }

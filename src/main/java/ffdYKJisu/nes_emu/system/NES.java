@@ -46,26 +46,6 @@ public class NES {
 		_ppu = new PPU(this);
 		_image.render();
 	}
-
-	/**
-	 * 
-	 * @param numCycles
-	 *            Cycles to run NES (in CPU cycles)
-	 */
-	public void emulateFor(long numCycles) {
-		// int testRunLength = 200;
-		// for(int i=0; i < testRunLength; i++) {
-		int ppuCycles = (int) (numCycles / 3);
-		// Pass data the cpu needs to the ppu and run the cpu
-		// cpu.emulateFor(numCycles, ppu.getCpuData();
-		for(long i = 0; i < numCycles; i++) {
-			_cpu.runStep();
-		}
-
-		// Pass data the ppu needs to the ppu and run the ppu
-		// ppu.emulateFor(ppuCycles, cpu.getPpuData());
-		// }
-	}
 	
 	public Cartridge getCart() { 
 		return cart;
@@ -94,9 +74,15 @@ public class NES {
 		_cpu.reset();
 	}
 
+	/** Run step here really means run one CPU opcode */
 	public void runStep() {
+		// TODO: integer overflow on cycles
+		int before = _cpu.getCycles();
 		_cpu.runStep();
-		for(int i = 0; i < PPU_CPU_CYCLE_RATIO; i++) {
+		int after = _cpu.getCycles();
+		int cpuCyclesRun = after - before; 
+		
+		for(int i = 0; i < cpuCyclesRun * PPU_CPU_CYCLE_RATIO; i++) {
 			_ppu.runStep();
 		}
 	}	
