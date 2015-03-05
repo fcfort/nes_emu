@@ -1,14 +1,18 @@
 package ffdYKJisu.nes_emu.system.ppu;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
 import ffdYKJisu.nes_emu.system.NES;
+import ffdYKJisu.nes_emu.system.cpu.CPU;
 
 public class PPUScrollingTest {
 
@@ -19,7 +23,9 @@ public class PPUScrollingTest {
 	@Before
 	public void initialize() {		
 		NES n = mock(NES.class);
+		CPU c = mock(CPU.class);
 		when(n.getImage()).thenReturn(null);
+		when(n.getCPU()).thenReturn(c);
 		p = new PPU(n);
 	}
 	

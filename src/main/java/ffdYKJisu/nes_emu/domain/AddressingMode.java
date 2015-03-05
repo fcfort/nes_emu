@@ -1,8 +1,9 @@
 package ffdYKJisu.nes_emu.domain;
 
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.Map;
+
+import com.google.common.collect.Maps;
 
 /**
  * All possible addressing modes available to operations
@@ -24,30 +25,29 @@ public enum AddressingMode {
 	INDIRECT_X( "(Indirect,X)" ),
 	INDIRECT_Y( "(Indirect),Y" );
 	
-	private static final Map<String, AddressingMode> lookup
-		= new HashMap<String, AddressingMode>();
+	private static final Map<String, AddressingMode> nameMap = Maps.newHashMap();
 
 	static {
 		for ( AddressingMode m : EnumSet.allOf( AddressingMode.class ) ) {
-			lookup.put( m.getAddressingModeString(), m );
+			nameMap.put( m.getName(), m );
 		}
 	}
 	
-	private final String xmlName;
+	private final String _name;
 	
 	AddressingMode( String name ) {
-		xmlName = name;
+		_name = name;
 	}
 
-	private String getAddressingModeString() {
-		return xmlName;
+	private String getName() {
+		return _name;
 	}
 
 	public static AddressingMode get( String mode ) {
-		return lookup.get( mode );
+		return nameMap.get( mode );
 	}
 	
 	@Override public String toString() {
-		return getAddressingModeString();
+		return getName();
 	}
 }

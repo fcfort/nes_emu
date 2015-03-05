@@ -30,6 +30,7 @@ public class PPU {
     private static final int REGISTER_SIZE = 8;
     private static final int TILE_SIZE = 8;
     private static final int TILES_PER_SCANLINE = 32;
+    private static final int LAST_VISIBLE_SCANLINE = 239;
     private static final int MAX_SCANLINE = 261;
     private static final int CYCLES_PER_SCANLINE = 341;
     private static final int OAM_SIZE = 256;
@@ -151,8 +152,15 @@ public class PPU {
     }
     
     public void runStep() {
-    	if(isRenderingEnabled()) {
-    		sleep(5);
+    	if(isRenderingEnabled()) {    		    	
+    		    		
+    		if(_verticalScroll == 0) {
+    			
+    		}
+    		
+    		if(_horizontalScroll == 0) {
+    			_fineXScroll = 0;
+    		}
     		
     		if(_horizontalScroll == 256) {
     			incrementY();
@@ -163,27 +171,37 @@ public class PPU {
     		}
     		
     		if(_horizontalScroll >= 328 || _horizontalScroll <= 256) {    			
-    			incrementFineX();
     			if(_horizontalScroll % 8 == 0 && _horizontalScroll != 0) {
     				lastNametableValue = fetchNametableByte();
 					lastAttributeTableValue = fetchAttributeTableByte();    			
 					lastLowBackgroundTile = fetchLowBackgroundByte();
 					lastHighBackgroundTile = fetchHighBackgroundByte();
-    				incrementCoarseX();	
+					logger.info("For coarse x {}, fine X {}, read nametable {} attr {} low bg {} high bg {}", new Object[] {
+							getCoarseX(),
+							getFineXScroll(),
+							HexUtils.toHex(lastNametableValue),
+							HexUtils.toHex(lastAttributeTableValue),
+							HexUtils.toHex(lastLowBackgroundTile),
+							HexUtils.toHex(lastHighBackgroundTile)
+					});
+					
+
     			}    			
     		}
     		
-    		if(_verticalScroll < 240 || _verticalScroll == MAX_SCANLINE) {
+    		if(_verticalScroll <= LAST_VISIBLE_SCANLINE || _verticalScroll == MAX_SCANLINE) {
 				int attributeByteOffset = ((getCoarseY() % 2) << 1)| (getCoarseX() % 2) << 1;
 				
 				int attributeBits = ((lastAttributeTableValue & (0b11 << attributeByteOffset)) >> attributeByteOffset) & 0b11;
 				
 				
 				logger.info("Got low bg {}, high bg {}, name table {}", new Object[] {lastLowBackgroundTile, lastHighBackgroundTile, lastNametableValue});
-				int pixel = muxPixel(_fineXScroll, lastAttributeTableValue, lastLowBackgroundTile, lastHighBackgroundTile);
+				int pixel = muxPixel(getFineXScroll(), lastAttributeTableValue, lastLowBackgroundTile, lastHighBackgroundTile);
 				logger.info("Got loopy v {}, loopy t {}, frame {}", new Object[] {HexUtils.toHex(_v), HexUtils.toHex(_t), _frame});  
 				
-				_image.setPixel(_horizontalScroll, _verticalScroll, pixel);
+				if(_verticalScroll != MAX_SCANLINE) {
+					_image.setPixel(_horizontalScroll, _verticalScroll, pixel);
+				}
     		}
     		
     		if(_verticalScroll == MAX_SCANLINE) {
@@ -191,6 +209,15 @@ public class PPU {
     				copyVerticalTtoV();
     			}
     		}
+    		
+    		if(_horizontalScroll >= 328 || _horizontalScroll <= 256) {    			
+    			if(_horizontalScroll % 8 == 0 && _horizontalScroll != 0) {
+    				incrementCoarseX();
+    				_fineXScroll = 0;
+    			}
+    		}
+    		
+			incrementFineX();
     	}
     		
     	// Increment counters
@@ -203,7 +230,7 @@ public class PPU {
     	}
     	
     	// set vblank
-    	if(_verticalScroll == MAX_SCANLINE - 20 && _horizontalScroll == 1) {
+    	if(_verticalScroll == LAST_VISIBLE_SCANLINE + 1 && _horizontalScroll == 1) {
     		setNMIOccurred(true);
 
     	}
@@ -226,7 +253,7 @@ public class PPU {
 
 	private void setNMIOccurred(boolean val_) {
 		logger.info("NMI occurred status set to {}", val_);
-		_statusRegister.setValue(7, val_);
+		_statusRegister.setBit(7, val_);
 		
 		if(val_ && isNMIEnabled()) {
 			logger.info("Generating NMI from PPU");
@@ -235,7 +262,7 @@ public class PPU {
 	}
 	
 	private boolean isNMIEnabled() {
-		return _controlRegister.getValue(7);
+		return _controlRegister.getBit(7);
 	}
 
 	private void incrementY() {
@@ -277,16 +304,16 @@ public class PPU {
 		_nes.getCPU().nonMaskableInterrupt();
 	}
 	
-    private boolean isRenderingEnabled() {
+	public boolean isRenderingEnabled() {
     	return isBackgroundRenderingEnabled() || isSpriteRenderingEnabled();
     }
     
-    private boolean isBackgroundRenderingEnabled() {
-    	return _maskRegister.getValue(3);
+	public boolean isBackgroundRenderingEnabled() {
+    	return _maskRegister.getBit(3);
     }
     
-    private boolean isSpriteRenderingEnabled() {
-    	return _maskRegister.getValue(2);
+	public boolean isSpriteRenderingEnabled() {
+    	return _maskRegister.getBit(2);
     }
     
     private byte fetchNametableByte() {
@@ -306,12 +333,12 @@ public class PPU {
     }    
     
     private short calculatePatternTableAddress(byte nametableByte_, int offset_) {
-    	int backgroundHandBit = _controlRegister.getValue(4) ? 1 : 0;
+    	int backgroundHandBit = _controlRegister.getBit(4) ? 1 : 0;
     	
     	short patternTableAddress = (short) ( 
     			(backgroundHandBit << 12) |
     			((nametableByte_ << 3) & 0xFF) |
-    			_fineXScroll    			
+    			getFineXScroll()    			
     	);
     	
     	return (short) (patternTableAddress + offset_);
@@ -418,7 +445,7 @@ public class PPU {
 
 	private void dataRegisterAccessIncrement() {
 		if(isRendering()) {		
-			_v += _controlRegister.getValue(2) ? 32 : 1;
+			_v += _controlRegister.getBit(2) ? 32 : 1;
 		} else {
 			// TODO: both x and y increments are supposed to happen simultaneously
 			incrementCoarseX();
@@ -426,7 +453,10 @@ public class PPU {
 		}
 	}
 	
-	private boolean isRendering() { return isRenderingEnabled() && (_verticalScroll < 240 || _verticalScroll == MAX_SCANLINE); }
+	private boolean isRendering() { 
+		return isRenderingEnabled() && 
+				(_verticalScroll <= LAST_VISIBLE_SCANLINE || _verticalScroll == MAX_SCANLINE); 
+	}
 
 	public int getCyclesSinceReset() { return _cyclesRunSinceReset; }
 	public int getCycles() { return _cyclesRun; }
