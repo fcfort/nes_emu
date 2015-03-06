@@ -151,8 +151,13 @@ public class PPU {
 		}
     }
     
+    public void runStep(int cyclesToRun_) { 
+    }
+    
     public void runStep() {
-    	if(isRenderingEnabled()) {    		    	
+    	_image.setPixel(_horizontalScroll % 256, _verticalScroll & 240, _horizontalScroll + _verticalScroll);
+    	_image.render();
+    	if(isRenderingEnabled()) {  	
     		    		
     		if(_verticalScroll == 0) {
     			
