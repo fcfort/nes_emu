@@ -3,6 +3,7 @@ package ffdYKJisu.nes_emu.system.cpu;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import ffdYKJisu.nes_emu.system.memory.CpuMemory;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -20,8 +21,8 @@ public class TestBCC {
 
 	NES _n;
 	CPU _c;
-	ArrayCpuMemory _mem;
-	
+	CpuMemory _mem;
+
 	@Before
 	public void initialize() throws UnableToLoadRomException {
 		Cartridge c = new Cartridge(ClassLoader.getSystemResourceAsStream("Pac-Man (U) [!].nes"));

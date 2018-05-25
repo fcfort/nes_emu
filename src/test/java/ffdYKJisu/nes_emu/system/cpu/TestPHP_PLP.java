@@ -2,6 +2,7 @@ package ffdYKJisu.nes_emu.system.cpu;
 
 import static org.junit.Assert.assertEquals;
 
+import ffdYKJisu.nes_emu.system.memory.CpuMemory;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -14,7 +15,7 @@ public class TestPHP_PLP {
 
 	NES _n;
 	CPU _c;
-	ArrayCpuMemory _mem;
+	CpuMemory _mem;
 	
 	@Before
 	public void initialize() throws UnableToLoadRomException {

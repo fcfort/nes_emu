@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import ffdYKJisu.nes_emu.system.memory.CpuMemory;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,7 +42,7 @@ public class NesTest {
 
   NES _n;
   CPU _c;
-  ArrayCpuMemory _mem;
+  CpuMemory _mem;
   private List<CPUState> _nesTestLog;
 
   @Before

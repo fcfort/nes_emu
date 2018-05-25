@@ -23,13 +23,13 @@ public final class CartLoadingService {
 
     // Copy to lower bank
     for (int i = 0; i < BANK_LEN; i++) {
-      cpuMemory.write();
-      PRGROM[i] = bank[i];
+//      cpuMemory.write();
+//      PRGROM[i] = bank[i];
     }
 
     // Copy to upper bank
     for (int i = 0; i < BANK_LEN; i++) {
-      PRGROM[i + BANK_LEN] = bank[i];
+//      PRGROM[i + BANK_LEN] = bank[i];
     }
   }
 }
