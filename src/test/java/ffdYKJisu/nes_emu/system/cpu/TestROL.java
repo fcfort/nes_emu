@@ -9,14 +9,14 @@ import org.junit.Test;
 import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
 import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
-import ffdYKJisu.nes_emu.system.memory.CPUMemory;
+import ffdYKJisu.nes_emu.system.memory.ArrayCpuMemory;
 import ffdYKJisu.nes_emu.util.HexUtils;
 
 public class TestROL {
 
 	NES _n;
 	CPU _c;
-	CPUMemory _mem; 
+	ArrayCpuMemory _mem;
 	
 	@Before
 	public void initialize() throws UnableToLoadRomException {

@@ -40,9 +40,9 @@ public class StatusBit {
 		D = b.get(3);
 		I = b.get(2);
 		Z = b.get(1);
-		C = b.get(0);		
+		C = b.get(0);
 	}
-	
+
 	public void setCarry() {
 		this.C = true;
 	// cpuLogger.log(Level.FINER,"Carry flag set");
@@ -155,59 +155,15 @@ public class StatusBit {
 		return N;
 	}
 
-	@Override
-	public String toString() {
-		StringBuffer s = new StringBuffer();
-		s.append("N:");
-		if (this.isSetNegative()) {
-			s.append("1");
-		} else {
-			s.append("0");
-		}
-		s.append(" ");
-
-		s.append("V:");
-		if (this.isSetOverflow()) {
-			s.append("1");
-		} else {
-			s.append("0");
-		}
-		s.append(" ");
-
-		s.append("- - ");
-
-		s.append("D:");
-		if (this.isSetDecimal()) {
-			s.append("1");
-		} else {
-			s.append("0");
-		}
-		s.append(" ");
-
-		s.append("I:");
-		if (this.isSetInterruptDisable()) {
-			s.append("1");
-		} else {
-			s.append("0");
-		}
-		s.append(" ");
-
-		s.append("Z:");
-		if (this.isSetZero()) {
-			s.append("1");
-		} else {
-			s.append("0");
-		}
-		s.append(" ");
-
-		s.append("C:");
-		if (this.isSetCarry()) {
-			s.append("1");
-		} else {
-			s.append("0");
-		}
-
-		return s.toString();
-	}
-
+  @Override
+  public String toString() {
+    return String.format(
+        "N: %d V: %d - - D: %d I: %s Z: %d C: %d",
+        this.isSetNegative() ? 1 : 0,
+        this.isSetOverflow() ? 1 : 0,
+        this.isSetDecimal() ? 1 : 0,
+        this.isSetInterruptDisable() ? 1 : 0,
+        this.isSetZero() ? 1 : 0,
+        this.isSetCarry() ? 1 : 0);
+  }
 }

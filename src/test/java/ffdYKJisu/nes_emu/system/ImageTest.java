@@ -21,8 +21,8 @@ public class ImageTest {
 	}
 
 	@Test
-	public void test() throws InterruptedException {
-		for (int j = 0; j < 10000; j++) {
+	public void test() {
+		for (int j = 0; j < 100; j++) {
 			Random r = new Random();
 			for (int x = 0; x < WIDTH; x++) {
 				for (int y = 0; y < HEIGHT; y++) {

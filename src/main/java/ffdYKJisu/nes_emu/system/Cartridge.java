@@ -21,7 +21,7 @@ import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
  */
 public class Cartridge {
 
-    static final Logger logger = LoggerFactory.getLogger(Cartridge.class);
+    private static final Logger logger = LoggerFactory.getLogger(Cartridge.class);
     
     private byte[] romData;
     private int num16PRGBanks = 0;
@@ -116,7 +116,7 @@ public class Cartridge {
     }
 
     String printCartridgeData() {
-        StringBuffer output = new StringBuffer();
+        StringBuilder output = new StringBuilder();
         output.append("There are " + this.num16PRGBanks + " PRG16 Bank(s)\n");
         for (int i = 0; i < this.num16PRGBanks; i++) {
             output.append("PRG16 Bank " + i + "\n");
@@ -253,13 +253,13 @@ public class Cartridge {
 
     private int getBankOffset(Bank bankType, int bankNum) {
         if (bankType.equals(Bank.PRG16)) {
-            return this.iNESOffset + Bank.PRG16.length * bankNum;
+            return iNESOffset + Bank.PRG16.length * bankNum;
         } else if (bankType.equals(Bank.CHR8)) {
-            int offset = this.iNESOffset + Bank.PRG16.length
+            int offset = iNESOffset + Bank.PRG16.length
                     * this.num16PRGBanks + Bank.CHR8.length * bankNum;
             return offset;
         } else {
-            return this.iNESOffset;
+            return iNESOffset;
         }
     }
 }

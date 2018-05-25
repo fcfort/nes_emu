@@ -1,4 +1,5 @@
 package ffdYKJisu.nes_emu.system.screen;
+
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Graphics;
