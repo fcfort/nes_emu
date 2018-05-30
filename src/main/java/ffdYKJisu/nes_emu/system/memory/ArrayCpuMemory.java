@@ -120,14 +120,6 @@ public class ArrayCpuMemory implements CpuMemory {
     System.arraycopy(bank, 0, PRGROM, 16384, BANK_LEN);
   }
 
-  private enum AddressLocation {
-    RAM,
-    PRGROM,
-    SRAM,
-    PPUio,
-    APUio
-  }
-
   public void push(byte address_, byte val_) {
     write((short) (Byte.toUnsignedInt(address_) + STACK_OFFSET), val_);
   }
