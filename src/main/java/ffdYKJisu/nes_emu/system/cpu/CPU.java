@@ -14,7 +14,7 @@ import ffdYKJisu.nes_emu.domain.StatusBit;
 import ffdYKJisu.nes_emu.exceptions.AddressingModeException;
 import ffdYKJisu.nes_emu.exceptions.OpcodeExecutionException;
 import ffdYKJisu.nes_emu.system.NES;
-import ffdYKJisu.nes_emu.system.memory.CpuMemory;
+import ffdYKJisu.nes_emu.system.memory.Addressable;
 import ffdYKJisu.nes_emu.system.memory.ArrayCpuMemory;
 import ffdYKJisu.nes_emu.util.HexUtils;
 
@@ -39,7 +39,7 @@ public class CPU implements ICPU {
   /** Holds the bits of the status byte for the processor */
   private StatusBit P;
 
-  private final CpuMemory memory;
+  private final Addressable memory;
   private int _cyclesRun;
   private int _cyclesRunSinceReset;
   private byte _stackPointer;
@@ -936,7 +936,7 @@ public class CPU implements ICPU {
     return _nes;
   }
 
-  public CpuMemory getMemory() {
+  public Addressable getMemory() {
     return memory;
   }
 

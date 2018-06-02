@@ -13,6 +13,7 @@ public class AddressMapper {
 //        RAM[ramOffset + 0x0800] = val;
 //        RAM[ramOffset + 0x1000] = val;
 //        RAM[ramOffset + 0x1800] = val;
+        return null;
     }
 
     public AddressLocation getAddressLocation(short address_) {

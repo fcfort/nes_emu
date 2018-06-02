@@ -2,33 +2,38 @@ package ffdYKJisu.nes_emu.system.memory;
 
 import com.google.common.base.Preconditions;
 
-public class Ram implements CpuMemory {
+import javax.inject.Inject;
 
-    private static final int RAM_LENGTH = 0x800;
+public class Ram implements Addressable {
 
-    private final byte[] data;
+  private static final int RAM_START = 0;
+  private static final int RAM_END = 0x1FFF;
+  private static final int RAM_LENGTH = 0x800;
 
-    public Ram() {
-        data = new byte[RAM_LENGTH];
-    }
+  private final byte[] data;
 
-    @Override
-    public byte read(short address) {
-        assertIsValidAddress(address);
-        return data[toCanonicalAddress(address)];
-    }
+  @Inject
+  Ram() {
+    data = new byte[RAM_LENGTH];
+  }
 
-    @Override
-    public void write(short address, byte value) {
-        assertIsValidAddress(address);
-        data[toCanonicalAddress(address)] = value;
-    }
+  @Override
+  public byte read(short address) {
+    assertIsValidAddress(address);
+    return data[toCanonicalAddress(address)];
+  }
 
-    private static boolean assertIsValidAddress(short address) {
-        Preconditions.checkArgument(address >= 0 && address <= 0x1FFF);
-    }
+  @Override
+  public void write(short address, byte value) {
+    assertIsValidAddress(address);
+    data[toCanonicalAddress(address)] = value;
+  }
 
-    private static int toCanonicalAddress(short address) {
-        return Short.toUnsignedInt(address) & RAM_LENGTH;
-    }
+  private static void assertIsValidAddress(short address) {
+    Preconditions.checkArgument(address >= RAM_START && address <= RAM_END);
+  }
+
+  private static int toCanonicalAddress(short address) {
+    return Short.toUnsignedInt(address) & (RAM_LENGTH - 1);
+  }
 }

@@ -3,7 +3,7 @@ package ffdYKJisu.nes_emu.system.memory;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class FakeCpuMemory implements CpuMemory {
+public final class FakeCpuMemory implements Addressable {
 
   private final Map<Short, Byte> memoryMap;
 

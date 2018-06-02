@@ -7,9 +7,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ArrayCpuMemoryTest {
+public class ArrayAddressableTest {
 
-	private static Logger logger = LoggerFactory.getLogger(ArrayCpuMemoryTest.class);
+	private static Logger logger = LoggerFactory.getLogger(ArrayAddressableTest.class);
 
 	ArrayCpuMemory memory;
 	

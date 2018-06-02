@@ -3,14 +3,13 @@ package ffdYKJisu.nes_emu.system.cpu;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import ffdYKJisu.nes_emu.system.memory.CpuMemory;
+import ffdYKJisu.nes_emu.system.memory.Addressable;
 import org.junit.Before;
 import org.junit.Test;
 
 import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
 import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
-import ffdYKJisu.nes_emu.system.memory.ArrayCpuMemory;
 
 /**
  * http://www.6502.org/tutorials/vflag.html
@@ -19,7 +18,7 @@ public class TestOverflowFlag {
 	
 	NES _n;
 	CPU _c;
-	CpuMemory _mem;
+	Addressable _mem;
 	
 	@Before
 	public void initialize() throws UnableToLoadRomException {

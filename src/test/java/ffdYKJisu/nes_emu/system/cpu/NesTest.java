@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import ffdYKJisu.nes_emu.system.memory.CpuMemory;
+import ffdYKJisu.nes_emu.system.memory.Addressable;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,7 +24,6 @@ import ffdYKJisu.nes_emu.domain.Opcode;
 import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
 import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
-import ffdYKJisu.nes_emu.system.memory.ArrayCpuMemory;
 import ffdYKJisu.nes_emu.util.UnsignedShorts;
 
 /**
@@ -42,7 +41,7 @@ public class NesTest {
 
   NES _n;
   CPU _c;
-  CpuMemory _mem;
+  Addressable _mem;
   private List<CPUState> _nesTestLog;
 
   @Before

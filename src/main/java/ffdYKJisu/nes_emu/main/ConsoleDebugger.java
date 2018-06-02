@@ -3,7 +3,7 @@ package ffdYKJisu.nes_emu.main;
 
 import java.io.IOException;
 
-import ffdYKJisu.nes_emu.system.memory.CpuMemory;
+import ffdYKJisu.nes_emu.system.memory.Addressable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +13,6 @@ import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
 import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.cpu.CPU;
-import ffdYKJisu.nes_emu.system.memory.ArrayCpuMemory;
 import ffdYKJisu.nes_emu.system.memory.PPUMemory;
 import ffdYKJisu.nes_emu.system.ppu.PPU;
 import ffdYKJisu.nes_emu.util.HexUtils;
@@ -27,7 +26,7 @@ public class ConsoleDebugger {
 	
 	private static final Logger logger = LoggerFactory.getLogger(ConsoleDebugger.class);
 	
-	private final CpuMemory _cpuMemory;
+	private final Addressable _cpuMemory;
 	private final PPUMemory _ppuMemory;
 	private final CPU _cpu;
 	private final NES _nes;

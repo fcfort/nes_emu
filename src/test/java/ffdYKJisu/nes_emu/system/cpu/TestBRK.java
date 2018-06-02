@@ -5,7 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
-import ffdYKJisu.nes_emu.system.memory.CpuMemory;
+import ffdYKJisu.nes_emu.system.memory.Addressable;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -16,7 +16,6 @@ import com.google.common.primitives.Shorts;
 import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
 import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
-import ffdYKJisu.nes_emu.system.memory.ArrayCpuMemory;
 
 public class TestBRK {
 
@@ -24,7 +23,7 @@ public class TestBRK {
 	
 	NES _n;
 	CPU _c;
-	CpuMemory _mem;
+	Addressable _mem;
 	
 	@Before
 	public void initialize() throws UnableToLoadRomException {

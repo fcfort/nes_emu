@@ -3,7 +3,7 @@ package ffdYKJisu.nes_emu.system.cpu;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import ffdYKJisu.nes_emu.system.memory.CpuMemory;
+import ffdYKJisu.nes_emu.system.memory.Addressable;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
 import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.NES;
-import ffdYKJisu.nes_emu.system.memory.ArrayCpuMemory;
 import ffdYKJisu.nes_emu.util.HexUtils;
 
 public class TestBCC {
@@ -21,7 +20,7 @@ public class TestBCC {
 
 	NES _n;
 	CPU _c;
-	CpuMemory _mem;
+	Addressable _mem;
 
 	@Before
 	public void initialize() throws UnableToLoadRomException {

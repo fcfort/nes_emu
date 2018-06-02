@@ -1,47 +1,39 @@
 package ffdYKJisu.nes_emu.system.memory;
 
-import com.google.common.flogger.FluentLogger;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static com.google.common.truth.Truth.assertThat;
 
 /** Tests for {@link Ram}. */
 public class RamTest {
 
-    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+  private Ram ram;
 
-    Ram ram;
+  @Before
+  public void setUp() {
+    ram = new Ram();
+  }
 
-    @Before
-    public void setUp() {
-        ram = new Ram();
-    }
+  @Test
+  public void assertWriteAndReadAtZeroReturnSameValue() {
+    ram.write((short) 0, (byte) 5);
 
-    @Test
-    public void assertWriteAndReadAtZeroReturnSameValue() {
-        ram.write((short) 0, (byte) 5);
+    assertThat(ram.read((short) 0)).isEqualTo(5);
+  }
 
-        assertEquals(5, ram.read((short) 0));
-    }
+  @Test
+  public void shouldReturnSameValueAtNextMask() {
+    ram.write((short) 0, (byte) 5);
+    assertThat(ram.read((short) 0)).isEqualTo(5);
+    assertThat(ram.read((short) 0x0800)).isEqualTo(5);
+    assertThat(ram.read((short) 0x1000)).isEqualTo(5);
+    assertThat(ram.read((short) 0x1800)).isEqualTo(5);
+  }
 
-
-    @Test
-    public void testReadRAM() {
-        assertEquals(0, ram.read((short)0));
-    }
-
-    @Test
-    public void testWriteRAM() {
-        ram.write((short)0,(byte)1);
-        assertEquals(1, ram.read((byte)0));
-        assertEquals(1, ram.read((short)0));
-    }
-
-    @Test
-    public void testWriteRAMHigh() {
-        ram.write((short)0x100,(byte)10);
-        assertEquals(10, ram.read((short)0x100));
-    }
-
+  @Test
+  public void writeAtEndOfRamShouldReadSameValue() {
+    ram.write((short) 0x1FFF, (byte) 5);
+    assertThat(ram.read((short) 0x07FF)).isEqualTo(5);
+  }
 }

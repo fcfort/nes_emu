@@ -1,13 +1,12 @@
 package ffdYKJisu.nes_emu.system;
 
-import ffdYKJisu.nes_emu.system.memory.CpuMemory;
+import ffdYKJisu.nes_emu.system.memory.Addressable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 import ffdYKJisu.nes_emu.screen.Image;
 import ffdYKJisu.nes_emu.system.cpu.CPU;
-import ffdYKJisu.nes_emu.system.memory.ArrayCpuMemory;
 import ffdYKJisu.nes_emu.system.ppu.PPU;
 
 /**
@@ -67,7 +66,7 @@ public class NES {
 	public PPU getPPU() { return _ppu; }
 	public Image getImage() { return _image; }
 	
-	public CpuMemory getCPUMemory() {
+	public Addressable getCPUMemory() {
 		return _cpu.getMemory();
 	}
 
