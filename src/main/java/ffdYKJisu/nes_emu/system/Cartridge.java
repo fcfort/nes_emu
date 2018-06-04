@@ -1,19 +1,18 @@
 package ffdYKJisu.nes_emu.system;
 
+import com.google.common.collect.Lists;
+import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
+import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
+import ffdYKJisu.nes_emu.system.cartridge.Mirroring;
+import org.apache.commons.lang.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-
-import org.apache.commons.lang.ArrayUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.Lists;
-
-import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
-import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 
 /**
  * A cartridge that can be loaded into an NES 
@@ -61,11 +60,6 @@ public class Cartridge {
             this.length = (int) size;
         }
     }
-
-    public enum Mirroring {
-        VERTICAL, HORIZONTAL
-    };
-
 
     Byte getByte(int index) {
         try {

@@ -9,7 +9,6 @@ import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 import ffdYKJisu.nes_emu.system.Cartridge;
 import ffdYKJisu.nes_emu.system.cpu.CPU;
 import ffdYKJisu.nes_emu.util.HexUtils;
-import ffdYKJisu.nes_emu.util.UnsignedShorts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,11 +38,13 @@ public class ArrayCpuMemory implements Addressable {
   private final CPU cpu;
   private final Ram ram;
   private final PpuIo ppuIo;
+  private final AddressMapper addressMapper;
 
   public ArrayCpuMemory(CPU cpu_) {
     cpu = cpu_;
     EROM = null;
     ram = new Ram();
+    addressMapper = new AddressMapper();
     ppuIo = new PpuIo();
     PRGROM = new byte[PRGROM_LEN];
     SRAM = new byte[SRAM_LEN];
@@ -53,7 +54,7 @@ public class ArrayCpuMemory implements Addressable {
   public byte read(short address) {
     byte val;
 
-    switch (getAddressLocation(address)) {
+    switch (addressMapper.getAddressLocation(address)) {
       case PPUio:
         val = ppuIo.read(address);
         break;
@@ -75,7 +76,7 @@ public class ArrayCpuMemory implements Addressable {
 
     logger.info(
         "Read of {} at address {} got val {}",
-        new Object[] {getAddressLocation(address).toString(), toHex(address), toHex(val)});
+        new Object[] {addressMapper.getAddressLocation(address).toString(), toHex(address), toHex(val)});
 
     return val;
   }
@@ -83,11 +84,11 @@ public class ArrayCpuMemory implements Addressable {
   @Override
   public void write(short address, byte val) throws InvalidAddressException {
     logger.info("Writing {} to address {}", toHex(val), toHex(address));
-    switch (getAddressLocation(address)) {
+    switch (addressMapper.getAddressLocation(address)) {
       case PPUio:
         ppuIo.write(address, val);
         break;
-      case PRGROM:
+      case CARTRIDGE:
         throw new InvalidAddressException("In PRGROM");
       case RAM:
         ram.write(address, val);
@@ -123,22 +124,4 @@ public class ArrayCpuMemory implements Addressable {
     return read((short) (Byte.toUnsignedInt(address_) + STACK_OFFSET));
   }
 
-  private static AddressLocation getAddressLocation(short address_) {
-    if (inRange(address_, 0, 0x2000)) {
-      return AddressLocation.RAM;
-    } else if (inRange(address_, 0x2000, 0x4000)) {
-      return AddressLocation.PPUio;
-    } else if (inRange(address_, 0x4000, 0x4020)) {
-      return AddressLocation.APUio;
-    } else if (inRange(address_, 0x4020, 0x10000)) {
-      return AddressLocation.PRGROM;
-    } else {
-      throw new UnsupportedOperationException("Uncategorized address " + toHex(address_));
-    }
-  }
-
-  private static boolean inRange(short address, int lowInclusive, int highExclusive) {
-    return UnsignedShorts.compare(address, (short) lowInclusive) >= 0
-        && UnsignedShorts.compare(address, (short) highExclusive) < 0;
-  }
 }

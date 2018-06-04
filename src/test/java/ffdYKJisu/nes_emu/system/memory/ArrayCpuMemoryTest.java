@@ -1,15 +1,15 @@
 package ffdYKJisu.nes_emu.system.memory;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ArrayAddressableTest {
+import static org.junit.Assert.assertEquals;
 
-	private static Logger logger = LoggerFactory.getLogger(ArrayAddressableTest.class);
+public class ArrayCpuMemoryTest {
+
+	private static Logger logger = LoggerFactory.getLogger(ArrayCpuMemoryTest.class);
 
 	ArrayCpuMemory memory;
 	

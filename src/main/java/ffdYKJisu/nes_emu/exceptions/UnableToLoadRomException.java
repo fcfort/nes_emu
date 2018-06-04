@@ -1,17 +1,12 @@
 package ffdYKJisu.nes_emu.exceptions;
 
-public class UnableToLoadRomException extends Exception {
+public class UnableToLoadRomException extends RuntimeException {
 
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = -6840972783398820100L;
+  public UnableToLoadRomException(String message) {
+    super(message);
+  }
 
-	public UnableToLoadRomException() {
-        super();
-    }
-
-    public UnableToLoadRomException(String message) {
-        super(message);
-    }
+  public UnableToLoadRomException(Exception e) {
+    super(e);
+  }
 }
