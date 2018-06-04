@@ -1,14 +1,13 @@
 package ffdYKJisu.nes_emu.system.cartridge;
 
 import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
-import ffdYKJisu.nes_emu.system.Cartridge;
+import java.io.IOException;
+import java.io.InputStream;
+import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import java.io.IOException;
-import java.io.InputStream;
-
+// https://wiki.nesdev.com/w/index.php/INES
 public final class CartridgeFactory {
 
   private static final Logger logger = LoggerFactory.getLogger(CartridgeFactory.class);
@@ -26,7 +25,7 @@ public final class CartridgeFactory {
 
     RomHeader header = readHeader(romData);
 
-    return null;
+    return new Cartridge(header);
   }
 
   private static RomHeader readHeader(byte[] romData) {
@@ -39,14 +38,22 @@ public final class CartridgeFactory {
     byte mapperUpperNybble = (byte) ((romData[7] & 0xF0));
     byte mapperNumber = (byte) (mapperUpperNybble | mapperLowerNybble);
 
+    boolean hasSram = (romData[6] & 0x10) >> 1 == 1;
+
     logger.info(
         "Mapper number: {} from lower {} and upper {}",
         new Object[] {mapperLowerNybble, mapperUpperNybble, mapperNumber});
 
-    int num8RAMBanks = (romData[8] == 0) ? 1 : romData[8];
+    int num8RAMBanks = 0;
 
-    logger.info("Got {} 16 PRG Banks and {} 8 CHR banks", num16PRGBanks, num8CHRBanks);
+    if (hasSram) {
+      num8RAMBanks = (romData[8] == 0) ? 1 : romData[8];
+    }
 
-    return RomHeader.create(num8CHRBanks, num8RAMBanks, num16PRGBanks, mapperNumber, mirroring);
+    logger.info(
+        "Got {} 16 PRG Banks and {} 8 CHR banks and {} ram banks",
+        new Object[] {num16PRGBanks, num8CHRBanks, num8RAMBanks});
+
+    return RomHeader.create(mapperNumber, num8CHRBanks, num8RAMBanks, num16PRGBanks, mirroring);
   }
 }
