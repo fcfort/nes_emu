@@ -44,9 +44,9 @@ public class Cartridge {
     /**
      * Defines the various kinds of banks possible in a cartridge
      * <p>
-     * <code>PRG16</code> - 16KB Program code
+     * <code>ProgramRom</code> - 16KB Program code
      * <p>
-     * <code>CHR8</code> - 8KB Character data
+     * <code>CharacterRom</code> - 8KB Character data
      * <p>
      * <code>RAM8</code> - 8KB RAM space
      */
@@ -111,9 +111,9 @@ public class Cartridge {
 
     String printCartridgeData() {
         StringBuilder output = new StringBuilder();
-        output.append("There are " + this.num16PRGBanks + " PRG16 Bank(s)\n");
+        output.append("There are " + this.num16PRGBanks + " ProgramRom Bank(s)\n");
         for (int i = 0; i < this.num16PRGBanks; i++) {
-            output.append("PRG16 Bank " + i + "\n");
+            output.append("ProgramRom Bank " + i + "\n");
             byte[] temp = null;
             try {
                 temp = this.get16PRGBank(i);
@@ -126,10 +126,10 @@ public class Cartridge {
             }
         }
         // System.out.print("There are " + this.num8CHRBanks +
-        // " CHR8 Bank(s)\n");
-        output.append("\nThere are " + this.num8CHRBanks + " CHR8 Bank(s)\n");
+        // " CharacterRom Bank(s)\n");
+        output.append("\nThere are " + this.num8CHRBanks + " CharacterRom Bank(s)\n");
         for (int i = 0; i < this.num8CHRBanks; i++) {
-            output.append("CHR8 Bank " + i + "\n");
+            output.append("CharacterRom Bank " + i + "\n");
             byte[] temp = null;
             try {
                 temp = this.get8CHRBank(i);
@@ -216,7 +216,7 @@ public class Cartridge {
         for (int i = 0; i < bankLength; i++) {
             // System.out.println("Bank length " + bankLength + " Bank offset "
             // +
-            // this.getBankOffset(Bank.PRG16, bankNum) + " index " + i);
+            // this.getBankOffset(Bank.ProgramRom, bankNum) + " index " + i);
             bank[i] = romData[this.getBankOffset(Bank.PRG16, bankNum) + i];
         }
         return bank;

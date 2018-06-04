@@ -1,16 +1,22 @@
 package ffdYKJisu.nes_emu.system.cartridge;
 
 import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
-import java.io.IOException;
-import java.io.InputStream;
-import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 // https://wiki.nesdev.com/w/index.php/INES
 public final class CartridgeFactory {
 
   private static final Logger logger = LoggerFactory.getLogger(CartridgeFactory.class);
+
+  private static final int INES_LENGTH = 16;
 
   @Inject
   public CartridgeFactory() {}
@@ -25,7 +31,29 @@ public final class CartridgeFactory {
 
     RomHeader header = readHeader(romData);
 
-    return new Cartridge(header);
+    // File order is PRG ROM banks then CHR ROM banks sequentially
+    List<byte[]> prgBanks = new LinkedList<>();
+
+    for (int i = 0; i < header.prgBanksCount(); i++) {
+      prgBanks.add(
+          Arrays.copyOfRange(
+              romData, INES_LENGTH + Bank.ProgramRom.length * i, Bank.ProgramRom.length));
+    }
+
+    // File order is PRG ROM banks then CHR ROM banks sequentially
+    List<byte[]> chrBanks = new LinkedList<>();
+
+    for (int i = 0; i < header.prgBanksCount(); i++) {
+      chrBanks.add(
+          Arrays.copyOfRange(
+              romData,
+              INES_LENGTH
+                  + Bank.ProgramRom.length * header.prgBanksCount()
+                  + i * Bank.CharacterRom.length,
+              Bank.CharacterRom.length));
+    }
+
+    return new Cartridge(header, prgBanks, chrBanks);
   }
 
   private static RomHeader readHeader(byte[] romData) {

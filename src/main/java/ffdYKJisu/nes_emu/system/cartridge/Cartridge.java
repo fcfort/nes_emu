@@ -1,16 +1,30 @@
 package ffdYKJisu.nes_emu.system.cartridge;
 
-import javax.inject.Inject;
+import ffdYKJisu.nes_emu.system.memory.Addressable;
 
-public class Cartridge {
+import java.util.List;
 
-    private RomHeader header;
+public class Cartridge implements Addressable {
 
-    Cartridge(RomHeader header) {
-        this.header = header;
-    }
+  private RomHeader header;
+  private List<byte[]> programRomBanks;
+  private List<byte[]> characterRomBanks;
 
-    public RomHeader getHeader() {
-        return header;
-    }
+  Cartridge(RomHeader header, List<byte[]> programRomBanks, List<byte[]> characterRomBanks) {
+    this.header = header;
+    this.programRomBanks = programRomBanks;
+    this.characterRomBanks = characterRomBanks;
+  }
+
+  public RomHeader getHeader() {
+    return header;
+  }
+
+  @Override
+  public byte read(short address) {
+    return 0;
+  }
+
+  @Override
+  public void write(short address, byte value) {}
 }
