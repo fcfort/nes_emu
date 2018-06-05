@@ -1,13 +1,7 @@
 package ffdYKJisu.nes_emu.system.cpu;
 
-import java.lang.reflect.InvocationTargetException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.Shorts;
-
 import ffdYKJisu.nes_emu.domain.AddressingMode;
 import ffdYKJisu.nes_emu.domain.Opcode;
 import ffdYKJisu.nes_emu.domain.StatusBit;
@@ -17,6 +11,10 @@ import ffdYKJisu.nes_emu.system.NES;
 import ffdYKJisu.nes_emu.system.memory.Addressable;
 import ffdYKJisu.nes_emu.system.memory.ArrayCpuMemory;
 import ffdYKJisu.nes_emu.util.HexUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * Controls all functions of the main CPU of the NES. Handles all opcode processing and registers of
@@ -61,8 +59,7 @@ public class CPU implements ICPU {
 
   public CPU(NES nes_) {
     _nes = nes_;
-    logger.info("CPU has been initiated");
-    memory = new ArrayCpuMemory(this);
+    memory = new ArrayCpuMemory(this, null);
     _cyclesRun = 0;
     _cyclesRunSinceReset = 0;
     // Set up State registers

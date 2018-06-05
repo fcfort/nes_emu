@@ -35,30 +35,29 @@ public final class CartridgeFactory {
     List<byte[]> prgBanks = new LinkedList<>();
 
     for (int i = 0; i < header.prgBanksCount(); i++) {
-      prgBanks.add(
-          Arrays.copyOfRange(
-              romData, INES_LENGTH + Bank.ProgramRom.length * i, Bank.ProgramRom.length));
+      int from = INES_LENGTH + Bank.ProgramRom.length * i;
+      int to = from + Bank.ProgramRom.length;
+      prgBanks.add(Arrays.copyOfRange(romData, from, to));
     }
 
     // File order is PRG ROM banks then CHR ROM banks sequentially
     List<byte[]> chrBanks = new LinkedList<>();
 
     for (int i = 0; i < header.prgBanksCount(); i++) {
-      chrBanks.add(
-          Arrays.copyOfRange(
-              romData,
-              INES_LENGTH
-                  + Bank.ProgramRom.length * header.prgBanksCount()
-                  + i * Bank.CharacterRom.length,
-              Bank.CharacterRom.length));
+      int from =
+          INES_LENGTH
+              + Bank.ProgramRom.length * header.prgBanksCount()
+              + i * Bank.CharacterRom.length;
+      int to = from + Bank.CharacterRom.length;
+      chrBanks.add(Arrays.copyOfRange(romData, from, to));
     }
 
     return new Cartridge(header, prgBanks, chrBanks);
   }
 
   private static RomHeader readHeader(byte[] romData) {
-    int num16PRGBanks = (int) romData[4];
-    int num8CHRBanks = (int) romData[5];
+    int num16PRGBanks = romData[4];
+    int num8CHRBanks = romData[5];
 
     Mirroring mirroring = ((romData[6] & 0x1) == 0) ? Mirroring.HORIZONTAL : Mirroring.VERTICAL;
 

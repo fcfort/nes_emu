@@ -55,7 +55,7 @@ public class NES {
 		this.cart = cart;
 		// TODO: fix exception handling
 		try {
-			//_cpu.getMemory().writeCartToMemory(cart);
+			//_cpu.getMemory().setCartridge(cart);
 			_ppu.getMemory().writeCartToMemory(cart);
 		} catch (BankNotFoundException e) {
 			throw new RuntimeException(e);
