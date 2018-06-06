@@ -1,30 +1,29 @@
 package ffdYKJisu.nes_emu.system.cpu;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.io.LineProcessor;
+import com.google.common.io.Resources;
+import com.google.common.primitives.UnsignedBytes;
+import ffdYKJisu.nes_emu.domain.Opcode;
+import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
+import ffdYKJisu.nes_emu.system.NES;
+import ffdYKJisu.nes_emu.system.cartridge.Cartridge;
+import ffdYKJisu.nes_emu.system.cartridge.CartridgeFactory;
 import ffdYKJisu.nes_emu.system.memory.Addressable;
+import ffdYKJisu.nes_emu.util.UnsignedShorts;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import com.google.common.io.LineProcessor;
-import com.google.common.io.Resources;
-import com.google.common.primitives.UnsignedBytes;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
-import ffdYKJisu.nes_emu.domain.Opcode;
-import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
-import ffdYKJisu.nes_emu.system.Cartridge;
-import ffdYKJisu.nes_emu.system.NES;
-import ffdYKJisu.nes_emu.util.UnsignedShorts;
+import static org.junit.Assert.assertEquals;
 
 /**
  * nestest fairly thoroughly tests CPU operation. This is the best test to start with when getting a
@@ -35,7 +34,7 @@ import ffdYKJisu.nes_emu.util.UnsignedShorts;
  */
 public class NesTest {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(NesTest.class);
+  private static final Logger logger = LoggerFactory.getLogger(NesTest.class);
 
   private static final int INVALID_OPCODE_START_INDEX = 5003;
 
@@ -46,9 +45,10 @@ public class NesTest {
 
   @Before
   public void initialize() throws UnableToLoadRomException, IOException {
-    Cartridge c = new Cartridge(ClassLoader.getSystemResourceAsStream("nestest.nes"));
-    NES _nes = new NES();
-    _nes.setCart(c);
+    Cartridge c =
+        new CartridgeFactory()
+            .fromInputStream(ClassLoader.getSystemResourceAsStream("nestest.nes"));
+    NES _nes = new NES(c);
     _c = _nes.getCPU();
     _mem = _c.getMemory();
     _c.reset();
@@ -62,7 +62,7 @@ public class NesTest {
 
     for (int i = 0; i < INVALID_OPCODE_START_INDEX; i++) {
       CPUState s = _nesTestLog.get(i);
-      LOGGER.info("({}): Asserting {} against {}", new Object[] {i + 1, s, getState()});
+      logger.info("({}): Asserting {} against {}", new Object[] {i + 1, s, getState()});
       assertEquals(s, getState());
       _c.runStep();
     }
@@ -83,7 +83,7 @@ public class NesTest {
             byte operands[] = new byte[tokens.length];
             int i = 0;
             for (String token : tokens) {
-              // LOGGER.info("Parsing byte {}", token);
+              // logger.info("Parsing byte {}", token);
               operands[i++] = UnsignedBytes.parseUnsignedByte(token, 16);
             }
 
@@ -97,14 +97,14 @@ public class NesTest {
                     getRangeAsByte(line_, 65, 67),
                     getRangeAsByte(line_, 71, 73));
 
-            // LOGGER.info("Got line {} and CPU state {}", line_, s);
+            // logger.info("Got line {} and CPU state {}", line_, s);
 
             return states.add(s);
           }
 
           @Override
           public List<CPUState> getResult() {
-            LOGGER.info("Parsed {} instructions", states.size());
+            logger.info("Parsed {} instructions", states.size());
             return states;
           }
         });

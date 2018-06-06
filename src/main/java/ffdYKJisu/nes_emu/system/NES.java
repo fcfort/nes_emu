@@ -1,13 +1,13 @@
 package ffdYKJisu.nes_emu.system;
 
-import ffdYKJisu.nes_emu.system.memory.Addressable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 import ffdYKJisu.nes_emu.screen.Image;
+import ffdYKJisu.nes_emu.system.cartridge.Cartridge;
 import ffdYKJisu.nes_emu.system.cpu.CPU;
+import ffdYKJisu.nes_emu.system.memory.Addressable;
 import ffdYKJisu.nes_emu.system.ppu.PPU;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This will hold both the CPU and PPU objects and the Cartridge. This is to
@@ -39,10 +39,10 @@ public class NES {
 		PAL, NTSC
 	}
 
-	public NES() {		
+	public NES(Cartridge cartridge) {
 		timing = Timing.NTSC;
 		_image = new Image(IMAGE_WIDTH, IMAGE_HEIGHT);
-		_cpu = new CPU(this);
+		_cpu = new CPU(cartridge);
 		_ppu = new PPU(this);
 		_image.render();
 	}

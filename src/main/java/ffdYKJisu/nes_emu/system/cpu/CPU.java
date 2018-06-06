@@ -7,7 +7,7 @@ import ffdYKJisu.nes_emu.domain.Opcode;
 import ffdYKJisu.nes_emu.domain.StatusBit;
 import ffdYKJisu.nes_emu.exceptions.AddressingModeException;
 import ffdYKJisu.nes_emu.exceptions.OpcodeExecutionException;
-import ffdYKJisu.nes_emu.system.NES;
+import ffdYKJisu.nes_emu.system.cartridge.Cartridge;
 import ffdYKJisu.nes_emu.system.memory.Addressable;
 import ffdYKJisu.nes_emu.system.memory.ArrayCpuMemory;
 import ffdYKJisu.nes_emu.util.HexUtils;
@@ -53,13 +53,10 @@ public class CPU implements ICPU {
 
   private static final short STACK_OFFSET = 0x100;
 
-  private final NES _nes;
-
   private boolean _nonMaskableInterruptFlag;
 
-  public CPU(NES nes_) {
-    _nes = nes_;
-    memory = new ArrayCpuMemory(this, null);
+  public CPU(Cartridge cartridge) {
+    memory = new ArrayCpuMemory(cartridge);
     _cyclesRun = 0;
     _cyclesRunSinceReset = 0;
     // Set up State registers
@@ -744,7 +741,7 @@ public class CPU implements ICPU {
   }
 
   private void push(byte val_) {
-    memory.write((short) (Byte.toUnsignedInt(val_) + STACK_OFFSET), val_);
+    memory.write((short) (Byte.toUnsignedInt(_stackPointer) + STACK_OFFSET), val_);
     _stackPointer--;
   }
 
@@ -807,29 +804,29 @@ public class CPU implements ICPU {
     setZero(X);
   }
 
-  void TAY() {
+  public void TAY() {
     Y = A;
     setNegative(Y);
     setZero(Y);
   }
 
-  void TSX() {
+  public void TSX() {
     X = _stackPointer;
     setNegative(X);
     setZero(X);
   }
 
-  void TXA() {
+  public void TXA() {
     A = X;
     setNegative(A);
     setZero(A);
   }
 
-  void TXS() {
+  public void TXS() {
     _stackPointer = X;
   }
 
-  void TYA() {
+  public void TYA() {
     A = Y;
     setNegative(A);
     setZero(A);
@@ -927,10 +924,6 @@ public class CPU implements ICPU {
 
   public boolean getNegativeFlag() {
     return P.isSetNegative();
-  }
-
-  public NES getNES() {
-    return _nes;
   }
 
   public Addressable getMemory() {

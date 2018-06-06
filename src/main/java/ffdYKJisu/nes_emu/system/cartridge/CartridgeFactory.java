@@ -1,5 +1,6 @@
 package ffdYKJisu.nes_emu.system.cartridge;
 
+import com.google.common.collect.ImmutableList;
 import ffdYKJisu.nes_emu.exceptions.UnableToLoadRomException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,13 @@ public final class CartridgeFactory {
 
   @Inject
   public CartridgeFactory() {}
+
+  public Cartridge fakeCartridge() {
+    return new Cartridge(
+        RomHeader.create(0, 0, 0, 1, Mirroring.HORIZONTAL),
+        ImmutableList.of(new byte[Bank.ProgramRom.length]),
+        ImmutableList.of());
+  }
 
   public Cartridge fromInputStream(InputStream is) {
     byte[] romData;

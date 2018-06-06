@@ -6,7 +6,6 @@ package ffdYKJisu.nes_emu.system.memory;
 
 import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
 import ffdYKJisu.nes_emu.system.cartridge.Cartridge;
-import ffdYKJisu.nes_emu.system.cpu.CPU;
 import ffdYKJisu.nes_emu.util.HexUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,15 +20,13 @@ public class ArrayCpuMemory implements Addressable {
 
   private static Logger logger = LoggerFactory.getLogger(ArrayCpuMemory.class);
 
-  private final CPU cpu;
   private final Ram ram;
   private final PpuIo ppuIo;
   private final AddressMapper addressMapper;
   private Cartridge cartridge;
 
-  public ArrayCpuMemory(CPU cpu, Cartridge cartridge) {
+  public ArrayCpuMemory(Cartridge cartridge) {
     this.cartridge = cartridge;
-    this.cpu = cpu;
     this.ram = new Ram();
     this.addressMapper = new AddressMapper();
     this.ppuIo = new PpuIo();

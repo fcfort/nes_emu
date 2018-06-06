@@ -4,19 +4,17 @@
  */
 package ffdYKJisu.nes_emu.system.memory;
 
-import java.util.Arrays;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.primitives.Shorts;
-
 import ffdYKJisu.nes_emu.exceptions.BankNotFoundException;
 import ffdYKJisu.nes_emu.exceptions.InvalidAddressException;
-import ffdYKJisu.nes_emu.system.Cartridge;
+import ffdYKJisu.nes_emu.system.cartridge.Cartridge;
 import ffdYKJisu.nes_emu.system.ppu.PPU;
 import ffdYKJisu.nes_emu.util.HexUtils;
 import ffdYKJisu.nes_emu.util.UnsignedShorts;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
 
 public class PPUMemory {
 	
@@ -182,7 +180,7 @@ public class PPUMemory {
 
 	public void writeCartToMemory(Cartridge cart_) throws BankNotFoundException {
 		// TODO: support custom mappers
-		byte[] chrrom = cart_.get8CHRBank(0);
+		byte[] chrrom = new byte[0x2000]; // = cart_.get8CHRBank(0);
 		PatternTable0 = Arrays.copyOfRange(chrrom, PATTERN_TABLE_0_LOC, PATTERN_TABLE_SIZE);
 		PatternTable1 = Arrays.copyOfRange(chrrom, PATTERN_TABLE_1_LOC, PATTERN_TABLE_1_LOC + PATTERN_TABLE_SIZE);
 		logger.info("Copy CHR ROM bank 0 to PPU memory: {}", Arrays.toString(chrrom));
