@@ -290,7 +290,7 @@ public class CPU implements ICPU {
         byte argX = memory.read((short) (PC_ + 1));
         short zeroPageAddress = (short) ((Byte.toUnsignedInt(argX) + Byte.toUnsignedInt(X)) % 256);
         byte lowerAddr = memory.read(zeroPageAddress);
-        byte upperAddr = memory.read((short) (zeroPageAddress + 1));
+        byte upperAddr = memory.read((short) ((zeroPageAddress + 1) % 256));
         addr = Shorts.fromBytes(upperAddr, lowerAddr);
         logger.info(
             "For mode {} got arg {} @ PC {}, got final addr {} from upper {} and lower {}",
@@ -307,7 +307,7 @@ public class CPU implements ICPU {
         /* val = PEEK(PEEK(arg) + PEEK((arg + 1) % 256) + y) */
         byte argY = memory.read((short) (PC_ + 1));
         byte lowerAddrY = memory.read(argY);
-        byte upperAddrY = memory.read((byte) ((argY + 1) & 0xFF));
+        byte upperAddrY = memory.read((short) ((argY + 1) & 0xFF));
         addr = (short) (Shorts.fromBytes(upperAddrY, lowerAddrY) + (Y & 0xFF));
         break;
       default:
