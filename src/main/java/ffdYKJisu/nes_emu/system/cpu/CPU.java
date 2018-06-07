@@ -288,12 +288,12 @@ public class CPU implements ICPU {
          */
         // TODO: Unify indirect addressing modes
         byte argX = memory.read((short) (PC_ + 1));
-        byte lowerAddr = (byte) ((Byte.toUnsignedInt(argX) + Byte.toUnsignedInt(X)) % 256);
-        byte upperAddr = (byte) ((Byte.toUnsignedInt(argX) + Byte.toUnsignedInt(X) + 1) % 256);
-        // addr = Shorts.fromBytes(upperAddr, lowerAddr);
-        addr = Shorts.fromBytes(memory.read(upperAddr), memory.read(lowerAddr));
+        short zeroPageAddress = (short) ((Byte.toUnsignedInt(argX) + Byte.toUnsignedInt(X)) % 256);
+        byte lowerAddr = memory.read(zeroPageAddress);
+        byte upperAddr = memory.read((short) (zeroPageAddress + 1));
+        addr = Shorts.fromBytes(upperAddr, lowerAddr);
         logger.info(
-            "For mode {} got arg {} @ PC {}, read addr {} from upper {} and lower {}, final addr {}",
+            "For mode {} got arg {} @ PC {}, got final addr {} from upper {} and lower {}",
             new Object[] {
               mode_,
               HexUtils.toHex(argX),

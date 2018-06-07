@@ -54,7 +54,7 @@ public class ArrayCpuMemory implements Addressable {
         throw new UnsupportedOperationException("Unrecognized address " + toHex(address));
     }
 
-    logger.info(
+    logger.debug(
         "Read of {} at address {} got val {}",
         new Object[] {
           addressMapper.getAddressLocation(address).toString(), toHex(address), toHex(val)
