@@ -304,11 +304,12 @@ public class CPU implements ICPU {
             });
         break;
       case INDIRECT_Y:
+
         /* val = PEEK(PEEK(arg) + PEEK((arg + 1) % 256) + y) */
         byte argY = memory.read((short) (PC_ + 1));
-        byte lowerAddrY = memory.read(argY);
-        byte upperAddrY = memory.read((short) ((argY + 1) & 0xFF));
-        addr = (short) (Shorts.fromBytes(upperAddrY, lowerAddrY) + (Y & 0xFF));
+        byte lowerAddrY = memory.read((short) Byte.toUnsignedInt(argY));
+        byte upperAddrY = memory.read((short) ((Byte.toUnsignedInt(argY) + 1) & 0xFF));
+        addr = (short) (Shorts.fromBytes(upperAddrY, lowerAddrY) + Byte.toUnsignedInt(Y));
         break;
       default:
         logger.error("No matching addressing mode for {}", mode_);
